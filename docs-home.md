@@ -1,11 +1,6 @@
 ## 原型入口（HTML）
 
-- <a href="原型/页面框架.html" target="_blank" rel="noopener">页面框架</a>
-- <a href="原型/登录页原型.html" target="_blank" rel="noopener">登录页原型</a>
-- <a href="原型/菜单管理.html" target="_blank" rel="noopener">菜单管理</a>
-- <a href="原型/患者列表.html" target="_blank" rel="noopener">患者列表</a>
-- <a href="原型/CT排队叫号.html" target="_blank" rel="noopener">CT排队叫号</a>
-- <a href="原型/治疗排队叫号.html" target="_blank" rel="noopener">治疗排队叫号</a>
+- <a href="原型/页面框架.html" target="_blank" rel="noopener">原型首页（页面框架）</a>
 
 ## 需求说明（Markdown）
 
