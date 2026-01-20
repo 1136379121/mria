@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户登录 - Mria系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        .hospital-logo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            height: 60px;
+            max-width: 200px;
+            object-fit: contain;
+        }
+
+        /* 登录区域整体上移（系统标题 + 输入框容器） */
+        .login-wrapper {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transform: translateY(-100px);
+        }
+
+        .login-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .system-title {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+            font-size: 55px;
+            font-weight: 600;
+            letter-spacing: 2px;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error-message {
+            background: #fff1f0;
+            border: 1px solid #ffccc7;
+            color: #ff4d4f;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .error-message.success {
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+            color: #52c41a;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            transition: all 0.3s;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .form-control.error {
+            border-color: #ff4d4f;
+        }
+
+        .form-control.error:focus {
+            border-color: #ff4d4f;
+            box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.2);
+        }
+
+        .form-control:disabled {
+            background: #f5f5f5;
+            cursor: not-allowed;
+        }
+
+        .error-text {
+            color: #ff4d4f;
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+        }
+
+        .error-text.show {
+            display: block;
+        }
+
+        .password-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #666;
+            font-size: 18px;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 4px;
+            transition: all 0.3s;
+        }
+
+        .password-toggle:hover {
+            color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .captcha-group {
+            display: none;
+        }
+
+        .captcha-group.show {
+            display: block;
+        }
+
+        .captcha-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .captcha-wrapper .form-control {
+            flex: 1;
+        }
+
+        .captcha-image {
+            width: 120px;
+            height: 40px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            cursor: pointer;
+            background: #f5f5f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #666;  
+            user-select: none;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .captcha-image:hover:not(.loading) {
+            border-color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .captcha-image.loading {
+            cursor: wait;
+        }
+
+        .captcha-image.loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #1890ff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        .login-button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+            background: #1890ff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-button:hover:not(:disabled) {
+            background: #40a9ff;
+        }
+
+        .login-button:active:not(:disabled) {
+            background: #096dd9;
+        }
+
+        .login-button:disabled {
+            background: #d9d9d9;
+            cursor: not-allowed;
+        }
+
+        .login-button.loading {
+            color: transparent;
+        }
+
+        .login-button.loading::after {
+            content: "";
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .account-locked {
+            background: #fff7e6;
+            border: 1px solid #ffd591;
+            color: #d46b08;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .account-locked.show {
+            display: block;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) and (min-width: 769px) {
+            /* 平板端 */
+            .login-container {
+                max-width: 350px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* 移动端 */
+            .hospital-logo {
+                top: 15px;
+                left: 15px;
+                height: 45px;
+                max-width: 150px;
+            }
+
+            .login-container {
+                padding: 30px 20px;
+                max-width: 90%;
+            }
+
+            .system-title {
+                font-size: 28px;
+            }
+
+            .form-control {
+                font-size: 16px; /* 防止iOS自动缩放 */
+                padding: 14px 16px; /* 加大高度便于触摸 */
+            }
+
+            .login-button {
+                padding: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .captcha-wrapper {
+                flex-direction: column;
+            }
+
+            .captcha-image {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img src="../UI图/医院logo.png" alt="医院Logo" class="hospital-logo">
+    <div class="login-wrapper">
+        <h1 class="system-title">放射治疗信息管理软件</h1>
+        <div class="login-container">
+            <div class="login-header">
+                <p>欢迎登录</p>
+            </div>
+
+            <div class="error-message" id="errorMessage"></div>
+            <div class="account-locked" id="accountLocked">
+                <strong>账号已被锁定</strong><br>
+                <span id="lockedTime"></span> 分钟后可以再次尝试登录
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="account">账号</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="account" 
+                            class="form-control" 
+                            placeholder="请输入用户名"
+                            autocomplete="username"
+                            maxlength="50"
+                        >
+                    </div>
+                    <div class="error-text" id="accountError"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">密码</label>
+                    <div class="input-wrapper">
+                        <input 
+                            type="password" 
+                            id="password" 
+                            class="form-control" 
+                            placeholder="请输入密码"
+                            autocomplete="current-password"
+                            maxlength="128"
+                        >
+                        <button type="button" class="password-toggle" id="passwordToggle" title="显示/隐藏密码">
+                            👁️
+                        </button>
+                    </div>
+                    <div class="error-text" id="passwordError"></div>
+                </div>
+
+                <div class="form-group captcha-group" id="captchaGroup">
+                    <label for="captcha">验证码</label>
+                    <div class="captcha-wrapper">
+                        <input 
+                            type="text" 
+                            id="captcha" 
+                            class="form-control" 
+                            placeholder="请输入验证码"
+                            maxlength="6"
+                            autocomplete="off"
+                        >
+                        <div class="captcha-image" id="captchaImage" title="点击刷新验证码">
+                            A3B2
+                        </div>
+                    </div>
+                    <div class="error-text" id="captchaError"></div>
+                </div>
+
+                <button type="submit" class="login-button" id="loginButton" disabled>
+                    登录
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 全局状态
+        let failedAttempts = 0;
+        let isLocked = false;
+        let lockUntil = null;
+        let isPasswordVisible = false;
+        let captchaId = null;
+
+        // DOM元素
+        const loginForm = document.getElementById('loginForm');
+        const accountInput = document.getElementById('account');
+        const passwordInput = document.getElementById('password');
+        const captchaInput = document.getElementById('captcha');
+        const captchaGroup = document.getElementById('captchaGroup');
+        const captchaImage = document.getElementById('captchaImage');
+        const passwordToggle = document.getElementById('passwordToggle');
+        const loginButton = document.getElementById('loginButton');
+        const errorMessage = document.getElementById('errorMessage');
+        const accountLocked = document.getElementById('accountLocked');
+        const lockedTime = document.getElementById('lockedTime');
+        const accountError = document.getElementById('accountError');
+        const passwordError = document.getElementById('passwordError');
+        const captchaError = document.getElementById('captchaError');
+
+        // 初始化：检查锁定状态
+        window.addEventListener('DOMContentLoaded', () => {
+            checkAccountLock();
+        });
+
+        // 检查账号锁定状态
+        function checkAccountLock() {
+            const lockTime = localStorage.getItem('lockUntil');
+            if (lockTime) {
+                const lockDate = new Date(lockTime);
+                const now = new Date();
+                if (lockDate > now) {
+                    isLocked = true;
+                    lockUntil = lockDate;
+                    showAccountLocked(lockDate);
+                } else {
+                    localStorage.removeItem('lockUntil');
+                    localStorage.removeItem('failedAttempts');
+                    failedAttempts = 0;
+                }
+            } else {
+                failedAttempts = parseInt(localStorage.getItem('failedAttempts') || '0');
+                if (failedAttempts >= 3) {
+                    showCaptcha();
+                }
+            }
+        }
+
+        // 显示账号锁定提示
+        function showAccountLocked(lockDate) {
+            const updateLockTime = () => {
+                const now = new Date();
+                const diff = lockDate - now;
+                if (diff <= 0) {
+                    isLocked = false;
+                    accountLocked.classList.remove('show');
+                    accountInput.disabled = false;
+                    passwordInput.disabled = false;
+                    localStorage.removeItem('lockUntil');
+                    localStorage.removeItem('failedAttempts');
+                    failedAttempts = 0;
+                    updateLoginButtonState();
+                    return;
+                }
+                const minutes = Math.ceil(diff / 1000 / 60);
+                lockedTime.textContent = minutes;
+                accountLocked.classList.add('show');
+                
+                // 禁用表单
+                accountInput.disabled = true;
+                passwordInput.disabled = true;
+                loginButton.disabled = true;
+                
+                setTimeout(updateLockTime, 60000); // 每分钟更新一次
+            };
+            updateLockTime();
+        }
+
+        // 显示验证码
+        function showCaptcha() {
+            captchaGroup.classList.add('show');
+            generateCaptcha();
+        }
+
+        // 生成验证码（模拟API调用）
+        function generateCaptcha() {
+            // 显示loading状态
+            captchaImage.classList.add('loading');
+            captchaImage.textContent = '';
+            
+            // 模拟API调用获取验证码
+            setTimeout(() => {
+                const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+                let result = '';
+                for (let i = 0; i < 4; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                captchaId = 'captcha_' + Date.now();
+                captchaImage.textContent = result;
+                captchaImage.classList.remove('loading');
+                // 存储验证码答案（实际应用中应该存储在服务端）
+                captchaImage.dataset.answer = result;
+                captchaImage.dataset.captchaId = captchaId;
+            }, 300);
+        }
+
+        // 点击验证码刷新
+        captchaImage.addEventListener('click', () => {
+            if (!captchaImage.classList.contains('loading')) {
+                generateCaptcha();
+                captchaInput.value = '';
+                clearError(captchaInput, captchaError);
+            }
+        });
+
+        // 密码显示/隐藏切换
+        passwordToggle.addEventListener('click', () => {
+            isPasswordVisible = !isPasswordVisible;
+            passwordInput.type = isPasswordVisible ? 'text' : 'password';
+            passwordToggle.textContent = isPasswordVisible ? '🙈' : '👁️';
+        });
+
+        // 输入框实时验证
+        accountInput.addEventListener('blur', validateAccount);
+        passwordInput.addEventListener('blur', validatePassword);
+        captchaInput.addEventListener('blur', validateCaptcha);
+
+        // 输入时清除错误状态
+        accountInput.addEventListener('input', () => {
+            clearError(accountInput, accountError);
+            updateLoginButtonState();
+        });
+
+        passwordInput.addEventListener('input', () => {
+            clearError(passwordInput, passwordError);
+            updateLoginButtonState();
+        });
+
+        captchaInput.addEventListener('input', () => {
+            clearError(captchaInput, captchaError);
+        });
+
+        // 回车键提交（支持Tab键切换）
+        accountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !loginButton.disabled) {
+                passwordInput.focus();
+            }
+        });
+
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !loginButton.disabled) {
+                if (captchaGroup.classList.contains('show')) {
+                    captchaInput.focus();
+                } else {
+                    loginForm.dispatchEvent(new Event('submit'));
+                }
+            }
+        });
+
+        captchaInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !loginButton.disabled) {
+                loginForm.dispatchEvent(new Event('submit'));
+            }
+        });
+
+        // 更新登录按钮状态
+        function updateLoginButtonState() {
+            const account = accountInput.value.trim();
+            const password = passwordInput.value.trim();
+            const shouldEnable = account && password && !isLocked;
+            loginButton.disabled = !shouldEnable;
+        }
+
+        // 验证账号格式
+        function validateAccount() {
+            const account = accountInput.value.trim();
+            if (!account) {
+                showError(accountInput, accountError, '请输入用户名');
+                return false;
+            }
+
+            if (account.length > 50) {
+                showError(accountInput, accountError, '用户名长度不能超过50个字符');
+                return false;
+            }
+
+            // 用户名格式验证：1-50字符，支持字母、数字、下划线
+            const usernameRegex = /^[a-zA-Z0-9_]{1,50}$/;
+            
+            if (usernameRegex.test(account)) {
+                // 用户名格式正确
+                clearError(accountInput, accountError);
+                return true;
+            } else {
+                showError(accountInput, accountError, '用户名格式不正确（支持字母、数字、下划线）');
+                return false;
+            }
+        }
+
+        // 验证密码格式
+        function validatePassword() {
+            const password = passwordInput.value;
+            if (!password) {
+                showError(passwordInput, passwordError, '请输入密码');
+                return false;
+            }
+
+            if (password.length < 8) {
+                showError(passwordInput, passwordError, '密码长度至少8位');
+                return false;
+            }
+
+            if (password.length > 128) {
+                showError(passwordInput, passwordError, '密码长度不能超过128位');
+                return false;
+            }
+
+            const hasLetter = /[a-zA-Z]/.test(password);
+            const hasNumber = /[0-9]/.test(password);
+            
+            if (!hasLetter || !hasNumber) {
+                showError(passwordInput, passwordError, '密码需包含字母和数字');
+                return false;
+            }
+
+            clearError(passwordInput, passwordError);
+            return true;
+        }
+
+        // 验证验证码
+        function validateCaptcha() {
+            if (!captchaGroup.classList.contains('show')) {
+                return true;
+            }
+
+            const captcha = captchaInput.value.trim().toUpperCase();
+            if (!captcha) {
+                showError(captchaInput, captchaError, '请输入验证码');
+                return false;
+            }
+
+            if (captcha.length < 4 || captcha.length > 6) {
+                showError(captchaInput, captchaError, '验证码长度为4-6位');
+                return false;
+            }
+
+            if (captcha !== captchaImage.dataset.answer) {
+                showError(captchaInput, captchaError, '验证码错误');
+                return false;
+            }
+
+            clearError(captchaInput, captchaError);
+            return true;
+        }
+
+        // 显示错误
+        function showError(input, errorElement, message) {
+            input.classList.add('error');
+            errorElement.textContent = message;
+            errorElement.classList.add('show');
+        }
+
+        // 清除错误
+        function clearError(input, errorElement) {
+            input.classList.remove('error');
+            errorElement.classList.remove('show');
+        }
+
+        // 显示全局错误消息
+        function showErrorMessage(message) {
+            errorMessage.classList.remove('success');
+            errorMessage.style.background = '#fff1f0';
+            errorMessage.style.borderColor = '#ffccc7';
+            errorMessage.style.color = '#ff4d4f';
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // 显示成功消息
+        function showSuccessMessage(message) {
+            errorMessage.classList.add('success');
+            errorMessage.style.background = '#f6ffed';
+            errorMessage.style.borderColor = '#b7eb8f';
+            errorMessage.style.color = '#52c41a';
+            errorMessage.textContent = message;
+            errorMessage.classList.add('show');
+            setTimeout(() => {
+                errorMessage.classList.remove('show');
+            }, 3000);
+        }
+
+        // 密码加密（MD5模拟）
+        function md5Hash(text) {
+            // 实际应用中应使用 crypto-js 等库
+            // 这里仅作演示，返回简单哈希
+            return btoa(text).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        }
+
+        // 模拟登录API调用
+        async function login(account, password, captcha) {
+            // 模拟网络延迟
+            await new Promise(resolve => setTimeout(resolve, 500));
+
+            // 模拟验证码验证
+            if (captchaGroup.classList.contains('show')) {
+                if (!captcha || captcha.toUpperCase() !== captchaImage.dataset.answer) {
+                    throw { code: 400, message: '验证码错误' };
+                }
+            }
+
+            // 模拟账号密码验证
+            // 超级管理员账号：mpadmin，密码：admin123
+            // 测试账号：user123，密码：Test1234
+            const superAdminAccount = 'mpadmin';
+            const superAdminPassword = 'admin123';
+            const testAccount = 'user123';
+            const testPassword = 'Test1234';
+
+            if (account === superAdminAccount && password === superAdminPassword) {
+                return {
+                    code: 200,
+                    message: '登录成功',
+                    data: {
+                        token: 'mock_token_' + Date.now(),
+                        refreshToken: 'refresh_token_' + Date.now(),
+                        userId: 'admin001',
+                        username: 'mpadmin',
+                        avatar: '',
+                        role: 'admin',
+                        permissions: ['admin', 'menu_management', 'doctor', 'nurse', 'technician', 'physicist'],
+                        expiresIn: 86400 // 24小时
+                    }
+                };
+            } else if (account === testAccount && password === testPassword) {
+                return {
+                    code: 200,
+                    message: '登录成功',
+                    data: {
+                        token: 'mock_token_' + Date.now(),
+                        refreshToken: 'refresh_token_' + Date.now(),
+                        userId: '123456',
+                        username: account,
+                        avatar: '',
+                        role: 'doctor',
+                        permissions: ['doctor'],
+                        expiresIn: 86400
+                    }
+                };
+            } else {
+                throw { code: 400, message: '用户名或密码错误' };
+            }
+        }
+
+        // 表单提交
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // 验证所有输入
+            const accountValid = validateAccount();
+            const passwordValid = validatePassword();
+            const captchaValid = validateCaptcha();
+
+            if (!accountValid || !passwordValid || (!captchaValid && captchaGroup.classList.contains('show'))) {
+                return;
+            }
+
+            // 检查锁定状态
+            if (isLocked) {
+                showErrorMessage('账号已被锁定，请稍后再试');
+                return;
+            }
+
+            // 显示加载状态
+            loginButton.classList.add('loading');
+            loginButton.disabled = true;
+            accountInput.disabled = true;
+            passwordInput.disabled = true;
+            if (captchaGroup.classList.contains('show')) {
+                captchaInput.disabled = true;
+            }
+
+            try {
+                const account = accountInput.value.trim();
+                const password = passwordInput.value;
+                const captcha = captchaInput.value.trim();
+
+                const response = await login(account, password, captcha);
+
+                // 登录成功
+                if (response.code === 200) {
+                    // 清除失败次数和锁定状态
+                    localStorage.removeItem('failedAttempts');
+                    localStorage.removeItem('lockUntil');
+                    failedAttempts = 0;
+                    isLocked = false;
+
+                    // 保存Token和用户信息
+                    localStorage.setItem('token', response.data.token);
+                    localStorage.setItem('refreshToken', response.data.refreshToken);
+                    localStorage.setItem('userId', response.data.userId);
+                    localStorage.setItem('username', response.data.username);
+                    
+                    // 保存用户完整信息（包括角色和权限）
+                    const userInfo = {
+                        username: response.data.username,
+                        userId: response.data.userId,
+                        role: response.data.role || 'doctor',
+                        permissions: response.data.permissions || ['doctor']
+                    };
+                    localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+                    // 显示成功消息
+                    showSuccessMessage('登录成功，正在跳转...');
+
+                    // 跳转到主页
+                    setTimeout(() => {
+                        window.location.href = '页面框架.html';
+                    }, 500);
+
+                }
+            } catch (error) {
+                // 登录失败
+                failedAttempts++;
+                localStorage.setItem('failedAttempts', failedAttempts.toString());
+
+                // 显示错误
+                showErrorMessage(error.message || '登录失败，请重试');
+                
+                // 清空密码框
+                passwordInput.value = '';
+                passwordInput.focus();
+
+                // 连续失败3次显示验证码
+                if (failedAttempts >= 3 && !captchaGroup.classList.contains('show')) {
+                    showCaptcha();
+                    captchaInput.focus();
+                }
+
+                // 连续失败5次锁定账号30分钟
+                if (failedAttempts >= 5) {
+                    const lockDate = new Date(Date.now() + 30 * 60 * 1000); // 30分钟后
+                    localStorage.setItem('lockUntil', lockDate.toISOString());
+                    isLocked = true;
+                    lockUntil = lockDate;
+                    showAccountLocked(lockDate);
+                    showErrorMessage('连续登录失败5次，账号已被锁定30分钟');
+                    
+                    // 重置表单状态
+                    loginButton.classList.remove('loading');
+                    accountInput.disabled = true;
+                    passwordInput.disabled = true;
+                    loginButton.disabled = true;
+                    return;
+                }
+
+                // 重置表单状态
+                loginButton.classList.remove('loading');
+                accountInput.disabled = false;
+                passwordInput.disabled = false;
+                if (captchaGroup.classList.contains('show')) {
+                    captchaInput.disabled = false;
+                    generateCaptcha();
+                    captchaInput.value = '';
+                    clearError(captchaInput, captchaError);
+                }
+                updateLoginButtonState();
+            }
+        });
+    </script>
+</body>
+</html>

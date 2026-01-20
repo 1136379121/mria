@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>患者列表 - 患者管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
+            padding: 0;
+            min-height: 100vh;
+        }
+
+        .container-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .page-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .patient-list-container {
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+            padding: 16px 16px 0 16px;
+        }
+
+        .search-input {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .search-btn {
+            padding: 8px 24px;
+            background: #1890ff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .search-btn:hover {
+            background: #40a9ff;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+            padding: 0 16px;
+        }
+
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .patient-table th,
+        .patient-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .patient-table th {
+            background: #fafafa;
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .patient-table td {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .patient-table tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .status-treating {
+            background: #e6f7ff;
+            color: #1890ff;
+        }
+
+        .status-pending {
+            background: #fff7e6;
+            color: #fa8c16;
+        }
+
+        .status-completed {
+            background: #f6ffed;
+            color: #52c41a;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 0 16px 16px 16px;
+        }
+
+        .pagination-btn {
+            padding: 6px 12px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .pagination-btn:hover:not(:disabled) {
+            color: #1890ff;
+            border-color: #1890ff;
+        }
+
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .pagination-info {
+            color: #666;
+            font-size: 14px;
+            margin: 0 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="patient-list-container">
+        <div class="container-header">
+            <div class="page-title">患者列表</div>
+        </div>
+        <div class="search-bar">
+            <input type="text" class="search-input" placeholder="搜索患者姓名、病历号..." id="searchInput">
+            <button class="search-btn" onclick="searchPatients()">搜索</button>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="patient-table" id="patientTable">
+                <thead>
+                    <tr>
+                        <th>病历号</th>
+                        <th>患者姓名</th>
+                        <th>性别</th>
+                        <th>年龄</th>
+                        <th>诊断</th>
+                        <th>治疗状态</th>
+                        <th>主治医生</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="patientTableBody">
+                    <!-- 数据将动态加载 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="pagination" id="pagination">
+            <!-- 分页将动态生成 -->
+        </div>
+    </div>
+
+    <script>
+        // 模拟患者数据
+        const mockPatients = [
+            { id: '001', name: '张三', gender: '男', age: 45, diagnosis: '肺癌', status: 'treating', doctor: '李医生' },
+            { id: '002', name: '李四', gender: '女', age: 52, diagnosis: '乳腺癌', status: 'treating', doctor: '王医生' },
+            { id: '003', name: '王五', gender: '男', age: 38, diagnosis: '鼻咽癌', status: 'pending', doctor: '张医生' },
+            { id: '004', name: '赵六', gender: '女', age: 65, diagnosis: '食管癌', status: 'treating', doctor: '李医生' },
+            { id: '005', name: '钱七', gender: '男', age: 58, diagnosis: '肝癌', status: 'completed', doctor: '王医生' },
+        ];
+
+        let currentPage = 1;
+        const pageSize = 10;
+        let filteredPatients = [...mockPatients];
+
+        // 状态标签映射
+        const statusMap = {
+            treating: { text: '治疗中', class: 'status-treating' },
+            pending: { text: '待治疗', class: 'status-pending' },
+            completed: { text: '已完成', class: 'status-completed' }
+        };
+
+        // 渲染患者列表
+        function renderPatientList() {
+            const tbody = document.getElementById('patientTableBody');
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageData = filteredPatients.slice(start, end);
+
+            if (pageData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>暂无患者数据</div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = pageData.map(patient => `
+                <tr>
+                    <td>${patient.id}</td>
+                    <td>${patient.name}</td>
+                    <td>${patient.gender}</td>
+                    <td>${patient.age}</td>
+                    <td>${patient.diagnosis}</td>
+                    <td>
+                        <span class="status-badge ${statusMap[patient.status].class}">
+                            ${statusMap[patient.status].text}
+                        </span>
+                    </td>
+                    <td>${patient.doctor}</td>
+                    <td>
+                        <a href="#" style="color: #1890ff; text-decoration: none;" onclick="viewPatient('${patient.id}')">查看</a>
+                    </td>
+                </tr>
+            `).join('');
+
+            renderPagination();
+        }
+
+        // 渲染分页
+        function renderPagination() {
+            const pagination = document.getElementById('pagination');
+            const totalPages = Math.ceil(filteredPatients.length / pageSize);
+
+            pagination.innerHTML = `
+                <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
+                    上一页
+                </button>
+                <span class="pagination-info">
+                    第 ${currentPage} 页，共 ${totalPages} 页，共 ${filteredPatients.length} 条记录
+                </span>
+                <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
+                    下一页
+                </button>
+            `;
+        }
+
+        // 跳转页面
+        function goToPage(page) {
+            const totalPages = Math.ceil(filteredPatients.length / pageSize);
+            if (page < 1 || page > totalPages) return;
+            currentPage = page;
+            renderPatientList();
+        }
+
+        // 搜索患者
+        function searchPatients() {
+            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+            if (!keyword) {
+                filteredPatients = [...mockPatients];
+            } else {
+                filteredPatients = mockPatients.filter(patient => 
+                    patient.name.toLowerCase().includes(keyword) ||
+                    patient.id.toLowerCase().includes(keyword) ||
+                    patient.diagnosis.toLowerCase().includes(keyword)
+                );
+            }
+            currentPage = 1;
+            renderPatientList();
+        }
+
+        // 查看患者详情
+        function viewPatient(patientId) {
+            alert(`查看患者详情：${patientId}\n（实际应用中会跳转到患者详情页面）`);
+        }
+
+        // 回车搜索
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                searchPatients();
+            }
+        });
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            renderPatientList();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>菜单管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
+            padding: 0;
+            color: #333;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .header {
+            background: #fff;
+            border-radius: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .label {
+            font-size: 13px;
+            color: #666;
+        }
+
+        .select, .input {
+            height: 32px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 14px;
+            outline: none;
+            background: #fff;
+        }
+        .select:focus, .input:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24,144,255,0.2);
+        }
+
+        .btn {
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .btn.primary {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: #fff;
+        }
+        .btn.danger {
+            background: #fff1f0;
+            border-color: #ffccc7;
+            color: #cf1322;
+        }
+        .btn:disabled { cursor: not-allowed; opacity: 0.55; }
+        .btn:hover:not(:disabled) { border-color: #1890ff; color: #1890ff; }
+        .btn.primary:hover:not(:disabled) { background: #40a9ff; border-color: #40a9ff; color: #fff; }
+        .btn.danger:hover:not(:disabled) { border-color: #ff4d4f; color: #ff4d4f; }
+
+        .card {
+            background: #fff;
+            border-radius: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .card-title { font-size: 14px; font-weight: 600; }
+        .card-body { padding: 12px 16px; }
+
+        .hint {
+            color: #999;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border-bottom: 1px solid #f0f0f0;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 14px;
+            vertical-align: top;
+        }
+        th {
+            background: #fafafa;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .row-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .indent-0 { padding-left: 0; }
+        .indent-1 { padding-left: 18px; }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            border: 1px solid transparent;
+        }
+        .tag.on { background: #f6ffed; color: #52c41a; border-color: #b7eb8f; }
+        .tag.off { background: #fff1f0; color: #ff4d4f; border-color: #ffccc7; }
+        .tag.builtin { background: #f0f5ff; color: #2f54eb; border-color: #adc6ff; }
+        .tag.custom { background: #fff7e6; color: #fa8c16; border-color: #ffd591; }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 6px;
+            border-radius: 9px;
+            background: #ff4d4f;
+            color: #fff;
+            font-size: 12px;
+        }
+
+        .ops { display: flex; flex-wrap: wrap; gap: 8px; }
+
+        /* modal */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+        }
+        .modal-mask.show { display: flex; }
+        .modal {
+            width: 100%;
+            max-width: 560px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.25);
+        }
+        .modal-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-body { padding: 12px 16px; }
+        .modal-footer {
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 10px 12px;
+            align-items: center;
+        }
+        .error {
+            margin-top: 10px;
+            color: #ff4d4f;
+            font-size: 12px;
+            display: none;
+        }
+        .error.show { display: block; }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            top: 20px;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 10000;
+        }
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>菜单管理</h1>
+            <div class="controls">
+                <span class="label">菜单布局模式</span>
+                <select class="select" id="layoutMode">
+                    <option value="vertical">竖向（左侧）</option>
+                    <option value="horizontal">横向（顶部）</option>
+                </select>
+                <button class="btn primary" id="saveLayout">保存</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">菜单树（两级）</div>
+                <div class="ops">
+                    <button class="btn" id="addChild">新增子菜单</button>
+                    <button class="btn primary" id="saveAll">保存菜单配置</button>
+                    <button class="btn" id="resetDefault">重置默认</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="hint">
+                    - 本原型按 `需求文档/菜单管理.md` 生成内置菜单树。<br>
+                    - 保存后写入 localStorage：<code>menuManagement.menuTree</code>，页面框架会读取并渲染。<br>
+                    - 无原型页面的菜单 URL 为空，仅展示即可（页面框架点击将无效果）。
+                </div>
+                <div style="height: 10px;"></div>
+                <div style="overflow:auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 34%;">菜单名称</th>
+                                <th style="width: 10%;">层级</th>
+                                <th style="width: 10%;">排序</th>
+                                <th style="width: 12%;">类型</th>
+                                <th style="width: 12%;">启用</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- modal -->
+    <div class="modal-mask" id="mask">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title" id="modalTitle">新增子菜单</div>
+                <button class="btn" id="closeModal">关闭</button>
+            </div>
+            <div class="modal-body">
+                <div class="grid">
+                    <div class="label">父级菜单</div>
+                    <div><input class="input" id="parentName" disabled></div>
+
+                    <div class="label">菜单名称</div>
+                    <div><input class="input" id="name" maxlength="20" placeholder="最多20字"></div>
+
+                    <div class="label">排序</div>
+                    <div><input class="input" id="order" type="number" min="1" step="1"></div>
+
+                    <div class="label">页面URL</div>
+                    <div><input class="input" id="url" placeholder="可选：如 患者列表.html"></div>
+
+                    <div class="label">启用状态</div>
+                    <div>
+                        <select class="select" id="enabled">
+                            <option value="true">启用</option>
+                            <option value="false">停用</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="error" id="err"></div>
+                <div style="height: 10px;"></div>
+                <div class="hint">校验：名称 1-20 字，且不含特殊字符 <code>\ / : * ? " . &lt; &gt; |</code></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="cancel">取消</button>
+                <button class="btn primary" id="ok">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        const K_TREE = 'menuManagement.menuTree';
+        const K_LAYOUT = 'menuManagement.layoutMode';
+        const K_NEED_RELOGIN = 'menuManagement.needRelogin';
+
+        function deepClone(x) { return JSON.parse(JSON.stringify(x)); }
+
+        function toast(msg, ms = 1800) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            setTimeout(() => el.classList.remove('show'), ms);
+        }
+
+        function getUser() {
+            try {
+                const raw = localStorage.getItem('userInfo');
+                return raw ? JSON.parse(raw) : null;
+            } catch (e) { return null; }
+        }
+
+        // 需求：仅超级管理员可修改（原型：role=admin 或 permissions 含 admin）
+        function isSuperAdmin() {
+            const u = getUser();
+            if (!u) return true; // 原型演示默认放开
+            if (u.role === 'admin') return true;
+            if (Array.isArray(u.permissions) && u.permissions.includes('admin')) return true;
+            return false;
+        }
+
+        function illegalName(name) {
+            const illegal = /[\\\/:*?"\.<>|]/;
+            return illegal.test(name);
+        }
+
+        function markNeedRelogin() {
+            try { localStorage.setItem(K_NEED_RELOGIN, 'true'); } catch (e) {}
+        }
+
+        // 内置菜单树（来自需求文档“内置菜单树”清单；无原型页面的 url 置空）
+        const defaultTree = [
+            {
+                id: 'patient-mgmt',
+                name: '患者管理',
+                enabled: true,
+                builtin: true,
+                children: [
+                    { id: 'patient-list', name: '患者列表', enabled: true, builtin: true, url: '患者列表.html', order: 1 },
+                    { id: 'patient-register', name: '患者登记', enabled: true, builtin: true, url: '', order: 2 }
+                ]
+            },
+            {
+                id: 'position-mgmt',
+                name: '定位管理',
+                enabled: true,
+                builtin: true,
+                children: [
+                    { id: 'ct-appointment', name: 'CT预约', enabled: true, builtin: true, url: '', order: 1 },
+                    { id: 'ct-queue', name: 'CT排队叫号', enabled: true, builtin: true, url: 'CT排队叫号.html', order: 2 }
+                ]
+            },
+            { id: 'contour-mgmt', name: '勾画管理', enabled: true, builtin: true, children: [
+                { id: 'contour-normal', name: '正常组织勾画', enabled: true, builtin: true, url: '', order: 1 },
+                { id: 'contour-target', name: '靶区勾画', enabled: true, builtin: true, url: '', order: 2 },
+                { id: 'contour-review', name: '勾画审核', enabled: true, builtin: true, url: '', order: 3 }
+            ] },
+            { id: 'plan-mgmt', name: '计划管理', enabled: true, builtin: true, children: [
+                { id: 'plan-design', name: '计划设计', enabled: true, builtin: true, url: '', order: 1 },
+                { id: 'plan-lead-review', name: '组长审核', enabled: true, builtin: true, url: '', order: 2 },
+                { id: 'plan-doctor-approve', name: '医师核准', enabled: true, builtin: true, url: '', order: 3 },
+                { id: 'plan-recheck', name: '计划复核', enabled: true, builtin: true, url: '', order: 4 }
+            ] },
+            { id: 'reset-mgmt', name: '复位管理', enabled: true, builtin: true, children: [
+                { id: 'reset-apply', name: '复位申请', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            { id: 'treatment-mgmt', name: '治疗管理', enabled: true, builtin: true, children: [
+                { id: 'treatment-appointment', name: '治疗预约', enabled: true, builtin: true, url: '', order: 1 },
+                { id: 'queue-call', name: '排队叫号', enabled: true, builtin: true, url: '治疗排队叫号.html', order: 2 },
+                { id: 'treatment-exec', name: '治疗执行', enabled: true, builtin: true, url: '', order: 3 }
+            ] },
+            { id: 'afterload-mgmt', name: '后装管理', enabled: true, builtin: true, children: [
+                { id: 'afterload-treatment', name: '后装治疗', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            { id: 'adaptive-mgmt', name: '自适应管理', enabled: true, builtin: true, children: [
+                { id: 'adaptive-treatment', name: '自适应治疗', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            { id: 'fee-mgmt', name: '费用管理', enabled: true, builtin: true, children: [
+                { id: 'fee-confirm', name: '费用确认', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            { id: 'data-monitor', name: '数据监测', enabled: true, builtin: true, children: [
+                { id: 'flow-warning', name: '流程预警', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            { id: 'stats', name: '统计分析', enabled: true, builtin: true, children: [
+                { id: 'all-stats', name: '全部统计模块', enabled: true, builtin: true, url: '', order: 1 }
+            ] },
+            {
+                id: 'flow-config',
+                name: '流程管理配置',
+                enabled: true,
+                builtin: true,
+                children: [
+                    { id: 'flow-setting', name: '流程设置', enabled: true, builtin: true, url: '', order: 1 },
+                    { id: 'form-mgmt', name: '表单管理', enabled: true, builtin: true, url: '', order: 2 },
+                    { id: 'menu-mgmt', name: '菜单管理', enabled: true, builtin: true, url: '菜单管理.html', order: 3 },
+                    { id: 'task-assign', name: '任务分配设置', enabled: true, builtin: true, url: '', order: 4 },
+                    { id: 'room-setting', name: '机房设置', enabled: true, builtin: true, url: '', order: 5 },
+                    { id: 'charge-item', name: '收费项目', enabled: true, builtin: true, url: '', order: 6 },
+                    { id: 'dict-maint', name: '字典维护', enabled: true, builtin: true, url: '', order: 7 },
+                    { id: 'case-doc', name: '病案文档', enabled: true, builtin: true, url: '', order: 8 },
+                    { id: 'all-config', name: '全部配置模块', enabled: true, builtin: true, url: '', order: 9 }
+                ]
+            }
+        ];
+
+        // 按需求文档（菜单管理.md:222-245）固定排序：一级菜单顺序 + “流程管理配置”的二级顺序
+        const DOC_PARENT_ORDER = [
+            '患者管理',
+            '定位管理',
+            '勾画管理',
+            '计划管理',
+            '复位管理',
+            '治疗管理',
+            '后装管理',
+            '自适应管理',
+            '费用管理',
+            '数据监测',
+            '统计分析',
+            '流程管理配置'
+        ];
+
+        const DOC_CHILD_ORDER_BY_PARENT = {
+            '患者管理': ['患者列表', '患者登记'],
+            '定位管理': ['CT预约', 'CT排队叫号'],
+            '流程管理配置': ['流程设置', '表单管理', '菜单管理', '任务分配设置', '机房设置', '收费项目', '字典维护', '病案文档']
+        };
+
+        function sortTreeByDocOrder(tree) {
+            const arr = Array.isArray(tree) ? tree : [];
+            const rank = new Map(DOC_PARENT_ORDER.map((n, i) => [n, i]));
+            arr.sort((a, b) => {
+                const ra = rank.has(a?.name) ? rank.get(a.name) : 9999;
+                const rb = rank.has(b?.name) ? rank.get(b.name) : 9999;
+                if (ra !== rb) return ra - rb;
+                return String(a?.name || '').localeCompare(String(b?.name || ''), 'zh-CN');
+            });
+
+            arr.forEach(p => {
+                if (!p) return;
+                if (!Array.isArray(p.children)) p.children = [];
+                const childOrder = DOC_CHILD_ORDER_BY_PARENT[p.name];
+                if (Array.isArray(childOrder) && childOrder.length > 0) {
+                    const childRank = new Map(childOrder.map((n, i) => [n, i]));
+                    p.children.sort((c1, c2) => {
+                        const r1 = childRank.has(c1?.name) ? childRank.get(c1.name) : 9999;
+                        const r2 = childRank.has(c2?.name) ? childRank.get(c2.name) : 9999;
+                        if (r1 !== r2) return r1 - r2;
+                        // 次级：按原 order，再按名称
+                        const o1 = c1?.order || 0;
+                        const o2 = c2?.order || 0;
+                        if (o1 !== o2) return o1 - o2;
+                        return String(c1?.name || '').localeCompare(String(c2?.name || ''), 'zh-CN');
+                    });
+                }
+            });
+            return arr;
+        }
+
+        // 将历史已保存的菜单树与最新内置菜单树合并（补齐缺失内置项；保留自定义与现有启用状态）
+        function mergeBuiltinTree(storedTree, builtinDefaults) {
+            const merged = Array.isArray(storedTree) ? deepClone(storedTree) : [];
+            let changed = false;
+
+            // 兼容历史命名：将旧的父级“流程管理/流程管理配置”迁移到新父级命名
+            merged.forEach(p => {
+                if (!p || !p.name) return;
+                if (p.name === '流程管理') { p.name = '患者管理'; changed = true; }
+                if (p.name === '流程配置管理') { p.name = '流程管理配置'; changed = true; }
+                if (p.name === '流程管理配置') { p.name = '流程管理配置'; }
+            });
+
+            // 兼容历史 URL：之前 CT排队叫号/排队叫号 都指向 排队叫号.html，现在拆分为两个页面
+            merged.forEach(p => {
+                if (!p || !Array.isArray(p.children)) return;
+                p.children.forEach(c => {
+                    if (!c || !c.name) return;
+                    if (c.name === 'CT排队叫号' && c.url === '排队叫号.html') { c.url = 'CT排队叫号.html'; changed = true; }
+                    if (c.name === '排队叫号' && c.url === '排队叫号.html') { c.url = '治疗排队叫号.html'; changed = true; }
+                });
+            });
+
+            // 去重：同名父级合并（避免历史数据迁移后出现两份同名分组）
+            const deduped = [];
+            const parentIndexByName = new Map();
+
+            function mergeChildInto(targetParent, sourceChild) {
+                if (!targetParent || !sourceChild) return;
+                if (!Array.isArray(targetParent.children)) targetParent.children = [];
+                const key = sourceChild.id || sourceChild.name;
+                let existing = null;
+                if (key) existing = targetParent.children.find(c => c && (c.id === key || c.name === key));
+                if (!existing && sourceChild.name) existing = targetParent.children.find(c => c && c.name === sourceChild.name);
+                if (!existing) {
+                    targetParent.children.push(deepClone(sourceChild));
+                    changed = true;
+                    return;
+                }
+                if (existing.enabled === undefined && sourceChild.enabled !== undefined) existing.enabled = sourceChild.enabled;
+                if ((!existing.url || existing.url === '') && sourceChild.url) existing.url = sourceChild.url;
+                if (existing.builtin === undefined && sourceChild.builtin !== undefined) existing.builtin = sourceChild.builtin;
+                if (!existing.order && sourceChild.order) existing.order = sourceChild.order;
+            }
+
+            merged.forEach(p => {
+                if (!p || !p.name) return;
+                if (!parentIndexByName.has(p.name)) {
+                    const cloned = deepClone(p);
+                    if (!Array.isArray(cloned.children)) cloned.children = [];
+                    parentIndexByName.set(p.name, deduped.length);
+                    deduped.push(cloned);
+                    return;
+                }
+                const idx = parentIndexByName.get(p.name);
+                const target = deduped[idx];
+                if (target.enabled === undefined && p.enabled !== undefined) target.enabled = p.enabled;
+                if (target.builtin === undefined && p.builtin !== undefined) target.builtin = p.builtin;
+                if (!Array.isArray(target.children)) target.children = [];
+                (p.children || []).forEach(c => mergeChildInto(target, c));
+            });
+
+            // 用去重后的树替换后续合并的基准
+            merged.length = 0;
+            deduped.forEach(p => merged.push(p));
+
+            function findParent(defParent) {
+                if (!defParent) return null;
+                const id = defParent.id;
+                if (id) {
+                    const hit = merged.find(p => p && p.id === id);
+                    if (hit) return hit;
+                }
+                if (defParent.name) {
+                    const hit = merged.find(p => p && p.name === defParent.name);
+                    if (hit) return hit;
+                }
+                return null;
+            }
+
+            function findChild(children, defChild) {
+                if (!Array.isArray(children) || !defChild) return null;
+                if (defChild.id) {
+                    const hit = children.find(c => c && c.id === defChild.id);
+                    if (hit) return hit;
+                }
+                if (defChild.name) {
+                    const hit = children.find(c => c && c.name === defChild.name);
+                    if (hit) return hit;
+                }
+                return null;
+            }
+
+            (builtinDefaults || []).forEach(defParent => {
+                if (!defParent) return;
+                let parent = findParent(defParent);
+                if (!parent) {
+                    merged.push(deepClone(defParent));
+                    changed = true;
+                    return;
+                }
+
+                // 兜底字段
+                if (parent.builtin === undefined) parent.builtin = true;
+                if (parent.enabled === undefined) parent.enabled = true;
+                if (!Array.isArray(parent.children)) parent.children = [];
+
+                (defParent.children || []).forEach(defChild => {
+                    if (!defChild) return;
+                    const child = findChild(parent.children, defChild);
+                    if (!child) {
+                        parent.children.push(deepClone(defChild));
+                        changed = true;
+                        return;
+                    }
+                    // 合并字段（不覆盖已有配置）
+                    if (child.builtin === undefined) child.builtin = true;
+                    if (child.enabled === undefined) child.enabled = true;
+                    if ((!child.url || child.url === '') && defChild.url) child.url = defChild.url;
+                    if (!child.order && defChild.order) child.order = defChild.order;
+                });
+            });
+
+            // 最后按文档顺序排序，避免 localStorage 乱序
+            sortTreeByDocOrder(merged);
+            return { tree: merged, changed };
+        }
+
+        function readTree() {
+            try {
+                const raw = localStorage.getItem(K_TREE);
+                if (!raw) return deepClone(defaultTree);
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    const { tree, changed } = mergeBuiltinTree(parsed, defaultTree);
+                    // 自动修复：若有缺失内置菜单，且当前用户可操作，则回写一次
+                    if (changed && isSuperAdmin()) {
+                        try { localStorage.setItem(K_TREE, JSON.stringify(tree)); } catch (e) {}
+                    }
+                    return tree;
+                }
+            } catch (e) {}
+            return deepClone(defaultTree);
+        }
+
+        function writeTree(next) {
+            localStorage.setItem(K_TREE, JSON.stringify(next));
+        }
+
+        function readLayout() {
+            try {
+                const v = localStorage.getItem(K_LAYOUT);
+                return v || 'vertical';
+            } catch (e) { return 'vertical'; }
+        }
+
+        function writeLayout(v) {
+            localStorage.setItem(K_LAYOUT, v);
+        }
+
+        function normalizeOrders(children) {
+            const arr = Array.isArray(children) ? children : [];
+            arr.sort((a, b) => (a.order || 0) - (b.order || 0));
+            arr.forEach((c, i) => c.order = i + 1);
+        }
+
+        function normalizeAll(tree) {
+            tree.forEach(p => {
+                if (!Array.isArray(p.children)) p.children = [];
+                normalizeOrders(p.children);
+            });
+            sortTreeByDocOrder(tree);
+        }
+
+        // 待办标识（原型简化演示）
+        function todoCount(name) {
+            if (name === 'CT排队叫号' || name === '排队叫号') return null;
+            if (name === 'CT预约' || name === '治疗预约') return Math.floor(Math.random() * 8);
+            return null;
+        }
+
+        let tree = readTree();
+        normalizeAll(tree);
+
+        let selectedParentId = null;
+        let modalMode = 'add'; // add/edit
+        let editing = null; // {parentId, childId}
+
+        const tbody = document.getElementById('tbody');
+        const layoutModeEl = document.getElementById('layoutMode');
+        const saveLayoutBtn = document.getElementById('saveLayout');
+        const addChildBtn = document.getElementById('addChild');
+        const saveAllBtn = document.getElementById('saveAll');
+        const resetDefaultBtn = document.getElementById('resetDefault');
+
+        // modal els
+        const mask = document.getElementById('mask');
+        const modalTitle = document.getElementById('modalTitle');
+        const closeModalBtn = document.getElementById('closeModal');
+        const cancelBtn = document.getElementById('cancel');
+        const okBtn = document.getElementById('ok');
+        const errEl = document.getElementById('err');
+        const parentNameEl = document.getElementById('parentName');
+        const nameEl = document.getElementById('name');
+        const orderEl = document.getElementById('order');
+        const urlEl = document.getElementById('url');
+        const enabledEl = document.getElementById('enabled');
+
+        function openModal() {
+            errEl.classList.remove('show');
+            errEl.textContent = '';
+            mask.classList.add('show');
+        }
+        function closeModal() {
+            mask.classList.remove('show');
+        }
+        function setErr(msg) {
+            errEl.textContent = msg;
+            errEl.classList.add('show');
+        }
+
+        function canEditChild(parent, child) {
+            // 需求：仅“定位管理/勾画管理/计划管理/复位管理/治疗管理”模块菜单 + 自定义新增菜单可编辑
+            const allowParents = ['定位管理', '勾画管理', '计划管理', '复位管理', '治疗管理'];
+            if (!child.builtin) return true;
+            return allowParents.includes(parent.name);
+        }
+
+        function render() {
+            const canEdit = isSuperAdmin();
+            layoutModeEl.value = readLayout();
+            layoutModeEl.disabled = !canEdit;
+            saveLayoutBtn.disabled = !canEdit;
+            addChildBtn.disabled = !canEdit;
+            saveAllBtn.disabled = !canEdit;
+            resetDefaultBtn.disabled = !canEdit;
+
+            tbody.innerHTML = '';
+
+            tree.forEach(parent => {
+                const trP = document.createElement('tr');
+                trP.innerHTML = `
+                    <td class="indent-0">
+                        <span class="row-title"><strong>${parent.name}</strong></span>
+                    </td>
+                    <td>一级</td>
+                    <td>-</td>
+                    <td><span class="tag ${parent.builtin ? 'builtin' : 'custom'}">${parent.builtin ? '内置' : '自定义'}</span></td>
+                    <td><span class="tag ${parent.enabled ? 'on' : 'off'}">${parent.enabled ? '启用' : '停用'}</span></td>
+                    <td>
+                        <div class="ops">
+                            <button class="btn" data-act="select">选择</button>
+                            <button class="btn" data-act="toggle">${parent.enabled ? '停用' : '启用'}</button>
+                        </div>
+                    </td>
+                `;
+
+                trP.querySelector('[data-act="select"]').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectedParentId = parent.id;
+                    Array.from(tbody.querySelectorAll('tr')).forEach(r => r.style.background = '');
+                    trP.style.background = '#f0f7ff';
+                    toast(`已选择：${parent.name}`);
+                });
+
+                trP.querySelector('[data-act="toggle"]').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!canEdit) return;
+                    parent.enabled = !parent.enabled;
+                    markNeedRelogin();
+                    toast('启用状态已变更（请重新登录生效）');
+                    render();
+                });
+
+                tbody.appendChild(trP);
+
+                const children = Array.isArray(parent.children) ? parent.children : [];
+                normalizeOrders(children);
+
+                children.forEach(child => {
+                    const trC = document.createElement('tr');
+                    const todo = todoCount(child.name);
+                    const todoHtml = todo === null ? '' : `<span class="badge">${todo}</span>`;
+
+                    trC.innerHTML = `
+                        <td class="indent-1">
+                            <span class="row-title">${child.name}${todoHtml}</span>
+                        </td>
+                        <td>二级</td>
+                        <td>${child.order || '-'}</td>
+                        <td><span class="tag ${child.builtin ? 'builtin' : 'custom'}">${child.builtin ? '内置' : '自定义'}</span></td>
+                        <td><span class="tag ${child.enabled ? 'on' : 'off'}">${child.enabled ? '启用' : '停用'}</span></td>
+                        <td>
+                            <div class="ops">
+                                <button class="btn" data-act="up">上移</button>
+                                <button class="btn" data-act="down">下移</button>
+                                <button class="btn" data-act="edit">编辑</button>
+                                <button class="btn danger" data-act="del">删除</button>
+                            </div>
+                        </td>
+                    `;
+
+                    const up = trC.querySelector('[data-act="up"]');
+                    const down = trC.querySelector('[data-act="down"]');
+                    const edit = trC.querySelector('[data-act="edit"]');
+                    const del = trC.querySelector('[data-act="del"]');
+
+                    up.disabled = !canEdit;
+                    down.disabled = !canEdit;
+                    edit.disabled = !canEdit || !canEditChild(parent, child);
+                    del.disabled = !canEdit || child.builtin;
+
+                    up.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (up.disabled) return;
+                        moveChild(parent.id, child.id, -1);
+                    });
+                    down.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (down.disabled) return;
+                        moveChild(parent.id, child.id, +1);
+                    });
+                    edit.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (edit.disabled) return;
+                        openEdit(parent.id, child.id);
+                    });
+                    del.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (del.disabled) return;
+                        if (!confirm('确定要删除该自定义菜单吗？')) return;
+                        deleteChild(parent.id, child.id);
+                    });
+
+                    tbody.appendChild(trC);
+                });
+            });
+        }
+
+        function moveChild(parentId, childId, delta) {
+            const p = tree.find(x => x.id === parentId);
+            if (!p || !Array.isArray(p.children)) return;
+            const idx = p.children.findIndex(x => x.id === childId);
+            const next = idx + delta;
+            if (idx < 0 || next < 0 || next >= p.children.length) return;
+            const tmp = p.children[idx];
+            p.children[idx] = p.children[next];
+            p.children[next] = tmp;
+            normalizeOrders(p.children);
+            markNeedRelogin();
+            toast('顺序已调整（请重新登录生效）');
+            render();
+        }
+
+        function deleteChild(parentId, childId) {
+            const p = tree.find(x => x.id === parentId);
+            if (!p || !Array.isArray(p.children)) return;
+            p.children = p.children.filter(x => x.id !== childId);
+            normalizeOrders(p.children);
+            markNeedRelogin();
+            toast('已删除（请重新登录生效）');
+            render();
+        }
+
+        function openAddChild() {
+            const p = tree.find(x => x.id === selectedParentId);
+            if (!p) {
+                alert('请先选择一个一级目录（点击一级目录行的【选择】）');
+                return;
+            }
+            modalMode = 'add';
+            editing = null;
+            modalTitle.textContent = '新增子菜单';
+            parentNameEl.value = p.name;
+            nameEl.value = '';
+            urlEl.value = '';
+            enabledEl.value = 'true';
+            const order = (Array.isArray(p.children) ? p.children.length : 0) + 1;
+            orderEl.value = String(order);
+            openModal();
+        }
+
+        function openEdit(parentId, childId) {
+            const p = tree.find(x => x.id === parentId);
+            if (!p) return;
+            const c = (p.children || []).find(x => x.id === childId);
+            if (!c) return;
+            modalMode = 'edit';
+            editing = { parentId, childId };
+            modalTitle.textContent = '编辑菜单';
+            parentNameEl.value = p.name;
+            nameEl.value = c.name || '';
+            urlEl.value = c.url || '';
+            enabledEl.value = c.enabled ? 'true' : 'false';
+            orderEl.value = String(c.order || 1);
+            openModal();
+        }
+
+        function saveModal() {
+            const name = (nameEl.value || '').trim();
+            const url = (urlEl.value || '').trim();
+            const order = parseInt(orderEl.value, 10);
+            const enabled = enabledEl.value === 'true';
+
+            if (!name) return setErr('请输入菜单名称');
+            if (name.length > 20) return setErr('菜单名称最多20字');
+            if (illegalName(name)) return setErr('菜单名称不能含有特殊字符：\\ / : * ? " . < > |');
+            if (!order || order < 1) return setErr('排序必须为正整数');
+
+            if (modalMode === 'add') {
+                const p = tree.find(x => x.id === selectedParentId);
+                if (!p) return;
+                const child = {
+                    id: `custom-${Date.now()}`,
+                    name,
+                    url: url || '',
+                    enabled,
+                    builtin: false,
+                    order
+                };
+                if (!Array.isArray(p.children)) p.children = [];
+                p.children.push(child);
+                normalizeOrders(p.children);
+                markNeedRelogin();
+                toast('新增成功：当前菜单配置已变动，请重新登录');
+                closeModal();
+                render();
+                return;
+            }
+
+            if (modalMode === 'edit' && editing) {
+                const p = tree.find(x => x.id === editing.parentId);
+                if (!p || !Array.isArray(p.children)) return;
+                const c = p.children.find(x => x.id === editing.childId);
+                if (!c) return;
+                c.name = name;
+                c.url = url || '';
+                c.enabled = enabled;
+                c.order = order;
+                normalizeOrders(p.children);
+                markNeedRelogin();
+                toast('编辑成功：当前菜单配置已变动，请重新登录');
+                closeModal();
+                render();
+            }
+        }
+
+        // events
+        addChildBtn.addEventListener('click', () => {
+            if (!isSuperAdmin()) return;
+            openAddChild();
+        });
+        saveAllBtn.addEventListener('click', () => {
+            if (!isSuperAdmin()) return;
+            normalizeAll(tree);
+            writeTree(tree);
+            markNeedRelogin();
+            toast('保存成功：当前菜单配置已变动，请重新登录');
+        });
+        resetDefaultBtn.addEventListener('click', () => {
+            if (!isSuperAdmin()) return;
+            if (!confirm('确定要重置为默认菜单配置吗？')) return;
+            tree = deepClone(defaultTree);
+            normalizeAll(tree);
+            writeTree(tree);
+            markNeedRelogin();
+            toast('已重置为默认（请重新登录生效）');
+            render();
+        });
+        saveLayoutBtn.addEventListener('click', () => {
+            if (!isSuperAdmin()) return;
+            writeLayout(layoutModeEl.value);
+            markNeedRelogin();
+            toast('保存成功：当前菜单配置已变动，请重新登录');
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+        okBtn.addEventListener('click', saveModal);
+
+        // init
+        render();
+        // 原型演示：每 30s 刷新一次待办标识
+        setInterval(render, 30000);
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>放射治疗信息管理软件</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* 按需求：菜单容器宽度减少 10%（240px -> 216px） */
+            --sidebar-width: 216px;
+            --sidebar-width-collapsed: 60px;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* 顶部菜单栏 */
+        .top-menu-bar {
+            background: #ffffff;
+            border-bottom: 1px solid #e8e8e8;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            z-index: 1000;
+        }
+
+        .menu-left {
+            display: flex;
+            align-items: center;
+            flex: 1;
+        }
+
+        .menu-logo {
+            height: 40px;
+            margin-right: 24px;
+        }
+
+        .menu-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-right: 32px;
+        }
+
+        .menu-items {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .menu-item {
+            padding: 8px 20px;
+            color: #666;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.3s;
+            border: none;
+            background: none;
+            font-family: inherit;
+            position: relative;
+        }
+
+        .menu-item:hover {
+            color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .menu-item.active {
+            color: #1890ff;
+            background: #e6f7ff;
+            font-weight: 500;
+        }
+
+        .menu-item.active::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: #1890ff;
+        }
+
+        .menu-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .logout-btn {
+            padding: 6px 16px;
+            color: #666;
+            background: #f5f5f5;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            color: #ff4d4f;
+            border-color: #ff4d4f;
+            background: #fff1f0;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* 左侧菜单栏 */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: #ffffff;
+            border-right: 1px solid #e8e8e8;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            /* 让菜单容器本身不滚动，避免右下角收起按钮跟随滚动 */
+            overflow: hidden;
+            position: relative;
+            transition: width 0.2s ease;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-width-collapsed);
+        }
+
+        .sidebar-toggle {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 28px;
+            height: 28px;
+            border: 1px solid #e8e8e8;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            transition: all 0.2s ease;
+            z-index: 5;
+        }
+
+        .sidebar.collapsed .sidebar-toggle {
+            right: 6px;
+            bottom: 8px;
+        }
+
+        .sidebar-toggle:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+            background: #f0f7ff;
+        }
+
+        .sidebar-menu {
+            flex: 1;
+            padding: 16px 0;
+            /* 给右下角收起按钮留空间，避免遮挡底部菜单 */
+            padding-bottom: 56px;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar-group {
+            padding: 8px 0;
+        }
+
+        .sidebar-group-title {
+            padding: 10px 14px 6px 14px;
+            /* 按需求：父子级文字大小一致（与菜单项一致） */
+            font-size: 14px;
+            color: #999;
+            /* 按需求：父级菜单字体加粗 */
+            font-weight: 600;
+            text-transform: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            user-select: none;
+            gap: 8px;
+        }
+
+        .sidebar-group-title .left {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .sidebar-icon {
+            width: 16px;
+            height: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 16px;
+        }
+
+        .sidebar-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .sidebar-group-title .caret {
+            font-size: 12px;
+            color: #bbb;
+            transform: rotate(90deg);
+            transition: transform 0.2s ease;
+        }
+
+        .sidebar-group-title.collapsed .caret {
+            transform: rotate(0deg);
+        }
+
+        .sidebar-group-children.collapsed {
+            display: none;
+        }
+
+        .sidebar-menu-item {
+            padding: 10px 14px;
+            color: #666;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        /* 父级菜单项（可点击）加粗 */
+        .sidebar-menu-item.is-parent {
+            font-weight: 600;
+        }
+
+        /* 子菜单明显缩进（字号与父级一致） */
+        .sidebar-menu-item.is-child {
+            padding-left: 36px;
+        }
+
+        /* 无原型页面：展示但不可点击（点击无效果） */
+        .sidebar-menu-item.disabled {
+            color: #bbb;
+            cursor: not-allowed;
+        }
+
+        .sidebar-menu-item.disabled:hover {
+            background: transparent;
+            color: #bbb;
+        }
+
+        .sidebar-menu-item:hover {
+            background: #f5f5f5;
+            color: #1890ff;
+        }
+
+        .sidebar-menu-item.active {
+            background: #e6f7ff;
+            color: #1890ff;
+            border-left-color: #1890ff;
+            font-weight: 500;
+        }
+
+        /* 收起态：仅显示一级菜单（图标 + 名称），二级隐藏；点击一级弹出气泡 */
+        .sidebar.collapsed .sidebar-group-children {
+            display: none !important;
+        }
+
+        .sidebar.collapsed .sidebar-group-title {
+            justify-content: center;
+            align-items: center;
+            padding: 10px 6px 10px 6px;
+        }
+
+        .sidebar.collapsed .sidebar-group-title .caret {
+            display: none;
+        }
+
+        .sidebar.collapsed .sidebar-group-title .left {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+            width: 100%;
+        }
+
+        .sidebar.collapsed .sidebar-text {
+            font-size: 12px;
+            color: #999;
+            white-space: normal;
+            text-align: center;
+            line-height: 1.2;
+            max-height: 2.4em; /* 最多两行 */
+            overflow: hidden;
+        }
+
+        .sidebar-popover {
+            position: fixed;
+            min-width: 220px;
+            max-width: 320px;
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 10px;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.16);
+            padding: 8px;
+            z-index: 9999;
+        }
+
+        .popover-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #333;
+            padding: 6px 8px 8px 8px;
+        }
+
+        .popover-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #666;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .popover-item:hover {
+            background: #f5f5f5;
+            color: #1890ff;
+        }
+
+        .popover-item.disabled {
+            color: #bbb;
+            cursor: not-allowed;
+        }
+
+        .popover-item.disabled:hover {
+            background: transparent;
+            color: #bbb;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            overflow: auto;
+            /* 按需求：内容页面与框架边距 10px */
+            padding: 10px;
+            box-sizing: border-box;
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* 内容容器 */
+        .content-container {
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background: #f5f5f5;
+            /* 按需求：圆角为 0 */
+            border-radius: 0;
+        }
+
+        .content-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #f5f5f5;
+            /* 按需求：圆角为 0 */
+            border-radius: 0;
+        }
+
+        /* 隐藏类 */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- 顶部菜单栏 -->
+    <div class="top-menu-bar">
+        <div class="menu-left">
+            <img src="../UI图/医院logo.png" alt="医院Logo" class="menu-logo">
+            <div class="menu-title">放射治疗信息管理软件</div>
+            <div class="menu-items" id="menuItems">
+                <!-- 菜单项将根据用户权限动态渲染 -->
+            </div>
+        </div>
+        <div class="menu-right">
+            <div class="user-info">
+                <span id="username">用户名</span>
+            </div>
+            <button class="logout-btn" onclick="logout()">退出登录</button>
+        </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+        <!-- 左侧菜单栏 -->
+        <div class="sidebar">
+            <button class="sidebar-toggle" id="sidebarToggle" title="收起/展开菜单栏">≡</button>
+            <div class="sidebar-menu" id="sidebarMenu">
+                <!-- 左侧菜单项将根据当前选中的顶部菜单动态渲染 -->
+            </div>
+        </div>
+
+        <!-- 内容区域 -->
+        <div class="content-wrapper">
+            <div class="content-container" id="contentContainer">
+                <!-- 页面内容将动态加载到此容器（iframe承载，保证样式/脚本可运行） -->
+                <iframe id="contentFrame" class="content-iframe" src="about:blank"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // localStorage 在 file:// 场景下可能不可用（SecurityError）。这里做兜底，保证原型可运行。
+        const storageAvailable = (() => {
+            try {
+                const k = '__storage_test__';
+                window.localStorage.setItem(k, '1');
+                window.localStorage.removeItem(k);
+                return true;
+            } catch (e) {
+                return false;
+            }
+        })();
+
+        function safeGet(key) {
+            try {
+                if (!storageAvailable) return null;
+                return window.localStorage.getItem(key);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function safeSet(key, value) {
+            try {
+                if (!storageAvailable) return;
+                window.localStorage.setItem(key, value);
+            } catch (e) {}
+        }
+
+        function safeRemove(key) {
+            try {
+                if (!storageAvailable) return;
+                window.localStorage.removeItem(key);
+            } catch (e) {}
+        }
+
+        // 默认菜单树兜底：当未进入“菜单管理”配置或无法读取 localStorage 时，仍能渲染菜单并加载页面
+        const defaultMenuTree = [
+            {
+                name: '患者管理',
+                enabled: true,
+                children: [
+                    { name: '患者列表', enabled: true, url: '患者列表.html' },
+                    { name: '患者登记', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '定位管理',
+                enabled: true,
+                children: [
+                    { name: 'CT预约', enabled: true, url: '' },
+                    { name: 'CT排队叫号', enabled: true, url: 'CT排队叫号.html' }
+                ]
+            },
+            {
+                name: '勾画管理',
+                enabled: true,
+                children: [
+                    { name: '正常组织勾画', enabled: true, url: '' },
+                    { name: '靶区勾画', enabled: true, url: '' },
+                    { name: '勾画审核', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '计划管理',
+                enabled: true,
+                children: [
+                    { name: '计划设计', enabled: true, url: '' },
+                    { name: '组长审核', enabled: true, url: '' },
+                    { name: '医师核准', enabled: true, url: '' },
+                    { name: '计划复核', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '复位管理',
+                enabled: true,
+                children: [
+                    { name: '复位申请', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '治疗管理',
+                enabled: true,
+                children: [
+                    { name: '治疗预约', enabled: true, url: '' },
+                    { name: '排队叫号', enabled: true, url: '治疗排队叫号.html' },
+                    { name: '治疗执行', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '后装管理',
+                enabled: true,
+                children: [
+                    { name: '后装治疗', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '自适应管理',
+                enabled: true,
+                children: [
+                    { name: '自适应治疗', enabled: true, url: '' }
+                ]
+            },
+            {
+                name: '费用管理',
+                enabled: true,
+                children: [
+                    { name: '费用确认', enabled: true, url: '' }
+                ]
+            },
+            { name: '数据监测', enabled: true, children: [
+                { name: '流程预警', enabled: true, url: '' }
+            ] },
+            { name: '统计分析', enabled: true, children: [
+                { name: '全部统计模块', enabled: true, url: '' }
+            ] },
+            {
+                name: '流程管理配置',
+                enabled: true,
+                children: [
+                    { name: '流程设置', enabled: true, url: '' },
+                    { name: '表单管理', enabled: true, url: '' },
+                    { name: '菜单管理', enabled: true, url: '菜单管理.html' },
+                    { name: '任务分配设置', enabled: true, url: '' },
+                    { name: '机房设置', enabled: true, url: '' },
+                    { name: '收费项目', enabled: true, url: '' },
+                    { name: '字典维护', enabled: true, url: '' },
+                    { name: '病案文档', enabled: true, url: '' },
+                    { name: '全部配置模块', enabled: true, url: '' }
+                ]
+            }
+        ];
+
+        // 按需求文档（菜单管理.md:222-245）固定排序：一级菜单顺序 + “流程管理配置”的二级顺序
+        const DOC_PARENT_ORDER = [
+            '患者管理',
+            '定位管理',
+            '勾画管理',
+            '计划管理',
+            '复位管理',
+            '治疗管理',
+            '后装管理',
+            '自适应管理',
+            '费用管理',
+            '数据监测',
+            '统计分析',
+            '流程管理配置'
+        ];
+
+        const DOC_CHILD_ORDER_BY_PARENT = {
+            '患者管理': ['患者列表', '患者登记'],
+            '定位管理': ['CT预约', 'CT排队叫号'],
+            '流程管理配置': ['流程设置', '表单管理', '菜单管理', '任务分配设置', '机房设置', '收费项目', '字典维护', '病案文档']
+        };
+
+        function sortTreeByDocOrder(tree) {
+            const arr = Array.isArray(tree) ? tree : [];
+            const rank = new Map(DOC_PARENT_ORDER.map((n, i) => [n, i]));
+            arr.sort((a, b) => {
+                const ra = rank.has(a?.name) ? rank.get(a.name) : 9999;
+                const rb = rank.has(b?.name) ? rank.get(b.name) : 9999;
+                if (ra !== rb) return ra - rb;
+                return String(a?.name || '').localeCompare(String(b?.name || ''), 'zh-CN');
+            });
+
+            arr.forEach(p => {
+                if (!p) return;
+                if (!Array.isArray(p.children)) p.children = [];
+                const childOrder = DOC_CHILD_ORDER_BY_PARENT[p.name];
+                if (Array.isArray(childOrder) && childOrder.length > 0) {
+                    const childRank = new Map(childOrder.map((n, i) => [n, i]));
+                    p.children.sort((c1, c2) => {
+                        const r1 = childRank.has(c1?.name) ? childRank.get(c1.name) : 9999;
+                        const r2 = childRank.has(c2?.name) ? childRank.get(c2.name) : 9999;
+                        if (r1 !== r2) return r1 - r2;
+                        return String(c1?.name || '').localeCompare(String(c2?.name || ''), 'zh-CN');
+                    });
+                }
+            });
+            return arr;
+        }
+
+        // 默认图标（一级/二级）
+        function getIconSvg(type) {
+            // 简单内置 SVG（避免依赖外部资源）
+            if (type === 'parent') {
+                return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 6.5C3 5.12 4.12 4 5.5 4H10l2 2h6.5C19.88 6 21 7.12 21 8.5v9c0 1.38-1.12 2.5-2.5 2.5h-13C4.12 20 3 18.88 3 17.5v-11Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                </svg>`;
+            }
+            return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+                <path d="M14 3v4h4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+            </svg>`;
+        }
+
+        let sidebarCollapsed = false;
+        let activePopover = null;
+
+        function closePopover() {
+            if (activePopover) {
+                activePopover.remove();
+                activePopover = null;
+            }
+        }
+
+        function openPopover(anchorEl, title, items) {
+            closePopover();
+            const pop = document.createElement('div');
+            pop.className = 'sidebar-popover';
+            pop.innerHTML = `<div class="popover-title">${title}</div>`;
+
+            items.forEach(it => {
+                const disabled = !it.url;
+                const row = document.createElement('div');
+                row.className = `popover-item${disabled ? ' disabled' : ''}`;
+                row.innerHTML = `<span class="sidebar-icon">${getIconSvg('child')}</span><span class="sidebar-text">${it.name}</span>`;
+                row.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (disabled) return;
+                    loadPageContent(it.url);
+                    // 更新左侧 active：仅当菜单栏处于展开态才高亮；收起态仅加载内容
+                    closePopover();
+                });
+                pop.appendChild(row);
+            });
+
+            pop.addEventListener('click', (e) => e.stopPropagation());
+            document.body.appendChild(pop);
+            activePopover = pop;
+
+            // 定位：出现在菜单栏右侧，垂直对齐点击项
+            const rect = anchorEl.getBoundingClientRect();
+            const top = Math.min(window.innerHeight - 20, Math.max(10, rect.top));
+            const left = Math.min(window.innerWidth - 10, rect.right + 10);
+            pop.style.top = `${top}px`;
+            pop.style.left = `${left}px`;
+        }
+
+        // 菜单配置
+        const menuConfig = {
+            '流程管理': {
+                url: '患者列表.html',
+                default: true,
+                permissions: ['doctor', 'nurse', 'technician', 'physicist', 'admin']
+            },
+            '数据管理': {
+                url: '数据管理.html',
+                permissions: ['admin', 'doctor', 'physicist']
+            },
+            '远程控制': {
+                url: '远程控制.html',
+                permissions: ['admin', 'technician']
+            },
+            '用户管理': {
+                url: '用户管理.html',
+                permissions: ['admin']
+            }
+        };
+
+        // 获取当前用户信息（从localStorage或从登录后获取）
+        function getCurrentUser() {
+            const userInfo = safeGet('userInfo');
+            if (userInfo) {
+                try {
+                    return JSON.parse(userInfo);
+                } catch (e) {}
+            }
+            // 默认返回管理员权限（演示用）
+            return {
+                username: 'mpadmin',
+                role: 'admin',
+                permissions: ['admin']
+            };
+        }
+
+        // 检查用户是否有权限访问某个菜单
+        function hasPermission(menuItem) {
+            const user = getCurrentUser();
+            const menuPermissions = menuItem.permissions || [];
+            
+            // 检查用户角色是否在允许的权限列表中
+            return menuPermissions.some(perm => {
+                if (user.permissions && Array.isArray(user.permissions)) {
+                    return user.permissions.includes(perm);
+                }
+                return user.role === perm || user.role === 'admin';
+            });
+        }
+
+        // 渲染左侧菜单（根据当前选中的顶部菜单）
+        function renderSidebar(menuName) {
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            
+            // 清空左侧菜单项
+            sidebarMenu.innerHTML = '';
+
+            // 从“菜单管理”页面保存的列表数据中，取所有【启用】状态的菜单渲染到左侧菜单框
+            const tree = loadMenuTreeFromStorage() || [];
+            const visibleTargets = [];
+            let expandedGroupChosen = false; // 仅展开默认加载页面所在的一级菜单组，其余默认收起
+
+            tree.forEach(parent => {
+                if (parent && parent.enabled === false) return;
+
+                const children = Array.isArray(parent.children) ? parent.children : [];
+                // 按《需求文档/页面框架.md》：左侧菜单仅按启用状态过滤
+                const visibleChildren = children.filter(child => {
+                    if (!child || child.enabled === false) return false;
+                    // 无原型页面：仍展示，但点击无效果
+                    return true;
+                });
+
+                // 若父级无可见子项且父级自身也没有可访问页面，则不显示该分组
+                const parentHasUrl = !!parent.url;
+                if (visibleChildren.length === 0 && !parentHasUrl) return;
+
+                // 默认仅展开“默认加载页面”所在分组：即第一个包含可点击菜单项（有 url）的分组
+                const hasAnyClickable =
+                    (parentHasUrl && !!parent.url) ||
+                    visibleChildren.some(c => c && !!c.url);
+                const expanded = !expandedGroupChosen && hasAnyClickable;
+                if (expanded) expandedGroupChosen = true;
+                const popItems = [];
+                // 父级本身若对应页面（且有 url），收起态也需要可访问
+                if (parentHasUrl && parent.url) {
+                    popItems.push({ name: parent.name, url: parent.url });
+                }
+                // 子级菜单项（无 url 也展示）
+                visibleChildren.forEach(c => {
+                    popItems.push({ name: c.name, url: c.url || '' });
+                });
+
+                const group = addSidebarGroup(parent.name || '未命名分组', { expanded, items: popItems });
+
+                // 父级本身若对应页面，则作为可点击菜单项
+                if (parentHasUrl) {
+                    const disabled = !parent.url;
+                    const el = addSidebarMenuItem(
+                        group.childrenEl,
+                        parent.name,
+                        () => {
+                            if (disabled) return;
+                            loadPageContent(parent.url);
+                        },
+                        { className: `is-parent${disabled ? ' disabled' : ''}`, disabled }
+                    );
+                    if (!disabled) visibleTargets.push({ el, url: parent.url });
+                }
+
+                // 子级菜单项
+                visibleChildren.forEach(child => {
+                    const disabled = !child.url;
+                    const el = addSidebarMenuItem(
+                        group.childrenEl,
+                        child.name,
+                        () => {
+                            if (disabled) return;
+                            loadPageContent(child.url);
+                        },
+                        { className: `is-child${disabled ? ' disabled' : ''}`, disabled }
+                    );
+                    if (!disabled) visibleTargets.push({ el, url: child.url });
+                });
+            });
+
+            // 默认选中并加载第一个可见菜单
+            if (visibleTargets.length > 0) {
+                // 通过触发点击，复用 active 更新逻辑
+                const first = visibleTargets[0];
+                if (first.el) {
+                    first.el.click();
+                } else {
+                    loadPageContent(first.url);
+                }
+                return first.url;
+            } else {
+                // 无可见菜单
+                const frame = document.getElementById('contentFrame');
+                if (frame) frame.src = 'about:blank';
+                return null;
+            }
+        }
+
+        function loadMenuTreeFromStorage() {
+            try {
+                const raw = safeGet('menuManagement.menuTree');
+                if (!raw) return defaultMenuTree;
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) return sortTreeByDocOrder(mergeTreeByName(parsed, defaultMenuTree));
+            } catch (e) {}
+            return sortTreeByDocOrder(defaultMenuTree);
+        }
+
+        // 将已保存的菜单树与默认内置树按“名称”合并，避免旧配置导致左侧菜单缺项
+        function mergeTreeByName(storedTree, builtinDefaults) {
+            const merged = Array.isArray(storedTree) ? JSON.parse(JSON.stringify(storedTree)) : [];
+            const defaults = Array.isArray(builtinDefaults) ? builtinDefaults : [];
+
+            function ensureChildrenArray(node) {
+                if (!node) return;
+                if (!Array.isArray(node.children)) node.children = [];
+            }
+
+            // 兼容历史命名：将旧的父级“流程管理/流程管理配置”迁移到新父级命名
+            merged.forEach(p => {
+                if (!p || !p.name) return;
+                if (p.name === '流程管理') p.name = '患者管理';
+                if (p.name === '流程配置管理') p.name = '流程管理配置';
+                if (p.name === '流程管理配置') p.name = '流程管理配置';
+            });
+
+            // 兼容历史 URL：之前 CT排队叫号/排队叫号 都指向 排队叫号.html，现在拆分为两个页面
+            merged.forEach(p => {
+                if (!p || !Array.isArray(p.children)) return;
+                p.children.forEach(c => {
+                    if (!c || !c.name) return;
+                    if (c.name === 'CT排队叫号' && c.url === '排队叫号.html') c.url = 'CT排队叫号.html';
+                    if (c.name === '排队叫号' && c.url === '排队叫号.html') c.url = '治疗排队叫号.html';
+                });
+            });
+
+            // 去重：同名父级合并（避免历史数据迁移后出现两份同名分组）
+            const mergedDeduped = [];
+            const parentIndexByName = new Map();
+
+            function mergeChildInto(targetParent, sourceChild) {
+                if (!targetParent || !sourceChild) return;
+                if (!Array.isArray(targetParent.children)) targetParent.children = [];
+
+                const key = sourceChild.id || sourceChild.name;
+                const existing = targetParent.children.find(c => (c && (c.id || c.name) === key) || (c && c.name && sourceChild.name && c.name === sourceChild.name));
+                if (!existing) {
+                    targetParent.children.push(JSON.parse(JSON.stringify(sourceChild)));
+                    return;
+                }
+                // 补齐，不覆盖
+                if (existing.enabled === undefined && sourceChild.enabled !== undefined) existing.enabled = sourceChild.enabled;
+                if ((!existing.url || existing.url === '') && sourceChild.url) existing.url = sourceChild.url;
+            }
+
+            merged.forEach(p => {
+                if (!p || !p.name) return;
+                if (!parentIndexByName.has(p.name)) {
+                    const cloned = JSON.parse(JSON.stringify(p));
+                    if (!Array.isArray(cloned.children)) cloned.children = [];
+                    parentIndexByName.set(p.name, mergedDeduped.length);
+                    mergedDeduped.push(cloned);
+                    return;
+                }
+                const idx = parentIndexByName.get(p.name);
+                const target = mergedDeduped[idx];
+                if (target.enabled === undefined && p.enabled !== undefined) target.enabled = p.enabled;
+                if (!Array.isArray(target.children)) target.children = [];
+                (p.children || []).forEach(c => mergeChildInto(target, c));
+            });
+
+            defaults.forEach(defParent => {
+                if (!defParent || !defParent.name) return;
+                let parent = mergedDeduped.find(p => p && p.name === defParent.name);
+                if (!parent) {
+                    mergedDeduped.push(JSON.parse(JSON.stringify(defParent)));
+                    return;
+                }
+                ensureChildrenArray(parent);
+
+                (defParent.children || []).forEach(defChild => {
+                    if (!defChild || !defChild.name) return;
+                    const child = parent.children.find(c => c && c.name === defChild.name);
+                    if (!child) {
+                        parent.children.push(JSON.parse(JSON.stringify(defChild)));
+                        return;
+                    }
+                    // 不覆盖已有配置，仅补齐缺失字段
+                    if (child.enabled === undefined) child.enabled = defChild.enabled;
+                    if ((!child.url || child.url === '') && defChild.url) child.url = defChild.url;
+                });
+            });
+
+            return mergedDeduped;
+        }
+
+        function addSidebarGroup(title, opts = {}) {
+            const sidebarMenu = document.getElementById('sidebarMenu');
+            const groupEl = document.createElement('div');
+            groupEl.className = 'sidebar-group';
+
+            const headerEl = document.createElement('div');
+            headerEl.className = 'sidebar-group-title';
+
+            const leftEl = document.createElement('span');
+            leftEl.className = 'left';
+            const iconEl = document.createElement('span');
+            iconEl.className = 'sidebar-icon';
+            iconEl.innerHTML = getIconSvg('parent');
+            const titleEl = document.createElement('span');
+            titleEl.className = 'sidebar-text';
+            titleEl.textContent = title;
+            leftEl.appendChild(iconEl);
+            leftEl.appendChild(titleEl);
+            const caretEl = document.createElement('span');
+            caretEl.className = 'caret';
+            caretEl.textContent = '›';
+
+            headerEl.appendChild(leftEl);
+            headerEl.appendChild(caretEl);
+
+            const childrenEl = document.createElement('div');
+            childrenEl.className = 'sidebar-group-children';
+
+            const expanded = opts.expanded !== false;
+            if (!expanded) {
+                childrenEl.classList.add('collapsed');
+                headerEl.classList.add('collapsed');
+            }
+
+            headerEl.addEventListener('click', (e) => {
+                if (sidebarCollapsed) {
+                    // 收起态：点击一级菜单弹出子菜单气泡
+                    const items = (opts.items || []).map(x => ({ name: x.name, url: x.url || '' }));
+                    openPopover(headerEl, title, items);
+                    // 防止全局 click 监听立即关闭气泡
+                    e.stopPropagation();
+                    return;
+                }
+                const collapsed = childrenEl.classList.toggle('collapsed');
+                headerEl.classList.toggle('collapsed', collapsed);
+            });
+
+            groupEl.appendChild(headerEl);
+            groupEl.appendChild(childrenEl);
+            sidebarMenu.appendChild(groupEl);
+
+            return { groupEl, headerEl, childrenEl };
+        }
+
+        // 添加左侧菜单项（辅助函数）
+        function addSidebarMenuItem(containerEl, text, onClick, opts = {}) {
+            const sidebarMenu = containerEl || document.getElementById('sidebarMenu');
+            const menuItem = document.createElement('div');
+            menuItem.className = 'sidebar-menu-item';
+            menuItem.innerHTML = `<span class="sidebar-icon">${getIconSvg('child')}</span><span class="sidebar-text">${text}</span>`;
+            if (opts.className) {
+                opts.className.split(' ').filter(Boolean).forEach(cls => menuItem.classList.add(cls));
+            }
+            if (opts.active) {
+                menuItem.classList.add('active');
+            }
+            menuItem.addEventListener('click', () => {
+                // 禁用菜单：点击无效果（不切换 active、不加载页面）
+                if (opts.disabled) return;
+                closePopover();
+                // 更新active状态
+                document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                menuItem.classList.add('active');
+                // 执行点击回调
+                if (onClick) onClick();
+            });
+            sidebarMenu.appendChild(menuItem);
+            return menuItem;
+        }
+
+        // 渲染顶部菜单栏
+        function renderMenu() {
+            const menuItemsContainer = document.getElementById('menuItems');
+            const user = getCurrentUser();
+            
+            // 更新用户名显示
+            document.getElementById('username').textContent = user.username || '用户';
+            
+            // 清空菜单项
+            menuItemsContainer.innerHTML = '';
+            
+            // 遍历菜单配置，根据权限渲染可用菜单
+            Object.keys(menuConfig).forEach((menuName, index) => {
+                const menuItem = menuConfig[menuName];
+                
+                // 检查权限
+                if (!hasPermission(menuItem)) {
+                    return; // 没有权限则不显示
+                }
+                
+                // 创建菜单项
+                const menuElement = document.createElement('button');
+                menuElement.className = 'menu-item';
+                menuElement.textContent = menuName;
+                
+                // 如果是默认菜单，添加active类
+                if (menuItem.default) {
+                    menuElement.classList.add('active');
+                }
+                
+                // 点击事件：加载页面内容
+                menuElement.addEventListener('click', () => {
+                    // 更新active状态
+                    document.querySelectorAll('.menu-item').forEach(item => {
+                        item.classList.remove('active');
+                    });
+                    menuElement.classList.add('active');
+                    
+                    // 更新左侧菜单
+                    const firstUrl = renderSidebar(menuName);
+
+                    // 若左侧菜单未产生可加载页面，则回退到顶部菜单配置的默认 URL
+                    if (!firstUrl && menuItem.url) {
+                        loadPageContent(menuItem.url);
+                    }
+                });
+                
+                menuItemsContainer.appendChild(menuElement);
+            });
+        }
+
+        // 加载页面内容到容器
+        function loadPageContent(url) {
+            const frame = document.getElementById('contentFrame');
+            if (!frame) return;
+            frame.src = url;
+        }
+
+        // 退出登录
+        function logout() {
+            if (confirm('确定要退出登录吗？')) {
+                // 清除登录信息
+                safeRemove('token');
+                safeRemove('refreshToken');
+                safeRemove('userInfo');
+                safeRemove('userId');
+                safeRemove('username');
+                
+                // 跳转到登录页
+                window.location.href = '登录页原型.html';
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    sidebarCollapsed = !sidebarCollapsed;
+                    sidebar.classList.toggle('collapsed', sidebarCollapsed);
+                    closePopover();
+                });
+            }
+
+            // 全局点击：关闭气泡
+            document.addEventListener('click', () => closePopover());
+            window.addEventListener('resize', () => closePopover());
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePopover();
+            });
+
+            // 检查是否已登录
+            // - 若 localStorage 不可用（常见于 file://），原型直接进入“演示模式”，不做跳转拦截
+            // - 若 localStorage 可用，则按 token 判断是否需要跳转登录页
+            if (storageAvailable) {
+                const token = safeGet('token');
+                if (!token) {
+                    window.location.href = '登录页原型.html';
+                    return;
+                }
+            }
+            
+            // 如果没有用户信息，从token或其他方式获取（这里简化处理）
+            if (!safeGet('userInfo')) {
+                // 模拟获取用户信息
+                const userInfo = {
+                    username: safeGet('username') || 'mpadmin',
+                    role: 'admin',
+                    permissions: ['admin', 'doctor', 'nurse', 'technician', 'physicist']
+                };
+                safeSet('userInfo', JSON.stringify(userInfo));
+            }
+            
+            // 渲染菜单
+            renderMenu();
+            
+            // 默认加载流程管理页面（患者列表）
+            const defaultMenu = Object.keys(menuConfig).find(key => menuConfig[key].default);
+            if (defaultMenu && hasPermission(menuConfig[defaultMenu])) {
+                // 渲染默认菜单的左侧菜单
+                const firstUrl = renderSidebar(defaultMenu);
+                // 若左侧菜单未产生可加载页面，则回退到顶部菜单配置的默认 URL
+                if (!firstUrl && menuConfig[defaultMenu].url) {
+                    loadPageContent(menuConfig[defaultMenu].url);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
