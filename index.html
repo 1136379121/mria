@@ -5,16 +5,40 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MRIA - 原型与需求文档</title>
   <meta name="description" content="MRIA 项目原型与需求说明（GitHub Pages）" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
   <style>
     /* 轻度定制：让首页更像“文档站”，并保留原型跳转体验 */
     :root { --theme-color: #1890ff; }
     .markdown-section a { text-decoration: none; }
     .markdown-section a:hover { text-decoration: underline; }
+    /* 防止 Docsify 未加载时页面只停留“加载中…”而无提示 */
+    #boot-error {
+      display: none;
+      max-width: 760px;
+      margin: 60px auto;
+      background: #fff;
+      border: 1px solid #f0f0f0;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+      color: #333;
+      line-height: 1.7;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+    #boot-error h1 { font-size: 16px; margin: 0 0 8px 0; }
+    #boot-error p { margin: 6px 0; color: #666; font-size: 14px; }
+    #boot-error code { background: #f5f5f5; padding: 2px 6px; border-radius: 6px; }
+    #boot-error a { color: #1890ff; text-decoration: none; }
+    #boot-error a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
   <div id="app">加载中…</div>
+  <div id="boot-error">
+    <h1>页面脚本加载失败</h1>
+    <p>当前页面使用 Docsify 渲染 Markdown 文档。如果你一直看到“加载中…”，通常是 CDN 资源在网络环境中不可用。</p>
+    <p>你可以先直接打开原型页：<a href="原型/页面框架.html" target="_blank" rel="noopener">页面框架</a>，或查看仓库：<a href="https://github.com/1136379121/mria" target="_blank" rel="noopener">GitHub 仓库</a>。</p>
+    <p>也可以稍后刷新重试，或更换网络/代理；本页会自动尝试多个 CDN。</p>
+  </div>
   <script>
     window.$docsify = {
       name: 'MRIA',
@@ -25,7 +49,76 @@
       subMaxLevel: 3
     };
   </script>
-  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+  <script>
+    // 多 CDN 降级：避免 jsDelivr 在部分网络环境不可用导致一直停留“加载中…”
+    (function () {
+      const cssCandidates = [
+        'https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css',
+        'https://unpkg.com/docsify@4/lib/themes/vue.css',
+        'https://cdnjs.cloudflare.com/ajax/libs/docsify/4.13.1/themes/vue.min.css'
+      ];
+      const jsCandidates = [
+        'https://cdn.jsdelivr.net/npm/docsify@4',
+        'https://unpkg.com/docsify@4',
+        'https://cdnjs.cloudflare.com/ajax/libs/docsify/4.13.1/docsify.min.js'
+      ];
+
+      function loadCss(url) {
+        return new Promise((resolve, reject) => {
+          const el = document.createElement('link');
+          el.rel = 'stylesheet';
+          el.href = url;
+          el.onload = () => resolve(url);
+          el.onerror = () => reject(new Error('css load failed: ' + url));
+          document.head.appendChild(el);
+        });
+      }
+
+      function loadScript(url) {
+        return new Promise((resolve, reject) => {
+          const el = document.createElement('script');
+          el.src = url;
+          el.async = true;
+          el.onload = () => resolve(url);
+          el.onerror = () => reject(new Error('script load failed: ' + url));
+          document.body.appendChild(el);
+        });
+      }
+
+      async function tryLoad(list, loader) {
+        let lastErr = null;
+        for (const url of list) {
+          try {
+            await loader(url);
+            return url;
+          } catch (e) {
+            lastErr = e;
+          }
+        }
+        throw lastErr || new Error('all candidates failed');
+      }
+
+      // 并行加载 CSS（失败不阻塞 JS）
+      tryLoad(cssCandidates, loadCss).catch(() => {});
+
+      // 加载 docsify 主脚本（串行尝试多个 CDN）
+      tryLoad(jsCandidates, loadScript)
+        .catch(() => {
+          // 显示可读错误提示（替代无限“加载中…”）
+          const box = document.getElementById('boot-error');
+          if (box) box.style.display = 'block';
+        });
+
+      // 超时兜底：8 秒后还没渲染则展示提示
+      setTimeout(() => {
+        const app = document.getElementById('app');
+        const box = document.getElementById('boot-error');
+        if (!app || !box) return;
+        const stillLoading = (app.textContent || '').trim() === '加载中…';
+        if (stillLoading) box.style.display = 'block';
+      }, 8000);
+    })();
+  </script>
 </body>
 </html>
 
