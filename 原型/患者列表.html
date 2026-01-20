@@ -322,7 +322,7 @@
 
         // 查看患者详情
         function viewPatient(patientId) {
-            const url = `患者详情.html?patientId=${encodeURIComponent(patientId)}`;
+            const url = `患者详情/患者详情.html?patientId=${encodeURIComponent(patientId)}`;
 
             // 优先：若在页面框架 iframe 中打开，则请求父页面在内容区打开详情页（集成到页面框架内容部分）
             try {
