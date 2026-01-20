@@ -1069,6 +1069,82 @@
             frame.src = url;
         }
 
+        // 对外暴露：允许内容页（如患者列表）请求在框架内容区打开指定页面
+        // - 约定：window.openContent(url)
+        // - 约定：postMessage({ type: 'open-content', url })
+        window.openContent = function (url) {
+            loadPageContent(url);
+        };
+
+        window.addEventListener('message', (e) => {
+            try {
+                const data = e && e.data ? e.data : null;
+                if (!data || typeof data !== 'object') return;
+                if (data.type !== 'open-content') return;
+                if (!data.url || typeof data.url !== 'string') return;
+
+                // file:// 场景 e.origin 可能为 "null"，线上 GitHub Pages 则为同源。
+                // 原型：不做严格域名校验，避免影响本地预览。
+                loadPageContent(data.url);
+            } catch (err) {
+                // ignore
+            }
+        });
+
+        // 框架级“内容区集成”机制：
+        // - 目标：后续所有页面默认都在 iframe 内容区内跳转/打开，不再弹新页
+        // - 做法：iframe load 后在其 document 内捕获 a 链接点击，并重定向到 loadPageContent；
+        //         同时覆盖 iframe 内的 window.open，对内部页面改为在内容区打开。
+        function installContentBridge() {
+            const frame = document.getElementById('contentFrame');
+            if (!frame) return;
+
+            // 避免重复绑定：同一个 frame 只绑定一次 load 监听
+            if (frame.__bridgeInstalled) return;
+            frame.__bridgeInstalled = true;
+
+            frame.addEventListener('load', () => {
+                try {
+                    const w = frame.contentWindow;
+                    const d = frame.contentDocument;
+                    if (!w || !d) return;
+
+                    const isExternal = (href) => /^(https?:|mailto:|tel:|javascript:)/i.test(String(href || ''));
+
+                    // 覆盖 iframe 内 window.open：内部链接改为在内容区打开；外部链接仍新开
+                    try {
+                        const originalOpen = w.open ? w.open.bind(w) : null;
+                        w.open = function (url, target, features) {
+                            if (typeof url === 'string' && url && !isExternal(url)) {
+                                window.openContent(url);
+                                return null;
+                            }
+                            // 外部链接：尽量新开标签页
+                            if (originalOpen) return originalOpen(url, target || '_blank', features);
+                            return null;
+                        };
+                    } catch (e) {}
+
+                    // 捕获链接点击：内部页面在内容区打开（不跳出框架）
+                    // 用 capture=true 尽量先于页面自身 onclick 执行
+                    d.addEventListener('click', (ev) => {
+                        const a = ev.target && ev.target.closest ? ev.target.closest('a') : null;
+                        if (!a) return;
+                        const href = a.getAttribute('href');
+                        if (!href || href === '#') return;
+                        const target = (a.getAttribute('target') || '').toLowerCase();
+                        if (target === '_blank') return; // 明确新开则尊重
+                        if (isExternal(href)) return; // 外链不拦截
+
+                        ev.preventDefault();
+                        window.openContent(href);
+                    }, true);
+                } catch (e) {
+                    // ignore
+                }
+            });
+        }
+
         // 退出登录
         function logout() {
             if (confirm('确定要退出登录吗？')) {
@@ -1096,6 +1172,9 @@
                     closePopover();
                 });
             }
+
+            // 安装“内容区集成”桥接（让所有内容页默认在 iframe 内打开/跳转）
+            installContentBridge();
 
             // 全局点击：关闭气泡
             document.addEventListener('click', () => closePopover());

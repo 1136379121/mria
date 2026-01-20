@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>患者详情</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0; /* 由页面框架统一控制边距 */
+      background: #f5f5f5;
+      color: #1f1f1f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    :root{
+      --bg: #f5f5f5;
+      --card: #fff;
+      --line: #eaecef;
+      --muted: #8c8c8c;
+      --primary: #1890ff;
+      --success: #52c41a;
+      --purple: #9254de;
+      --teal: #13c2c2;
+      --orange: #fa8c16;
+      --shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .page {
+      background: var(--card);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    /* 顶部患者信息条 */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .back {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid #d9d9d9;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      color: #666;
+      background: #fff;
+    }
+    .badge-big {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      background: #b7a6ff;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      font-weight: 800;
+      flex: 0 0 120px;
+    }
+    .pinfo {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 620px;
+    }
+    .pinfo-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .p-name {
+      font-size: 22px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+    .p-sex { font-size: 18px; font-weight: 700; }
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      height: 22px;
+      padding: 0 8px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid #d9f7be;
+      color: #389e0d;
+      background: #f6ffed;
+      margin-left: 4px;
+    }
+    .pinfo-sub {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 22px;
+      color: #333;
+      font-size: 13px;
+    }
+    .kv { display: inline-flex; gap: 6px; align-items: baseline; }
+    .k { color: var(--muted); }
+    .v { font-weight: 600; color: #111; }
+
+    .tabs {
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+      color: #333;
+      border: 1px solid transparent;
+      background: #fff;
+    }
+    .tab .dot{
+      width: 18px; height: 18px; border-radius: 6px;
+      display: inline-flex; align-items:center; justify-content:center;
+      color: #fff; font-size: 12px; font-weight: 800;
+    }
+    .tab.active{
+      border-color: rgba(24,144,255,0.28);
+      background: rgba(24,144,255,0.06);
+      color: var(--primary);
+    }
+    .tab.active .label{ font-weight: 700; }
+    .dot.blue{ background: #1890ff; }
+    .dot.green{ background: #52c41a; }
+    .dot.teal{ background: #13c2c2; }
+    .dot.orange{ background: #fa8c16; }
+
+    .top-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #666;
+      font-size: 13px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: #fff7e6;
+      border: 1px solid #ffe7ba;
+      color: #ad4e00;
+      user-select: none;
+    }
+
+    /* 主体三列布局 */
+    .main {
+      display: grid;
+      grid-template-columns: 56px 340px 1fr 170px;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+    }
+
+    /* 左侧竖向功能栏 */
+    .rail {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+    }
+    .rail-item{
+      width: 42px;
+      height: 64px;
+      border-radius: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+      color: #666;
+      font-size: 12px;
+    }
+    .rail-item.active{
+      background: rgba(24,144,255,0.08);
+      border-color: rgba(24,144,255,0.22);
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .rail-ico{
+      width: 26px;
+      height: 26px;
+      border-radius: 10px;
+      background: #f5f5f5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      color: #888;
+    }
+    .rail-item.active .rail-ico{
+      background: rgba(24,144,255,0.18);
+      color: var(--primary);
+    }
+
+    /* 流程树 */
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    .panel-header{
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .panel-title{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .count{
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      height: 18px;
+      min-width: 18px;
+      padding: 0 6px;
+      border-radius: 6px;
+      background: #fff7e6;
+      border: 1px solid #ffe7ba;
+      color: #ad4e00;
+      font-size: 12px;
+      font-weight: 800;
+    }
+    .panel-action{
+      color: var(--primary);
+      cursor: pointer;
+      user-select: none;
+      font-size: 13px;
+    }
+    .flow {
+      padding: 10px 8px 12px 8px;
+      max-height: 560px;
+      overflow: auto;
+    }
+    .flow-group{
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 8px;
+      border-radius: 8px;
+      background: #f0f5ff;
+      border: 1px solid #d6e4ff;
+      color: #1d39c4;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+    .caret{
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #1d39c4;
+      opacity: .9;
+    }
+    .flow-items{
+      position: relative;
+      padding-left: 18px;
+    }
+    .flow-items::before{
+      content:"";
+      position:absolute;
+      left: 11px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: #d9d9d9;
+    }
+    .flow-item{
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      color: #333;
+    }
+    .flow-item:hover{ background: #fafafa; }
+    .flow-item.active{
+      background: rgba(24,144,255,0.08);
+      border: 1px solid rgba(24,144,255,0.2);
+    }
+    .node{
+      position:absolute;
+      left: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 900;
+      border: 2px solid #fff;
+    }
+    .flow-text{
+      padding-left: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .mini-icon{
+      width: 16px; height: 16px; border-radius: 6px;
+      background: rgba(24,144,255,0.18);
+      display:inline-flex; align-items:center; justify-content:center;
+      color: var(--primary);
+      font-weight: 900;
+      font-size: 12px;
+    }
+
+    /* 中央文档区 */
+    .doc {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      min-height: 620px;
+    }
+    .doc-inner{
+      padding: 18px 18px 8px 18px;
+      overflow: auto;
+    }
+    .doc-top{
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hosp{
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #333;
+    }
+    .hosp-logo{
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #e8e8e8;
+      background: radial-gradient(circle at 30% 30%, #d6f4ff, #fff);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 900;
+      color: #1677ff;
+    }
+    .hosp-name{
+      font-weight: 800;
+      font-size: 12px;
+      color: #555;
+      line-height: 1.2;
+    }
+    .barcode{
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .bars{
+      width: 330px;
+      height: 40px;
+      border-radius: 6px;
+      background:
+        repeating-linear-gradient(90deg, #111 0 5px, #fff 5px 9px, #111 9px 11px, #fff 11px 14px);
+      opacity: 0.92;
+    }
+    .barcode-num{ font-size: 13px; color: #111; font-weight: 700; }
+
+    .doc-title{
+      margin-top: 14px;
+      text-align: center;
+    }
+    .dept{ font-size: 18px; font-weight: 800; margin-bottom: 10px; }
+    .big-title{ font-size: 36px; font-weight: 900; letter-spacing: 1px; }
+
+    .section{
+      margin-top: 18px;
+    }
+    .section-head{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      color: #333;
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+    .mark{
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+      background: var(--primary);
+    }
+    .kv-grid{
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      padding: 12px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+      gap: 10px 14px;
+      font-size: 13px;
+      color: #333;
+    }
+    .kv-grid .kv { white-space: nowrap; }
+
+    .loc-grid{
+      border-top: 1px solid #f0f0f0;
+      padding-top: 12px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    .body-img{
+      height: 170px;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px;
+      background:
+        linear-gradient(90deg, rgba(24,144,255,0.12), rgba(24,144,255,0.02)),
+        radial-gradient(circle at 40% 40%, rgba(0,0,0,0.12), rgba(0,0,0,0) 50%);
+      position: relative;
+      overflow: hidden;
+    }
+    .body-img::after{
+      content:"";
+      position:absolute;
+      left: 18px; top: 24px;
+      width: 68px; height: 120px;
+      border-radius: 40px 40px 30px 30px;
+      background: rgba(0,0,0,0.16);
+      filter: blur(0.2px);
+      opacity: .35;
+    }
+    .checklist{
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+      font-size: 12px;
+      color: #555;
+    }
+    .check{
+      display:flex;
+      align-items:center;
+      gap: 6px;
+      user-select:none;
+    }
+    .check input{ accent-color: var(--primary); }
+
+    .loc-kv{
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px 14px;
+      font-size: 13px;
+      color: #333;
+    }
+
+    .doc-footer{
+      border-top: 1px solid var(--line);
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #fff;
+    }
+    .fbtn{
+      height: 34px;
+      padding: 0 14px;
+      border-radius: 10px;
+      border: 1px solid #d9d9d9;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+    }
+    .fbtn:hover{ border-color: var(--primary); color: var(--primary); }
+
+    /* 右侧快捷按钮 */
+    .side-actions{
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .sbtn{
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      padding: 0 12px;
+      color: #333;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    .sbtn:hover{ border-color: rgba(24,144,255,0.28); }
+    .sico{
+      width: 22px; height: 22px;
+      border-radius: 8px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color: #fff;
+      font-weight: 900;
+      font-size: 12px;
+    }
+    .sico.blue{ background: var(--primary); }
+    .sico.purple{ background: var(--purple); }
+    .sico.orange{ background: var(--orange); }
+    .sico.teal{ background: var(--teal); }
+    .slabel{ font-size: 13px; font-weight: 700; }
+
+    @media (max-width: 1280px){
+      .main{ grid-template-columns: 56px 320px 1fr 150px; }
+      .bars{ width: 260px; }
+      .kv-grid{ grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 980px){
+      .main{ grid-template-columns: 1fr; }
+      .rail{ flex-direction: row; justify-content: center; padding: 10px; }
+      .rail-item{ width: 90px; height: 52px; }
+      .side-actions{ flex-direction: row; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="topbar">
+      <div class="back" id="btnBack" title="返回">‹</div>
+      <div class="badge-big" title="患者序号/床号示意">1</div>
+
+      <div class="pinfo">
+        <div class="pinfo-top">
+          <div class="p-name">111</div>
+          <div class="p-sex">女</div>
+          <span class="tag">门诊</span>
+          <span style="color:var(--muted); font-size: 12px;">登记信息</span>
+        </div>
+        <div class="pinfo-sub">
+          <span class="kv"><span class="k">年龄</span><span class="v">36岁</span></span>
+          <span class="kv"><span class="k">病案号</span><span class="v">00009</span></span>
+          <span class="kv"><span class="k">放疗号</span><span class="v">20220025</span></span>
+          <span class="kv"><span class="k">本人电话</span><span class="v">15659341022</span></span>
+          <span class="kv"><span class="k">医生组</span><span class="v">—</span></span>
+          <span class="kv"><span class="k">主管医生</span><span class="v">姜鹏荣</span></span>
+        </div>
+        <div class="tabs" id="topTabs">
+          <div class="tab active" data-tab="log"><span class="dot blue">✓</span><span class="label">治疗日志</span></div>
+          <div class="tab" data-tab="record"><span class="dot green">✓</span><span class="label">治疗实施记录</span></div>
+          <div class="tab" data-tab="img"><span class="dot teal">✓</span><span class="label">集成视图</span></div>
+          <div class="tab" data-tab="data"><span class="dot orange">✓</span><span class="label">数据中心</span></div>
+        </div>
+      </div>
+
+      <div class="top-right">
+        <div class="pill">共1次登记&nbsp;&nbsp;|&nbsp;&nbsp;门诊</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- 左侧竖栏 -->
+      <div class="rail" id="leftRail">
+        <div class="rail-item active" data-rail="progress"><div class="rail-ico">⏱</div><div>进度</div></div>
+        <div class="rail-item" data-rail="plan"><div class="rail-ico">✦</div><div>计划</div></div>
+        <div class="rail-item" data-rail="emr"><div class="rail-ico">≡</div><div>病历</div></div>
+        <div class="rail-item" data-rail="fee"><div class="rail-ico">¥</div><div>费用</div></div>
+        <div class="rail-item" data-rail="doc"><div class="rail-ico">—</div><div>文档</div></div>
+      </div>
+
+      <!-- 流程 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">共<span class="count">1</span>个流程</div>
+          <div class="panel-action" id="btnAddFlow">新增</div>
+        </div>
+        <div class="flow">
+          <div class="flow-group">
+            <div class="caret"></div>
+            <div style="flex:1;">[1] 完整流程 (头颈部-鼻咽)</div>
+            <div style="opacity:.65;">⋯</div>
+          </div>
+          <div class="flow-items" id="flowItems">
+            <div class="flow-item active" data-node="定位申请"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">🧾</span><span>定位申请</span></div></div>
+            <div class="flow-item" data-node="定位执行"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">📌</span><span>定位执行</span></div></div>
+            <div class="flow-item" data-node="靶区勾画"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">✎</span><span>靶区勾画</span></div></div>
+            <div class="flow-item" data-node="勾画审核"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">✔</span><span>勾画审核</span></div></div>
+            <div class="flow-item" data-node="计划申请"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">🧩</span><span>计划申请</span></div></div>
+            <div class="flow-item" data-node="计划设计"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">📐</span><span>计划设计</span></div></div>
+            <div class="flow-item" data-node="组长审核"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">👥</span><span>组长审核</span></div></div>
+            <div class="flow-item" data-node="医师核准"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">🩺</span><span>医师核准</span></div></div>
+            <div class="flow-item" data-node="计划验证"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">🧪</span><span>计划验证</span></div></div>
+            <div class="flow-item" data-node="治疗执行"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">⚡</span><span>治疗执行</span></div></div>
+            <div class="flow-item" data-node="治疗小结"><span class="node">✓</span><div class="flow-text"><span class="mini-icon">📝</span><span>治疗小结</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 文档 -->
+      <div class="doc">
+        <div class="doc-inner">
+          <div class="doc-top">
+            <div class="hosp">
+              <div class="hosp-logo">C</div>
+              <div class="hosp-name">长海医院<br/>放射治疗科</div>
+            </div>
+            <div class="barcode">
+              <div class="bars" aria-label="条码示意"></div>
+              <div class="barcode-num">00009</div>
+            </div>
+          </div>
+
+          <div class="doc-title">
+            <div class="dept">肿瘤放化疗科12</div>
+            <div class="big-title">定位申请单</div>
+          </div>
+
+          <div class="section">
+            <div class="section-head"><span class="mark"></span><span>基本信息</span></div>
+            <div class="kv-grid">
+              <span class="kv"><span class="k">姓名</span><span class="v">111</span></span>
+              <span class="kv"><span class="k">院区</span><span class="v">月湖</span></span>
+              <span class="kv"><span class="k">性别</span><span class="v">女</span></span>
+              <span class="kv"><span class="k">年龄[岁]</span><span class="v">36</span></span>
+              <span class="kv"><span class="k">病案号</span><span class="v">00009</span></span>
+              <span class="kv"><span class="k">放疗号</span><span class="v">20220025</span></span>
+              <span class="kv"><span class="k">患者电话</span><span class="v">15659341022</span></span>
+              <span class="kv"><span class="k">联系人电话</span><span class="v">15659341022</span></span>
+              <span class="kv" style="grid-column: span 2;"><span class="k">主管医生</span><span class="v">姜鹏荣</span></span>
+              <span class="kv" style="grid-column: span 2;"><span class="k">分期</span><span class="v">TXN0M0</span></span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head"><span class="mark"></span><span>定位信息</span></div>
+            <div class="loc-grid">
+              <div>
+                <div class="body-img" title="部位示意（原型）"></div>
+                <div class="checklist">
+                  <label class="check"><input type="checkbox" checked> 颅顶</label>
+                  <label class="check"><input type="checkbox" checked> 肩弓</label>
+                  <label class="check"><input type="checkbox" checked> 鼻尖</label>
+                  <label class="check"><input type="checkbox" checked> 下颌</label>
+                  <label class="check"><input type="checkbox" checked> 喉结</label>
+                  <label class="check"><input type="checkbox"> 胸骨上窝</label>
+                </div>
+              </div>
+              <div class="loc-kv">
+                <span class="kv"><span class="k">肿瘤位置1</span><span class="v">头颈部</span></span>
+                <span class="kv"><span class="k">扫描部位</span><span class="v">头</span></span>
+                <span class="kv"><span class="k">扫描范围[上界]</span><span class="v">颅顶</span></span>
+                <span class="kv"><span class="k">扫描范围[下界]</span><span class="v">喉结</span></span>
+                <span class="kv"><span class="k">扫描方式</span><span class="v">平扫</span></span>
+                <span class="kv"><span class="k">扫描进程</span><span class="v">头先进</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-footer">
+          <button class="fbtn" id="btnEdit">编辑</button>
+          <button class="fbtn" id="btnPrint">打印</button>
+        </div>
+      </div>
+
+      <!-- 右侧快捷按钮 -->
+      <div class="side-actions">
+        <button class="sbtn" data-act="ct"><span class="sico blue">CT</span><span class="slabel">CT重扫</span></button>
+        <button class="sbtn" data-act="wire"><span class="sico teal">+</span><span class="slabel">补线</span></button>
+        <button class="sbtn" data-act="appt"><span class="sico purple">📅</span><span class="slabel">预约记录</span></button>
+        <button class="sbtn" data-act="flow"><span class="sico orange">⟲</span><span class="slabel">流转记录</span></button>
+        <button class="sbtn" data-act="guide"><span class="sico purple">ⓘ</span><span class="slabel">操作指南</span></button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    // 读取患者参数（从患者列表“查看”进入时携带 patientId）
+    (function initPatientFromQuery() {
+      try {
+        const params = new URLSearchParams(window.location.search || '');
+        const pid = params.get('patientId');
+        if (!pid) return;
+
+        const barcode = document.querySelector('.barcode-num');
+        if (barcode) barcode.textContent = pid;
+
+        const title = document.querySelector('.p-name');
+        if (title) title.textContent = pid;
+
+        document.title = `患者详情 - ${pid}`;
+      } catch (e) {
+        // ignore
+      }
+    })();
+
+    // 顶部 tab 切换（原型：仅高亮）
+    $('#topTabs').addEventListener('click', (e) => {
+      const tab = e.target.closest('.tab');
+      if (!tab) return;
+      $$('#topTabs .tab').forEach(t => t.classList.toggle('active', t === tab));
+    });
+
+    // 左侧 rail 切换（原型：仅高亮 + 提示）
+    $('#leftRail').addEventListener('click', (e) => {
+      const item = e.target.closest('.rail-item');
+      if (!item) return;
+      $$('#leftRail .rail-item').forEach(i => i.classList.toggle('active', i === item));
+      const name = item.textContent.trim();
+      // 不弹窗干扰主体验，轻提示
+      console.log('切换功能：', name);
+    });
+
+    // 流程节点选中（原型：切换文档标题）
+    $('#flowItems').addEventListener('click', (e) => {
+      const it = e.target.closest('.flow-item');
+      if (!it) return;
+      $$('#flowItems .flow-item').forEach(x => x.classList.toggle('active', x === it));
+      const node = it.dataset.node || '定位申请';
+      document.title = `患者详情 - ${node}`;
+      const h = document.querySelector('.big-title');
+      if (h) h.textContent = node + '单';
+    });
+
+    // 右侧快捷按钮
+    $$('.side-actions .sbtn').forEach(btn => {
+      btn.addEventListener('click', () => alert(`${btn.innerText.trim()}（原型演示）`));
+    });
+
+    // 底部按钮
+    $('#btnEdit').addEventListener('click', () => alert('编辑（原型演示）'));
+    $('#btnPrint').addEventListener('click', () => window.print());
+    $('#btnAddFlow').addEventListener('click', () => alert('新增流程（原型演示）'));
+    $('#btnBack').addEventListener('click', () => history.back());
+  </script>
+</body>
+</html>
+

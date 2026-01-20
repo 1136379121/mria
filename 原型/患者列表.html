@@ -322,7 +322,31 @@
 
         // 查看患者详情
         function viewPatient(patientId) {
-            alert(`查看患者详情：${patientId}\n（实际应用中会跳转到患者详情页面）`);
+            const url = `患者详情.html?patientId=${encodeURIComponent(patientId)}`;
+
+            // 优先：若在页面框架 iframe 中打开，则请求父页面在内容区打开详情页（集成到页面框架内容部分）
+            try {
+                if (window.parent && window.parent !== window) {
+                    // 方式1：调用父页面公开方法
+                    if (typeof window.parent.openContent === 'function') {
+                        window.parent.openContent(url);
+                        return;
+                    }
+
+                    // 方式2：postMessage（更通用）
+                    window.parent.postMessage({ type: 'open-content', url }, '*');
+
+                    const frame = window.parent.document.getElementById('contentFrame');
+                    if (frame && frame.tagName === 'IFRAME') {
+                        frame.src = url;
+                        return;
+                    }
+                }
+            } catch (e) {
+                // ignore cross-origin / sandbox restrictions (原型：尽量兼容)
+            }
+            // 否则在当前页打开（默认集成到页面框架内容区，不再新开标签）
+            window.location.href = url;
         }
 
         // 回车搜索
