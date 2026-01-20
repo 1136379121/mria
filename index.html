@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MRIA - 原型与需求文档</title>
+  <meta name="description" content="MRIA 项目原型与需求说明（GitHub Pages）" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  <style>
+    /* 轻度定制：让首页更像“文档站”，并保留原型跳转体验 */
+    :root { --theme-color: #1890ff; }
+    .markdown-section a { text-decoration: none; }
+    .markdown-section a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div id="app">加载中…</div>
+  <script>
+    window.$docsify = {
+      name: 'MRIA',
+      repo: 'https://github.com/1136379121/mria',
+      homepage: 'docs-home.md',
+      auto2top: true,
+      maxLevel: 4,
+      subMaxLevel: 3
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
+</body>
+</html>
+
