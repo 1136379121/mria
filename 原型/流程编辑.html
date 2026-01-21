@@ -12,6 +12,8 @@
             padding: 0;
             min-height: 100vh;
             color: #1f1f1f;
+            /* 只允许画布区/右侧面板各自滚动，页面本身不出现纵向滚动条 */
+            overflow: hidden;
         }
 
         .app {
@@ -21,7 +23,7 @@
             overflow: hidden;
             display: flex;
             flex-direction: column;
-            min-height: calc(100vh - 0px);
+            height: 100vh;
         }
 
         .topbar {
@@ -33,6 +35,10 @@
             justify-content: space-between;
             gap: 12px;
             background: #fff;
+            /* 顶部栏固定不动 */
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         .top-left {
@@ -99,6 +105,7 @@
             display: grid;
             grid-template-columns: 1fr 380px;
             min-height: 0;
+            height: calc(100vh - 56px);
         }
 
         .canvas-wrap {
@@ -115,14 +122,6 @@
             border-radius: 6px;
             min-height: 720px;
             padding: 18px;
-        }
-
-        .canvas-header {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-bottom: 10px;
         }
 
         .flow-col {
@@ -385,10 +384,6 @@
         <div class="main">
             <div class="canvas-wrap">
                 <div class="canvas">
-                    <div class="canvas-header">
-                        <button class="btn" id="btnAddNode">新增下一节点</button>
-                        <button class="btn" id="btnDeleteNode">删除节点</button>
-                    </div>
                     <div class="flow-col" id="flowCol"></div>
                 </div>
             </div>
@@ -594,7 +589,8 @@
             } catch (e) { /* ignore */ }
             try {
                 if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'openContent', url: finalUrl }, '*');
+                    // 与页面框架约定：postMessage({ type: 'open-content', url })
+                    window.parent.postMessage({ type: 'open-content', url: finalUrl }, '*');
                     return;
                 }
             } catch (e) { /* ignore */ }
@@ -1236,12 +1232,7 @@
             toast('保存成功（原型）');
         });
 
-        document.getElementById('btnAddNode').addEventListener('click', addNextNode);
-        document.getElementById('btnDeleteNode').addEventListener('click', () => {
-            const node = getActiveNode();
-            if (!node) return;
-            deleteNode(node.id);
-        });
+        // 画布右上角按钮已按原型要求移除：节点新增通过 “+” 插入；删除通过节点卡片右上角 “×”
 
         // 基本设置联动
         elIsEnd.addEventListener('change', () => {

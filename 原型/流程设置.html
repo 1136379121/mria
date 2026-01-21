@@ -403,7 +403,8 @@
             } catch (e) { /* ignore */ }
             try {
                 if (window.parent && window.parent !== window) {
-                    window.parent.postMessage({ type: 'openContent', url: finalUrl }, '*');
+                    // 与页面框架约定：postMessage({ type: 'open-content', url })
+                    window.parent.postMessage({ type: 'open-content', url: finalUrl }, '*');
                     return;
                 }
             } catch (e) { /* ignore */ }
