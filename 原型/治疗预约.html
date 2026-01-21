@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>治疗预约 - 预约管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            color: #1f1f1f;
+        }
+
+        :root{
+            --line: #eaecef;
+            --primary: #1677ff;
+            --muted: #8c8c8c;
+            --bg: #f5f5f5;
+            --card: #fff;
+        }
+
+        .page {
+            background: var(--card);
+            border-radius: 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .topbar {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            border-bottom: 1px solid var(--line);
+            background: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+
+        .title {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            white-space: nowrap;
+        }
+
+        .select {
+            min-width: 160px;
+            height: 32px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 10px;
+            background: #fff;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            background: #ff4d4f;
+            color: #fff;
+            font-size: 12px;
+            padding: 0 6px;
+            font-weight: 800;
+        }
+
+        .topbar-center {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .view-tabs {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            background: #f5f5f5;
+            border-radius: 6px;
+            padding: 2px;
+        }
+
+        .view-tab {
+            padding: 6px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            cursor: pointer;
+            border-radius: 4px;
+            user-select: none;
+            white-space: nowrap;
+        }
+        .view-tab.active {
+            background: #fff;
+            color: var(--primary);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        .date-nav {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-btn {
+            width: 24px;
+            height: 24px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            background: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        .nav-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+        .date-range {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .input {
+            width: 240px;
+            height: 32px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 10px 0 32px;
+            font-size: 13px;
+            background: #fff;
+        }
+        .input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(22,119,255,0.15);
+        }
+
+        .search-wrap {
+            position: relative;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            color: var(--muted);
+            pointer-events: none;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 6px;
+            border: 1px solid #91caff;
+            background: #fff;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            user-select: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            white-space: nowrap;
+        }
+        .btn:hover { background: #f0f6ff; }
+
+        .content {
+            flex: 1;
+            background: var(--bg);
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        .calendar-wrap {
+            flex: 1;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-header {
+            display: flex;
+            background: #fff;
+            border-bottom: 1px solid var(--line);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            flex-shrink: 0;
+            /* 对齐修正：为下方滚动条预留同等空间，避免周标题与时段竖线错位 */
+            padding-right: var(--sbw, 0px);
+        }
+
+        .time-axis {
+            width: 80px;
+            border-right: 1px solid var(--line);
+            background: #fafafa;
+            flex-shrink: 0;
+        }
+
+        .time-axis-header {
+            height: 48px;
+            border-bottom: none; /* 去掉左上角（时间轴头部）横线 */
+        }
+
+        .days-row {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+        }
+
+        .day-header {
+            padding: 12px 8px;
+            text-align: center;
+            border-right: 1px solid var(--line);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .day-header.weekend {
+            background: #fafafa;
+            color: #999;
+        }
+
+        .calendar-body {
+            flex: 1;
+            display: flex;
+            overflow-y: auto;
+            overflow-x: hidden;
+            min-height: 0;
+            /* 现代浏览器：为滚动条预留 gutter，减少布局抖动 */
+            scrollbar-gutter: stable;
+        }
+
+        .time-columns {
+            width: 80px;
+            border-right: 1px solid var(--line);
+            background: #fafafa;
+        }
+
+        .time-slot {
+            height: 60px;
+            border-bottom: 1px solid var(--line);
+            display: flex;
+            align-items: flex-start;
+            padding: 6px 8px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .calendar-grid {
+            flex: 1;
+            display: flex;
+        }
+
+        .day-column {
+            flex: 1;
+            border-right: 1px solid var(--line);
+            position: relative;
+        }
+
+        .day-column.weekend {
+            /* 周末整列斜条纹：实际铺在每个时段格子上，避免出现“只覆盖部分时段”的视觉问题 */
+            background: transparent;
+        }
+
+        .time-cell {
+            height: 60px;
+            border-bottom: 1px solid var(--line);
+            position: relative;
+            padding: 2px;
+        }
+
+        /* 周六/周日：所有时段都填充斜条纹背景 */
+        .day-column.weekend .time-cell {
+            background: repeating-linear-gradient(
+                45deg,
+                #fafafa,
+                #fafafa 10px,
+                #f5f5f5 10px,
+                #f5f5f5 20px
+            );
+        }
+
+        .appointment-block {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            top: 2px;
+            bottom: 2px;
+            background: #e6f4ff;
+            border: 1px solid #91caff;
+            border-radius: 4px;
+            padding: 4px 6px;
+            font-size: 12px;
+            cursor: pointer;
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .appointment-block:hover {
+            background: #bae0ff;
+            z-index: 3;
+        }
+
+        .appointment-title {
+            font-weight: 700;
+            color: #1677ff;
+            margin-bottom: 2px;
+        }
+
+        .appointment-time {
+            font-size: 11px;
+            color: #666;
+        }
+
+        .add-appointment {
+            position: absolute;
+            left: 2px;
+            right: 2px;
+            top: 2px;
+            bottom: 2px;
+            background: #f0f6ff;
+            border: 1px dashed #91caff;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary);
+            font-size: 12px;
+            cursor: pointer;
+            z-index: 1;
+        }
+        .add-appointment:hover {
+            background: #e6f4ff;
+            border-color: var(--primary);
+        }
+
+        .remaining {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 11px;
+            color: var(--muted);
+            z-index: 4;
+        }
+
+        .sidebar {
+            width: 112px;
+            background: #fff;
+            border-left: 1px solid var(--line);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden; /* 页面不需要滚动条：侧边栏不滚动 */
+            justify-content: space-between;
+        }
+
+        .time-quick-nav {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .time-quick-nav-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .time-option {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .time-option:hover {
+            background: #f5f5f5;
+        }
+        .time-option.active {
+            background: #e6f4ff;
+            color: var(--primary);
+        }
+
+        .time-radio {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #d9d9d9;
+            border-radius: 50%;
+            position: relative;
+            flex: 0 0 auto;
+        }
+        .time-option.active .time-radio {
+            border-color: var(--primary);
+        }
+        .time-option.active .time-radio::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: var(--primary);
+            border-radius: 50%;
+        }
+
+
+        .footer {
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 0 16px;
+            background: #fff;
+            border-top: 1px solid var(--line);
+        }
+
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .footer-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #666;
+            font-size: 12px;
+        }
+        .footer-icon:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .status-legend {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .status-legend-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex: 0 0 auto;
+        }
+        .legend-dot.blue { background: #1677ff; }
+        .legend-dot.orange { background: #fa8c16; }
+        .legend-dot.gray { background: #8c8c8c; }
+
+        .popover {
+            position: absolute;
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 12px;
+            z-index: 100;
+            min-width: 180px;
+            font-size: 12px;
+        }
+
+        .popover-item {
+            margin-bottom: 8px;
+            color: #666;
+        }
+        .popover-item:last-child {
+            margin-bottom: 0;
+        }
+        .popover-label {
+            color: #999;
+            margin-right: 8px;
+        }
+
+        @media (max-width: 1400px) {
+            .topbar-center { flex-wrap: wrap; }
+            .input { width: 200px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="topbar">
+            <div class="topbar-left">
+                <div class="title">治疗预约</div>
+                <select class="select" id="roomSelect">
+                    <option>治疗机房1</option>
+                    <option>治疗机房2</option>
+                    <option>治疗机房3</option>
+                </select>
+                <span>待预约 <span class="badge">10</span></span>
+            </div>
+
+            <div class="topbar-center">
+                <div class="view-tabs">
+                    <div class="view-tab active" data-view="week">周</div>
+                    <div class="view-tab" data-view="day">日</div>
+                    <div class="view-tab" data-view="list">列表</div>
+                </div>
+                <div class="date-nav">
+                    <button class="nav-btn" id="prevWeek">‹</button>
+                    <span class="date-range" id="dateRange">2026-01-05 至 2026-01-11</span>
+                    <button class="nav-btn" id="nextWeek">›</button>
+                </div>
+                <div class="search-wrap">
+                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+                        <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <input type="text" class="input" placeholder="姓名/病案号/放疗号等" id="searchInput" />
+                </div>
+            </div>
+
+            <div class="topbar-right">
+                <button class="btn" id="btnMed">刷医保码</button>
+                <button class="btn" id="btnCard">读社保卡</button>
+                <button class="btn" id="btnBatch">批量调整</button>
+                <button class="btn" id="btnStats">统计视图</button>
+                <button class="btn" id="btnExport">导出Excel</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div class="calendar-wrap">
+                <div class="calendar-header">
+                    <div class="time-axis">
+                        <div class="time-axis-header"></div>
+                    </div>
+                    <div class="days-row">
+                        <div class="day-header">周一<br>(1月5日)</div>
+                        <div class="day-header">周二<br>(1月6日)</div>
+                        <div class="day-header">周三<br>(1月7日)</div>
+                        <div class="day-header">周四<br>(1月8日)</div>
+                        <div class="day-header">周五<br>(1月9日)</div>
+                        <div class="day-header weekend">周六<br>(1月10日)</div>
+                        <div class="day-header weekend">周日<br>(1月11日)</div>
+                    </div>
+                </div>
+
+                <div class="calendar-body">
+                    <div class="time-columns" id="timeColumns"></div>
+
+                    <div class="calendar-grid" id="calendarGrid">
+                        <!-- 7个日期列，每列24个时间段（00:00-23:00） -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="time-quick-nav">
+                    <div class="time-quick-nav-title">快速定位</div>
+                    <div class="time-option active" data-time="08:00">
+                        <div class="time-radio"></div>
+                        <span>08:00</span>
+                    </div>
+                    <div class="time-option" data-time="10:00">
+                        <div class="time-radio"></div>
+                        <span>10:00</span>
+                    </div>
+                    <div class="time-option" data-time="14:00">
+                        <div class="time-radio"></div>
+                        <span>14:00</span>
+                    </div>
+                    <div class="time-option" data-time="16:00">
+                        <div class="time-radio"></div>
+                        <span>16:00</span>
+                    </div>
+                    <div class="time-option" data-time="17:00">
+                        <div class="time-radio"></div>
+                        <span>17:00</span>
+                    </div>
+                </div>
+
+                <div class="status-legend">
+                    <div class="status-legend-title">状态</div>
+                    <div class="legend-item">
+                        <div class="legend-dot blue"></div>
+                        <span>未执行</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot orange"></div>
+                        <span>已暂停</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot gray"></div>
+                        <span>已执行</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SLOT_HEIGHT = 60; // px，每小时一段
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function buildHourSlots() {
+            return Array.from({ length: 24 }).map((_, h) => `${pad2(h)}:00`);
+        }
+        function scrollToHour(hour) {
+            const calendarBody = document.querySelector('.calendar-body');
+            if (!calendarBody) return;
+            const h = Math.max(0, Math.min(23, Number(hour) || 0));
+            calendarBody.scrollTop = h * SLOT_HEIGHT;
+        }
+        function setQuickActive(timeStr) {
+            const t = String(timeStr || '');
+            document.querySelectorAll('.time-option').forEach(o => o.classList.remove('active'));
+            const el = document.querySelector(`.time-option[data-time="${t}"]`);
+            if (el) el.classList.add('active');
+        }
+
+        // 生成日历网格
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+            const timeSlots = buildHourSlots(); // 00:00-23:00，共24段
+            // 渲染左侧时间轴
+            const timeColumns = document.getElementById('timeColumns');
+            if (timeColumns) {
+                timeColumns.innerHTML = timeSlots.map(t => `<div class="time-slot">${t}</div>`).join('');
+            }
+            const days = [
+                { name: '周一', date: '1月5日', weekend: false },
+                { name: '周二', date: '1月6日', weekend: false },
+                { name: '周三', date: '1月7日', weekend: false },
+                { name: '周四', date: '1月8日', weekend: false },
+                { name: '周五', date: '1月9日', weekend: false },
+                { name: '周六', date: '1月10日', weekend: true },
+                { name: '周日', date: '1月11日', weekend: true }
+            ];
+            
+            days.forEach((day, dayIndex) => {
+                const dayCol = document.createElement('div');
+                dayCol.className = `day-column${day.weekend ? ' weekend' : ''}`;
+                
+                timeSlots.forEach((time, timeIndex) => {
+                    const cell = document.createElement('div');
+                    cell.className = 'time-cell';
+                    cell.dataset.day = dayIndex;
+                    cell.dataset.time = timeIndex;
+                    
+                    // 添加预约块（示例数据）
+                    if (dayIndex === 1 && timeIndex === 8) {
+                        // 周二 08:00 - 流程1223
+                        const block = document.createElement('div');
+                        block.className = 'appointment-block';
+                        block.innerHTML = `
+                            <div class="appointment-title">流程1223</div>
+                            <div class="appointment-time">末次 --/--</div>
+                        `;
+                        block.addEventListener('click', (e) => showPopover(e, { title: '流程1223', count: '--', doctor: 'chhys', chief: '--' }));
+                        cell.appendChild(block);
+                    } else if (dayIndex === 2 && timeIndex === 8) {
+                        // 周三 08:00 - 递补0010
+                        const block = document.createElement('div');
+                        block.className = 'appointment-block';
+                        block.innerHTML = `
+                            <div class="appointment-title">递补0010</div>
+                            <div class="appointment-time">末次 --/--</div>
+                        `;
+                        block.addEventListener('click', (e) => showPopover(e, { title: '递补0010', count: '--', doctor: '--', chief: '--' }));
+                        cell.appendChild(block);
+                    } else if (dayIndex === 3 && timeIndex === 8) {
+                        // 周四 08:00 - 空，可显示弹出提示
+                        const cellInner = document.createElement('div');
+                        cellInner.style.cssText = 'width: 100%; height: 100%; cursor: pointer;';
+                        cellInner.addEventListener('click', (e) => showPopover(e, { title: '--', count: '--', doctor: 'chhys', chief: '--' }));
+                        cell.appendChild(cellInner);
+                    } else if (dayIndex === 4 && timeIndex === 8) {
+                        // 周五 08:00 - 两个预约块
+                        const block1 = document.createElement('div');
+                        block1.className = 'appointment-block';
+                        block1.style.cssText = 'top: 2px; height: calc(50% - 3px);';
+                        block1.innerHTML = `
+                            <div class="appointment-title">对测...</div>
+                            <div class="appointment-time">末次 --/--</div>
+                        `;
+                        cell.appendChild(block1);
+                        
+                        const block2 = document.createElement('div');
+                        block2.className = 'appointment-block';
+                        block2.style.cssText = 'bottom: 2px; height: calc(50% - 3px);';
+                        block2.innerHTML = `
+                            <div class="appointment-title">对测...</div>
+                            <div class="appointment-time">末次 --/--</div>
+                        `;
+                        cell.appendChild(block2);
+                        
+                        const addBtn = document.createElement('div');
+                        addBtn.className = 'add-appointment';
+                        addBtn.textContent = '+添加预约';
+                        addBtn.style.zIndex = '10';
+                        addBtn.addEventListener('click', () => alert('添加预约（原型占位）'));
+                        cell.appendChild(addBtn);
+                        
+                        const remaining = document.createElement('div');
+                        remaining.className = 'remaining';
+                        remaining.textContent = '余3';
+                        cell.appendChild(remaining);
+                    } else {
+                        // 其他空单元格可以添加预约
+                        const addBtn = document.createElement('div');
+                        addBtn.className = 'add-appointment';
+                        addBtn.style.display = 'none';
+                        addBtn.textContent = '+添加预约';
+                        addBtn.addEventListener('click', () => alert('添加预约（原型占位）'));
+                        cell.appendChild(addBtn);
+                        
+                        cell.addEventListener('mouseenter', () => {
+                            if (!cell.querySelector('.appointment-block')) {
+                                addBtn.style.display = 'flex';
+                            }
+                        });
+                        cell.addEventListener('mouseleave', () => {
+                            addBtn.style.display = 'none';
+                        });
+                    }
+                    
+                    dayCol.appendChild(cell);
+                });
+                
+                grid.appendChild(dayCol);
+            });
+        }
+
+        let activePopover = null;
+
+        function showPopover(e, data) {
+            closePopover();
+            
+            const popover = document.createElement('div');
+            popover.className = 'popover';
+            popover.innerHTML = `
+                <div class="popover-item">
+                    <span class="popover-label">放疗次数:</span>
+                    <span>${data.count || '--'}</span>
+                </div>
+                <div class="popover-item">
+                    <span class="popover-label">主管医生:</span>
+                    <span>${data.doctor || '--'}</span>
+                </div>
+                <div class="popover-item">
+                    <span class="popover-label">主诊医生:</span>
+                    <span>${data.chief || '--'}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(popover);
+            const rect = e.target.getBoundingClientRect();
+            popover.style.left = `${rect.right + 10}px`;
+            popover.style.top = `${rect.top}px`;
+            
+            activePopover = popover;
+            
+            setTimeout(() => {
+                document.addEventListener('click', closePopover, { once: true });
+            }, 0);
+        }
+
+        function closePopover() {
+            if (activePopover) {
+                activePopover.remove();
+                activePopover = null;
+            }
+        }
+
+        // 视图切换
+        document.querySelectorAll('.view-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                const view = this.dataset.view;
+                if (view === 'list') {
+                    alert('列表视图（原型占位）');
+                } else if (view === 'day') {
+                    alert('日视图（原型占位）');
+                }
+            });
+        });
+
+        // 日期导航
+        document.getElementById('prevWeek').addEventListener('click', () => {
+            alert('上一周（原型占位）');
+        });
+        document.getElementById('nextWeek').addEventListener('click', () => {
+            alert('下一周（原型占位）');
+        });
+
+        // 快速时间定位
+        document.querySelectorAll('.time-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.time-option').forEach(o => o.classList.remove('active'));
+                this.classList.add('active');
+                const time = this.dataset.time;
+                // 滚动到对应小时（00:00-23:00）
+                const hour = parseInt(String(time || '').split(':')[0] || '0', 10);
+                scrollToHour(hour);
+            });
+        });
+
+        // 按钮事件
+        document.getElementById('btnMed').addEventListener('click', () => alert('刷医保码（原型占位）'));
+        document.getElementById('btnCard').addEventListener('click', () => alert('读社保卡（原型占位）'));
+        document.getElementById('btnBatch').addEventListener('click', () => alert('批量调整（原型占位）'));
+        document.getElementById('btnStats').addEventListener('click', () => alert('统计视图（原型占位）'));
+        document.getElementById('btnExport').addEventListener('click', () => alert('导出Excel（原型占位）'));
+
+        // 初始化
+        renderCalendar();
+        // 默认定位到 08:00
+        setQuickActive('08:00');
+        // 等待一次渲染后滚动（避免某些浏览器未计算高度）
+        setTimeout(() => scrollToHour(8), 0);
+
+        // 修正：周标题与时段竖线对齐（补齐滚动条宽度）
+        function syncScrollbarGutter() {
+            const bodyEl = document.querySelector('.calendar-body');
+            if (!bodyEl) return;
+            const sbw = Math.max(0, (bodyEl.offsetWidth - bodyEl.clientWidth));
+            document.documentElement.style.setProperty('--sbw', sbw + 'px');
+        }
+        // 初次 + 延迟一次（确保滚动条出现后也计算到）
+        syncScrollbarGutter();
+        setTimeout(syncScrollbarGutter, 50);
+        window.addEventListener('resize', () => syncScrollbarGutter());
+    </script>
+</body>
+</html>

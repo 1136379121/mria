@@ -1,0 +1,850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>表单管理 - 流程管理配置</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
+            padding: 0;
+            color: #1f1f1f;
+            /* 只让列表数据区滚动：页面本身不滚动 */
+            overflow: hidden;
+        }
+
+        .page {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            /* 在 iframe/不同浏览器下更稳：确保页面撑满视口 */
+            height: 100vh;
+            height: 100%;
+            min-height: 0;
+        }
+
+        .header {
+            background: #fff;
+            border-radius: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            /* 标题栏固定 */
+            flex: 0 0 auto;
+        }
+
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            line-height: 1.2;
+        }
+
+        .controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .search {
+            display: inline-flex;
+            align-items: center;
+            height: 32px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .search input {
+            height: 32px;
+            width: 240px;
+            border: none;
+            outline: none;
+            padding: 0 10px;
+            font-size: 14px;
+        }
+
+        .search button {
+            width: 36px;
+            height: 32px;
+            border: none;
+            border-left: 1px solid #d9d9d9;
+            background: #fff;
+            cursor: pointer;
+            color: #666;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .search:focus-within {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+        }
+
+        .btn {
+            height: 32px;
+            padding: 0 12px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            user-select: none;
+        }
+        .btn.primary {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: #fff;
+        }
+        .btn:hover { border-color: #1890ff; color: #1890ff; }
+        .btn.primary:hover { background: #40a9ff; border-color: #40a9ff; color: #fff; }
+
+        .card {
+            background: #fff;
+            border-radius: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            /* 让表格区在卡片内滚动，分页固定 */
+            flex: 1 1 auto;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            flex: 1 1 auto;
+            min-height: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        thead th {
+            background: #fafafa;
+            color: #666;
+            font-weight: 600;
+            font-size: 13px;
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f0f0f0;
+            /* 表头固定 */
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        tbody td {
+            font-size: 13px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #f5f5f5;
+            vertical-align: middle;
+            color: #333;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        tbody tr:hover { background: #fafcff; }
+
+        .col-name { width: 280px; }
+        .col-remark { width: 160px; }
+        .col-dept { width: 180px; }
+        .col-updater { width: 100px; }
+        .col-time { width: 160px; }
+        .col-ops { width: 320px; }
+
+        .name-cell {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .doc-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 6px;
+            background: #e6f7ff;
+            color: #1677ff;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 22px;
+            border: 1px solid #bae0ff;
+        }
+
+        .link {
+            color: #1677ff;
+            text-decoration: none;
+            cursor: pointer;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .link:hover { text-decoration: underline; }
+
+        .ops {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: flex-start;
+        }
+
+        .op-link {
+            border: none;
+            background: transparent;
+            padding: 0;
+            font-size: 13px;
+            cursor: pointer;
+            color: #1677ff;
+        }
+        .op-link:hover { text-decoration: underline; }
+
+        .op-danger { color: #ff4d4f; }
+
+        .footer {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+            flex-wrap: wrap;
+            color: #666;
+            font-size: 13px;
+            border-top: 1px solid #f0f0f0;
+            flex: 0 0 auto;
+            /* 确保分页器始终贴底（不参与表格滚动） */
+            margin-top: auto;
+            background: #fff;
+        }
+
+        .pager {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pager button {
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            color: #333;
+            border-radius: 6px;
+            padding: 6px 10px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .pager button:hover { border-color: #1677ff; color: #1677ff; }
+        .pager button:disabled { cursor: not-allowed; opacity: 0.55; }
+
+        .pager .page-btn.active {
+            border-color: #1677ff;
+            color: #1677ff;
+            font-weight: 600;
+        }
+
+        .pager select {
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 13px;
+            outline: none;
+            background: #fff;
+        }
+        .pager select:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.18);
+        }
+
+        /* modal */
+        .modal-mask {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 9999;
+        }
+        .modal-mask.show { display: flex; }
+        .modal {
+            width: min(720px, 100%);
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.18);
+            overflow: hidden;
+        }
+        .modal-hd {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .modal-title { font-weight: 600; color: #333; }
+        .modal-close {
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+        }
+        .modal-bd { padding: 16px; }
+        .form {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 12px 12px;
+            align-items: center;
+        }
+        .form label { color: #555; font-size: 13px; }
+        .form input, .form textarea, .form select {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            outline: none;
+            font-size: 14px;
+        }
+        .form textarea { min-height: 84px; resize: vertical; }
+        .modal-ft {
+            padding: 12px 16px;
+            border-top: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        /* toast */
+        .toast {
+            position: fixed;
+            left: 50%;
+            top: 18px;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            padding: 10px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            z-index: 10000;
+            display: none;
+            max-width: 70vw;
+            text-align: center;
+        }
+        .toast.show { display: block; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <div class="header">
+            <h1>表单管理</h1>
+            <div class="controls">
+                <div class="search" title="按表单名称搜索">
+                    <input id="keyword" type="text" placeholder="表单名称" />
+                    <button id="btnSearch" aria-label="搜索">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15Z" stroke="currentColor" stroke-width="1.8"/>
+                            <path d="M16.5 16.5 21 21" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                </div>
+                <button class="btn primary" id="btnAdd">新增</button>
+                <button class="btn primary" id="btnPrint">打印设置</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="col-name">表单名称</th>
+                            <th class="col-remark">备注</th>
+                            <th class="col-dept">所属科室</th>
+                            <th class="col-updater">更新人</th>
+                            <th class="col-time">更新时间</th>
+                            <th class="col-ops">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody"></tbody>
+                </table>
+            </div>
+            <div class="footer">
+                <div id="pagerInfo">共 0 条</div>
+                <div class="pager" id="pager"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="modalMask" role="dialog" aria-modal="true">
+        <div class="modal">
+            <div class="modal-hd">
+                <div class="modal-title" id="modalTitle">新增表单</div>
+                <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+            </div>
+            <div class="modal-bd">
+                <div class="form">
+                    <label>表单名称</label>
+                    <input id="fName" maxlength="60" placeholder="请输入表单名称" />
+
+                    <label>所属科室</label>
+                    <input id="fDept" maxlength="120" placeholder="如：放疗科" />
+
+                    <label>备注</label>
+                    <textarea id="fRemark" maxlength="200" placeholder="可选：备注"></textarea>
+                </div>
+            </div>
+            <div class="modal-ft">
+                <button class="btn" id="btnCancel">取消</button>
+                <button class="btn primary" id="btnSave">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-mask" id="printMask" role="dialog" aria-modal="true">
+        <div class="modal">
+            <div class="modal-hd">
+                <div class="modal-title">打印设置（原型）</div>
+                <button class="modal-close" id="printClose" aria-label="关闭">×</button>
+            </div>
+            <div class="modal-bd">
+                <div class="form">
+                    <label>纸张尺寸</label>
+                    <select id="pSize">
+                        <option value="A4">A4</option>
+                        <option value="A5">A5</option>
+                        <option value="Letter">Letter</option>
+                    </select>
+
+                    <label>方向</label>
+                    <select id="pOrientation">
+                        <option value="portrait">纵向</option>
+                        <option value="landscape">横向</option>
+                    </select>
+
+                    <label>页眉/页脚</label>
+                    <select id="pHeader">
+                        <option value="on">显示</option>
+                        <option value="off">隐藏</option>
+                    </select>
+                </div>
+                <div style="height: 10px;"></div>
+                <div style="color:#999;font-size:12px;line-height:1.5;">
+                    说明：打印设置仅为原型占位，用于还原 UI 图右上角“打印设置”入口的交互。
+                </div>
+            </div>
+            <div class="modal-ft">
+                <button class="btn" id="printCancel">关闭</button>
+                <button class="btn primary" id="printOk">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script>
+        function toast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = String(msg || '');
+            el.classList.add('show');
+            window.clearTimeout(toast._t);
+            toast._t = window.setTimeout(() => el.classList.remove('show'), 1800);
+        }
+
+        function openInFrame(url) {
+            const finalUrl = String(url || '');
+            try {
+                if (window.parent && window.parent !== window && typeof window.parent.openContent === 'function') {
+                    window.parent.openContent(finalUrl);
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+            try {
+                if (window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type: 'open-content', url: finalUrl }, '*');
+                    return;
+                }
+            } catch (e) { /* ignore */ }
+            window.location.href = finalUrl;
+        }
+
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function formatTime(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        }
+
+        const CURRENT_USER = '超级管理员';
+        const DEFAULT_DEPT = '放疗科';
+
+        function seedData(total = 146) {
+            const now = new Date('2026-01-21T10:40:09');
+            const names = [
+                'SJ-定位执行',
+                '计划申请-test',
+                '外照射流程-计划申请',
+                '长海-test',
+                '上级长海医院患者告知书',
+                '放疗小结',
+                'SJ流程-取回包间',
+                'SJ流程-计划设计',
+                '放科-治疗执行-内部联动_zlh',
+                '放科-治疗执行-内部联动',
+                '放科-4周复位初审核',
+                'ZZZ定位申请单',
+                'ZZZ段位信息',
+                'ZZZ基本信息',
+                '33333333',
+                '22',
+                '1111111',
+                'SJ流程-定位申请',
+                '测试1028',
+                'test23'
+            ];
+
+            const list = [];
+            for (let i = 0; i < total; i++) {
+                const n = names[i % names.length];
+                const t = new Date(now.getTime() - (i * 3600 * 1000 + (i % 11) * 60 * 1000));
+                const dept = i % 7 === 3 ? 'test,妇科1,2,test122,测试科室,放疗科...' : DEFAULT_DEPT;
+                list.push({
+                    id: `form_${i + 1}`,
+                    name: i < names.length ? n : `${n}-${i + 1}`,
+                    remark: i % 5 === 0 ? '--' : (i % 3 === 0 ? '—' : '--'),
+                    dept,
+                    updater: CURRENT_USER,
+                    updateTime: formatTime(t)
+                });
+            }
+            return list;
+        }
+
+        let allRows = seedData(146);
+        let viewRows = [...allRows];
+        let currentPage = 1;
+        let pageSize = 20;
+        let editingId = null; // null=新增；否则编辑
+
+        function getTotalPages() {
+            const total = viewRows.length;
+            return Math.max(1, Math.ceil(total / pageSize));
+        }
+
+        function clampPage() {
+            const totalPages = getTotalPages();
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+        }
+
+        function applyFilter() {
+            const kw = (document.getElementById('keyword').value || '').trim();
+            if (!kw) {
+                viewRows = [...allRows];
+            } else {
+                const low = kw.toLowerCase();
+                viewRows = allRows.filter(r => String(r.name || '').toLowerCase().includes(low));
+            }
+            currentPage = 1;
+            render();
+        }
+
+        function render() {
+            clampPage();
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = '';
+            const start = (currentPage - 1) * pageSize;
+            const end = start + pageSize;
+            const pageRows = viewRows.slice(start, end);
+
+            pageRows.forEach(row => {
+                const tr = document.createElement('tr');
+
+                const tdName = document.createElement('td');
+                tdName.className = 'col-name';
+                const nameWrap = document.createElement('div');
+                nameWrap.className = 'name-cell';
+                const icon = document.createElement('span');
+                icon.className = 'doc-icon';
+                icon.innerHTML = `
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                        <path d="M14 3v4h4" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                    </svg>
+                `;
+                const a = document.createElement('a');
+                a.className = 'link';
+                a.href = 'javascript:void(0)';
+                a.title = row.name;
+                a.textContent = row.name;
+                a.addEventListener('click', () => {
+                    const url = `表单设计.html?code=${encodeURIComponent(row.id)}&name=${encodeURIComponent(row.name)}`;
+                    // 设计页要求“独立页面”，不嵌入框架：这里新开页面
+                    try { window.open(url, '_blank', 'noopener'); } catch (e) { window.location.href = url; }
+                });
+                nameWrap.appendChild(icon);
+                nameWrap.appendChild(a);
+                tdName.appendChild(nameWrap);
+
+                const tdRemark = document.createElement('td');
+                tdRemark.className = 'col-remark';
+                tdRemark.title = row.remark || '';
+                tdRemark.textContent = row.remark || '--';
+
+                const tdDept = document.createElement('td');
+                tdDept.className = 'col-dept';
+                tdDept.title = row.dept || '';
+                tdDept.textContent = row.dept || '';
+
+                const tdUpdater = document.createElement('td');
+                tdUpdater.className = 'col-updater';
+                tdUpdater.textContent = row.updater || '';
+
+                const tdTime = document.createElement('td');
+                tdTime.className = 'col-time';
+                tdTime.textContent = row.updateTime || '';
+
+                const tdOps = document.createElement('td');
+                tdOps.className = 'col-ops';
+                const ops = document.createElement('div');
+                ops.className = 'ops';
+
+                function addOp(text, onClick, danger) {
+                    const b = document.createElement('button');
+                    b.type = 'button';
+                    b.className = 'op-link' + (danger ? ' op-danger' : '');
+                    b.textContent = text;
+                    b.addEventListener('click', onClick);
+                    ops.appendChild(b);
+                }
+
+                addOp('设计', () => {
+                    const url = `表单设计.html?code=${encodeURIComponent(row.id)}&name=${encodeURIComponent(row.name)}`;
+                    // 设计页要求“独立页面”，不嵌入框架：这里新开页面
+                    try { window.open(url, '_blank', 'noopener'); } catch (e) { window.location.href = url; }
+                });
+                addOp('复制', () => {
+                    const copy = { ...row };
+                    copy.id = `form_${Date.now()}`;
+                    copy.name = `${row.name}-复制`;
+                    copy.updater = CURRENT_USER;
+                    copy.updateTime = formatTime(new Date());
+                    allRows.unshift(copy);
+                    applyFilter();
+                    toast('已复制');
+                });
+                addOp('配置模板', () => toast('原型占位：配置模板'));
+                addOp('编辑', () => openEdit(row.id));
+                addOp('删除', () => {
+                    if (!confirm(`确定删除表单「${row.name}」？`)) return;
+                    allRows = allRows.filter(r => r.id !== row.id);
+                    applyFilter();
+                    toast('已删除');
+                }, true);
+
+                tdOps.appendChild(ops);
+
+                tr.appendChild(tdName);
+                tr.appendChild(tdRemark);
+                tr.appendChild(tdDept);
+                tr.appendChild(tdUpdater);
+                tr.appendChild(tdTime);
+                tr.appendChild(tdOps);
+                tbody.appendChild(tr);
+            });
+
+            renderPager();
+        }
+
+        function renderPager() {
+            const total = viewRows.length;
+            const totalPages = getTotalPages();
+            clampPage();
+            document.getElementById('pagerInfo').textContent = `共${total}条`;
+
+            const pager = document.getElementById('pager');
+            pager.innerHTML = '';
+
+            const btnPrev = document.createElement('button');
+            btnPrev.textContent = '‹';
+            btnPrev.disabled = currentPage <= 1;
+            btnPrev.addEventListener('click', () => { currentPage -= 1; render(); });
+            pager.appendChild(btnPrev);
+
+            const maxButtons = 7;
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + (maxButtons - 1));
+            startPage = Math.max(1, endPage - (maxButtons - 1));
+
+            function addEllipsis() {
+                const span = document.createElement('span');
+                span.style.padding = '0 4px';
+                span.textContent = '...';
+                pager.appendChild(span);
+            }
+
+            if (startPage > 1) {
+                const first = document.createElement('button');
+                first.className = 'page-btn';
+                first.textContent = '1';
+                first.addEventListener('click', () => { currentPage = 1; render(); });
+                pager.appendChild(first);
+                if (startPage > 2) addEllipsis();
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                const b = document.createElement('button');
+                b.className = 'page-btn' + (p === currentPage ? ' active' : '');
+                b.textContent = String(p);
+                b.addEventListener('click', () => { currentPage = p; render(); });
+                pager.appendChild(b);
+            }
+
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) addEllipsis();
+                const last = document.createElement('button');
+                last.className = 'page-btn';
+                last.textContent = String(totalPages);
+                last.addEventListener('click', () => { currentPage = totalPages; render(); });
+                pager.appendChild(last);
+            }
+
+            const btnNext = document.createElement('button');
+            btnNext.textContent = '›';
+            btnNext.disabled = currentPage >= totalPages;
+            btnNext.addEventListener('click', () => { currentPage += 1; render(); });
+            pager.appendChild(btnNext);
+
+            const size = document.createElement('select');
+            [10, 20, 50, 100].forEach(n => {
+                const opt = document.createElement('option');
+                opt.value = String(n);
+                opt.textContent = `${n}条/页`;
+                if (n === pageSize) opt.selected = true;
+                size.appendChild(opt);
+            });
+            size.addEventListener('change', () => {
+                pageSize = Number(size.value) || 20;
+                currentPage = 1;
+                render();
+            });
+            pager.appendChild(size);
+        }
+
+        function openModal(title) {
+            document.getElementById('modalTitle').textContent = title || '新增表单';
+            document.getElementById('modalMask').classList.add('show');
+        }
+        function closeModal() {
+            document.getElementById('modalMask').classList.remove('show');
+        }
+        function openPrint() { document.getElementById('printMask').classList.add('show'); }
+        function closePrint() { document.getElementById('printMask').classList.remove('show'); }
+
+        function openAdd() {
+            editingId = null;
+            document.getElementById('fName').value = '';
+            document.getElementById('fDept').value = DEFAULT_DEPT;
+            document.getElementById('fRemark').value = '';
+            openModal('新增表单');
+            setTimeout(() => document.getElementById('fName').focus(), 0);
+        }
+
+        function openEdit(id) {
+            const row = allRows.find(r => r.id === id);
+            if (!row) return;
+            editingId = id;
+            document.getElementById('fName').value = row.name || '';
+            document.getElementById('fDept').value = row.dept || '';
+            document.getElementById('fRemark').value = row.remark === '--' ? '' : (row.remark || '');
+            openModal('编辑表单');
+            setTimeout(() => document.getElementById('fName').focus(), 0);
+        }
+
+        function saveModal() {
+            const name = (document.getElementById('fName').value || '').trim();
+            const dept = (document.getElementById('fDept').value || '').trim();
+            const remark = (document.getElementById('fRemark').value || '').trim();
+            if (!name) { toast('请输入表单名称'); return; }
+            if (!dept) { toast('请输入所属科室'); return; }
+
+            const now = new Date();
+            if (!editingId) {
+                allRows.unshift({
+                    id: `form_${Date.now()}`,
+                    name,
+                    remark: remark || '--',
+                    dept,
+                    updater: CURRENT_USER,
+                    updateTime: formatTime(now)
+                });
+                closeModal();
+                applyFilter();
+                toast('新增成功');
+                return;
+            }
+
+            const row = allRows.find(r => r.id === editingId);
+            if (!row) return;
+            row.name = name;
+            row.dept = dept;
+            row.remark = remark || '--';
+            row.updater = CURRENT_USER;
+            row.updateTime = formatTime(now);
+            closeModal();
+            applyFilter();
+            toast('保存成功');
+        }
+
+        // events
+        document.getElementById('btnSearch').addEventListener('click', applyFilter);
+        document.getElementById('keyword').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyFilter();
+        });
+        document.getElementById('btnAdd').addEventListener('click', openAdd);
+        document.getElementById('btnPrint').addEventListener('click', openPrint);
+
+        document.getElementById('btnCancel').addEventListener('click', closeModal);
+        document.getElementById('btnSave').addEventListener('click', saveModal);
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+        document.getElementById('modalMask').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closeModal();
+        });
+
+        document.getElementById('printCancel').addEventListener('click', closePrint);
+        document.getElementById('printOk').addEventListener('click', () => { closePrint(); toast('已保存（原型）'); });
+        document.getElementById('printClose').addEventListener('click', closePrint);
+        document.getElementById('printMask').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) closePrint();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') { closeModal(); closePrint(); }
+        });
+
+        // init
+        applyFilter();
+    </script>
+</body>
+</html>
+

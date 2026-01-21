@@ -26,6 +26,32 @@
             overflow: hidden;
         }
 
+        /* 全局滚动条：统一更细（Chrome/Edge/Safari + Firefox） */
+        * {
+            scrollbar-width: thin;              /* Firefox */
+            scrollbar-color: rgba(140,140,140,0.55) rgba(0,0,0,0); /* Firefox */
+        }
+        *::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        *::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        *::-webkit-scrollbar-thumb {
+            background: rgba(140,140,140,0.38);
+            border-radius: 999px;
+            border: 2px solid transparent; /* 让 thumb 更细更圆润 */
+            background-clip: padding-box;
+        }
+        *::-webkit-scrollbar-thumb:hover {
+            background: rgba(140,140,140,0.55);
+            background-clip: padding-box;
+        }
+        *::-webkit-scrollbar-corner {
+            background: transparent;
+        }
+
         /* 顶部菜单栏 */
         .top-menu-bar {
             background: #ffffff;
@@ -490,14 +516,14 @@
                 enabled: true,
                 children: [
                     { name: '患者列表', enabled: true, url: '患者列表.html' },
-                    { name: '患者登记', enabled: true, url: '' }
+                    { name: '患者登记', enabled: true, url: '患者登记.html' }
                 ]
             },
             {
                 name: '定位管理',
                 enabled: true,
                 children: [
-                    { name: 'CT预约', enabled: true, url: '' },
+                    { name: 'CT预约', enabled: true, url: 'CT预约.html' },
                     { name: 'CT排队叫号', enabled: true, url: 'CT排队叫号.html' }
                 ]
             },
@@ -531,7 +557,7 @@
                 name: '治疗管理',
                 enabled: true,
                 children: [
-                    { name: '治疗预约', enabled: true, url: '' },
+                    { name: '治疗预约', enabled: true, url: '治疗预约.html' },
                     { name: '排队叫号', enabled: true, url: '治疗排队叫号.html' },
                     { name: '治疗执行', enabled: true, url: '' }
                 ]
@@ -568,7 +594,7 @@
                 enabled: true,
                 children: [
                     { name: '流程设置', enabled: true, url: '流程设置.html' },
-                    { name: '表单管理', enabled: true, url: '' },
+                    { name: '表单管理', enabled: true, url: '表单管理.html' },
                     { name: '菜单管理', enabled: true, url: '菜单管理.html' },
                     { name: '任务分配设置', enabled: true, url: '' },
                     { name: '机房设置', enabled: true, url: '' },
@@ -668,7 +694,7 @@
                     e.stopPropagation();
                     if (disabled) return;
                     loadPageContent(it.url);
-                    // 更新左侧 active：仅当菜单栏处于展开态才高亮；收起态仅加载内容
+                    // loadPageContent 内部已调用 updateActiveMenuItem，无需额外处理
                     closePopover();
                 });
                 pop.appendChild(row);
@@ -792,7 +818,7 @@
                             if (disabled) return;
                             loadPageContent(parent.url);
                         },
-                        { className: `is-parent${disabled ? ' disabled' : ''}`, disabled }
+                        { className: `is-parent${disabled ? ' disabled' : ''}`, disabled, url: parent.url }
                     );
                     if (!disabled) visibleTargets.push({ el, url: parent.url });
                 }
@@ -807,7 +833,7 @@
                             if (disabled) return;
                             loadPageContent(child.url);
                         },
-                        { className: `is-child${disabled ? ' disabled' : ''}`, disabled }
+                        { className: `is-child${disabled ? ' disabled' : ''}`, disabled, url: child.url }
                     );
                     if (!disabled) visibleTargets.push({ el, url: child.url });
                 });
@@ -992,6 +1018,10 @@
             if (opts.className) {
                 opts.className.split(' ').filter(Boolean).forEach(cls => menuItem.classList.add(cls));
             }
+            // 存储 URL，用于根据 URL 激活菜单项
+            if (opts.url) {
+                menuItem.setAttribute('data-url', opts.url);
+            }
             if (opts.active) {
                 menuItem.classList.add('active');
             }
@@ -1066,7 +1096,48 @@
         function loadPageContent(url) {
             const frame = document.getElementById('contentFrame');
             if (!frame) return;
+            
+            // 更新左侧菜单的选中状态
+            updateActiveMenuItem(url);
+            
             frame.src = url;
+        }
+
+        // 根据 URL 更新左侧菜单的选中状态
+        function updateActiveMenuItem(url) {
+            if (!url) return;
+            
+            // 移除所有菜单项的 active 状态
+            document.querySelectorAll('.sidebar-menu-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // 查找匹配的菜单项
+            // 支持完整路径和文件名匹配
+            const urlParts = url.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            const menuItems = document.querySelectorAll('.sidebar-menu-item[data-url]');
+            
+            for (const item of menuItems) {
+                const itemUrl = item.getAttribute('data-url');
+                if (!itemUrl) continue;
+                
+                // 完全匹配或文件名匹配
+                if (itemUrl === url || itemUrl.endsWith(fileName)) {
+                    item.classList.add('active');
+                    // 确保父级分组展开
+                    const group = item.closest('.sidebar-group');
+                    if (group) {
+                        const childrenEl = group.querySelector('.sidebar-children');
+                        const headerEl = group.querySelector('.sidebar-group-header');
+                        if (childrenEl && childrenEl.classList.contains('collapsed')) {
+                            childrenEl.classList.remove('collapsed');
+                            if (headerEl) headerEl.classList.remove('collapsed');
+                        }
+                    }
+                    break;
+                }
+            }
         }
 
         // 对外暴露：允许内容页（如患者列表）请求在框架内容区打开指定页面
@@ -1110,6 +1181,28 @@
                     if (!w || !d) return;
 
                     const isExternal = (href) => /^(https?:|mailto:|tel:|javascript:)/i.test(String(href || ''));
+
+                    // 注入：让内容页滚动条也统一更细（避免逐个页面改样式）
+                    try {
+                        if (!d.getElementById('__mria_scrollbar_style__')) {
+                            const st = d.createElement('style');
+                            st.id = '__mria_scrollbar_style__';
+                            st.textContent = `
+                                *{ scrollbar-width: thin; scrollbar-color: rgba(140,140,140,0.55) rgba(0,0,0,0); }
+                                *::-webkit-scrollbar{ width:8px; height:8px; }
+                                *::-webkit-scrollbar-track{ background: transparent; }
+                                *::-webkit-scrollbar-thumb{
+                                    background: rgba(140,140,140,0.38);
+                                    border-radius: 999px;
+                                    border: 2px solid transparent;
+                                    background-clip: padding-box;
+                                }
+                                *::-webkit-scrollbar-thumb:hover{ background: rgba(140,140,140,0.55); background-clip: padding-box; }
+                                *::-webkit-scrollbar-corner{ background: transparent; }
+                            `;
+                            d.head.appendChild(st);
+                        }
+                    } catch (e) {}
 
                     // 覆盖 iframe 内 window.open：内部链接改为在内容区打开；外部链接仍新开
                     try {

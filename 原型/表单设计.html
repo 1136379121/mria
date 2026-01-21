@@ -1,0 +1,1300 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>表单设计 - 放射治疗信息系统（原型）</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background:#f5f5f5;
+      color:#1f1f1f;
+      overflow:hidden; /* 三栏内部滚动 */
+    }
+
+    :root{
+      --primary:#1890ff;
+      --border:#e8e8e8;
+      --muted:#8c8c8c;
+      --shadow: 0 2px 8px rgba(0,0,0,.06);
+      --panel-bg:#fff;
+    }
+
+    .app{
+      height:100%;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    /* 顶部栏 */
+    .topbar{
+      height:56px;
+      background:var(--panel-bg);
+      border-bottom:1px solid var(--border);
+      box-shadow: var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 16px;
+      gap:12px;
+      flex:0 0 auto;
+    }
+    .top-left{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      min-width:0;
+    }
+    .back{
+      width:34px;
+      height:34px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      border-radius:8px;
+      cursor:pointer;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      color:#666;
+    }
+    .back:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+    .form-title{
+      font-weight:700;
+      font-size:16px;
+      color:#333;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 52vw;
+    }
+    .top-actions{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex:0 0 auto;
+    }
+    .btn{
+      height:32px;
+      padding:0 12px;
+      border-radius:8px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size:14px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.primary{
+      background: var(--primary);
+      border-color: var(--primary);
+      color:#fff;
+    }
+    .btn.primary:hover{ background:#40a9ff; border-color:#40a9ff; color:#fff; }
+    .btn.sub{
+      background:#f5f5f5;
+      border-color:#f0f0f0;
+      color:#555;
+    }
+    .btn.sub:hover{ border-color:#d9d9d9; color:#333; }
+
+    /* 主体三栏 */
+    .main{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      gap:10px;
+      padding:10px;
+    }
+
+    .panel{
+      background:var(--panel-bg);
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius:10px;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      overflow:hidden;
+    }
+
+    /* 左侧：控件库 */
+    .left{
+      width:280px;
+      flex:0 0 280px;
+    }
+    .tabs{
+      display:flex;
+      gap:0;
+      border-bottom:1px solid #f0f0f0;
+      padding:0 10px;
+      height:44px;
+      align-items:flex-end;
+      background:#fff;
+      flex:0 0 auto;
+    }
+    .tab{
+      padding:10px 12px;
+      font-size:14px;
+      color:#666;
+      cursor:pointer;
+      border-bottom:2px solid transparent;
+      user-select:none;
+    }
+    .tab.active{
+      color:var(--primary);
+      border-bottom-color:var(--primary);
+      font-weight:600;
+    }
+    .left-body{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding:10px 12px 14px 12px;
+    }
+    .group-title{
+      font-size:13px;
+      color:#333;
+      font-weight:700;
+      margin:10px 0 8px 0;
+    }
+    .pill-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    .pill{
+      border:1px dashed #d9d9d9;
+      background:#fff;
+      border-radius:10px;
+      padding:10px 10px;
+      font-size:13px;
+      color:#333;
+      cursor:grab;
+      user-select:none;
+      text-align:center;
+    }
+    .pill:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+    .pill.selected{
+      border-style: solid;
+      border-color: var(--primary);
+      background:#e6f7ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .pill.disabled{
+      cursor:not-allowed;
+      opacity:.55;
+      background:#fafafa;
+    }
+    .pill.disabled:hover{ border-color:#d9d9d9; color:#333; background:#fafafa; }
+
+    .link-search{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+    .link-search input{
+      flex:1 1 auto;
+      height:32px;
+      border:1px solid #d9d9d9;
+      border-radius:8px;
+      padding:0 10px;
+      outline:none;
+      font-size:14px;
+    }
+    .link-search input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.18);
+    }
+    .link-item{
+      width:100%;
+      text-align:left;
+      border:1px solid #f0f0f0;
+      background:#fff;
+      border-radius:10px;
+      padding:10px 10px;
+      cursor:pointer;
+      font-size:13px;
+      color:#333;
+      margin-bottom:10px;
+    }
+    .link-item:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+
+    /* 中间：画布 */
+    .center{
+      flex:1 1 auto;
+      min-width:0;
+    }
+    .canvas-wrap{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      background: linear-gradient(#f7f7f7, #f7f7f7) padding-box;
+      padding:14px;
+    }
+
+    /* 拖拽投放提示（原型） */
+    .drop-hint{
+      border: 1px dashed #cbd5e1;
+      background: #f8fafc;
+      color:#64748b;
+      border-radius:12px;
+      padding:12px;
+      font-size:13px;
+      margin-bottom:12px;
+    }
+    .drop-hint.active{
+      border-color: var(--primary);
+      background:#f0f7ff;
+      color:#1677ff;
+      box-shadow: 0 0 0 2px rgba(24,144,255,.14);
+    }
+    .paper{
+      width:min(980px, 100%);
+      margin:0 auto;
+      background:#fff;
+      border:1px solid #eaeaea;
+      border-radius:10px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      padding:16px;
+    }
+    .paper-head{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      align-items:center;
+    }
+    .img-ph{
+      height:72px;
+      border:1px dashed #d9d9d9;
+      border-radius:10px;
+      background: repeating-linear-gradient(
+        45deg,
+        #fafafa,
+        #fafafa 8px,
+        #f5f5f5 8px,
+        #f5f5f5 16px
+      );
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#999;
+      font-size:12px;
+    }
+    .paper-title{
+      margin:12px 0 6px 0;
+      text-align:center;
+      font-weight:800;
+      font-size:22px;
+      color:#111;
+      letter-spacing:1px;
+    }
+
+    .section{
+      margin-top:14px;
+      border:1px solid #f0f0f0;
+      border-radius:10px;
+      overflow:hidden;
+    }
+    .section-hd{
+      padding:10px 12px;
+      background:#fafafa;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+    }
+    .section-title{
+      font-weight:700;
+      font-size:14px;
+      color:#333;
+    }
+    .section-bd{
+      padding:12px;
+    }
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap:12px;
+    }
+    .field{
+      border:1px solid #f0f0f0;
+      border-radius:10px;
+      padding:10px 10px;
+      background:#fff;
+      cursor:pointer;
+      min-width:0;
+      position: relative;
+      /* 设计态：为顶部“手柄/标签”留空间 */
+      padding-top: 30px;
+    }
+    /* 画布中直接展示设计态（偏“编辑器”观感） */
+    .field{
+      border: 1px dashed #d9d9d9;
+      background:#fafafa;
+    }
+    .field:hover{ border-color: #69c0ff; background:#f0f7ff; }
+    .field.active{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.16);
+    }
+    .field::before{
+      content:"≡";
+      position:absolute;
+      top:8px;
+      left:10px;
+      width:18px;
+      height:18px;
+      border-radius:6px;
+      border:1px solid #e6e6e6;
+      background:#fff;
+      color:#999;
+      font-size:12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      line-height:1;
+    }
+    /* 画布中的控件：不显示“设计态”标识（按需求） */
+    .label{
+      font-size:12px;
+      color:#555;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+    }
+    .req{
+      color:#ff4d4f;
+      font-weight:700;
+    }
+    .ctrl{
+      height:32px;
+      border:1px solid #d9d9d9;
+      border-radius:8px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      padding:0 10px;
+      color:#bfbfbf;
+      font-size:13px;
+      overflow:hidden;
+      white-space:nowrap;
+      text-overflow:ellipsis;
+    }
+
+    .big-field{ grid-column: span 3; }
+
+    /* 右侧：属性 */
+    .right{
+      width:340px;
+      flex:0 0 340px;
+    }
+    .prop-hd{
+      height:44px;
+      padding:0 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      border-bottom:1px solid #f0f0f0;
+      flex:0 0 auto;
+    }
+    .prop-hd strong{ font-size:14px; color:#333; }
+    .prop-body{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding:12px;
+    }
+    .kv{
+      display:grid;
+      grid-template-columns: 92px 1fr;
+      gap:10px 10px;
+      align-items:center;
+    }
+    .k{
+      font-size:13px;
+      color:#666;
+    }
+    .v input, .v select{
+      width:100%;
+      height:32px;
+      border:1px solid #d9d9d9;
+      border-radius:8px;
+      padding:0 10px;
+      font-size:14px;
+      outline:none;
+      background:#fff;
+    }
+    .v input[disabled]{
+      background:#fafafa;
+      color:#999;
+      cursor:not-allowed;
+    }
+    .v input:focus, .v select:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.18);
+    }
+
+    .prop-empty{
+      border: 1px dashed #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+      padding: 14px;
+      color: #999;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .prop-lock-tip{
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid #ffe58f;
+      background: #fffbe6;
+      color: #ad6800;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+    .hint{
+      margin-top:10px;
+      font-size:12px;
+      color:#999;
+      line-height:1.6;
+    }
+
+    /* 画布旁“应用态浮窗”（仅用于开发/测试对比） */
+    .runtime-popover{
+      position: fixed;
+      width: 300px;
+      background:#fff;
+      border:1px solid #ffd6d6;
+      border-radius:12px;
+      box-shadow: 0 16px 50px rgba(0,0,0,.18);
+      z-index: 10000;
+      overflow:hidden;
+      display:none;
+    }
+    .runtime-popover.show{ display:block; }
+    .runtime-popover .hd{
+      padding:10px 12px;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:#fff5f5;
+    }
+    .runtime-popover .hd strong{
+      font-size:13px;
+      color:#cf1322; /* 红字标注 */
+      font-weight:800;
+    }
+    .runtime-popover .hd button{
+      height:28px;
+      padding:0 10px;
+      border-radius:8px;
+      border:1px solid #ffccc7;
+      background:#fff;
+      color:#cf1322;
+      cursor:pointer;
+      font-size:13px;
+    }
+    .runtime-popover .bd{
+      padding:12px;
+    }
+    .runtime-popover .bd .rt-label{
+      font-size:12px;
+      color:#555;
+      display:flex;
+      align-items:center;
+      gap:6px;
+      margin-bottom:8px;
+    }
+    .runtime-popover .bd .rt-ctrl{
+      width:100%;
+      height:32px;
+      border:1px solid #d9d9d9;
+      border-radius:8px;
+      padding:0 10px;
+      font-size:13px;
+      display:flex;
+      align-items:center;
+      background:#fff;
+    }
+    .runtime-popover .bd .rt-ctrl.placeholder{ color:#bfbfbf; }
+    .runtime-popover .bd .rt-ctrl.textarea{
+      height:auto;
+      min-height:72px;
+      padding:10px;
+      align-items:flex-start;
+      white-space:pre-wrap;
+      color:#bfbfbf;
+    }
+    .runtime-popover .ft{
+      padding:10px 12px;
+      border-top:1px solid #f0f0f0;
+      color:#cf1322; /* 红字提示 */
+      font-size:12px;
+      line-height:1.5;
+      background:#fff;
+    }
+
+    /* toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      top:18px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.75);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:13px;
+      display:none;
+      z-index:9999;
+      max-width: 70vw;
+      text-align:center;
+    }
+    .toast.show{ display:block; }
+
+    /* 预览 modal（原型） */
+    .mask{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:9998;
+    }
+    .mask.show{ display:flex; }
+    .dialog{
+      width:min(980px, 100%);
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow: 0 16px 50px rgba(0,0,0,.22);
+      display:flex;
+      flex-direction:column;
+      max-height: 90vh;
+    }
+    .dialog-hd{
+      padding:12px 14px;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .dialog-bd{
+      padding:12px;
+      overflow:auto;
+      background:#f5f5f5;
+    }
+    .dialog-ft{
+      padding:12px 14px;
+      border-top:1px solid #f0f0f0;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="top-left">
+        <button class="back" id="btnBack" title="返回">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M15 6 9 12l6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+        <div class="form-title" id="formTitle">表单设计</div>
+      </div>
+      <div class="top-actions">
+        <button class="btn sub" id="btnPreview">打印预览</button>
+        <button class="btn sub" id="btnClear">清空</button>
+        <button class="btn primary" id="btnSave">保存</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- 左侧：控件库 / 关联表单 -->
+      <div class="panel left">
+        <div class="tabs">
+          <div class="tab active" data-tab="lib">控件库</div>
+          <div class="tab" data-tab="link">关联表单</div>
+        </div>
+        <div class="left-body" id="leftLib">
+          <div class="group-title">布局控件</div>
+          <div class="pill-grid">
+            <div class="pill" data-insert="container">容器</div>
+            <div class="pill" data-insert="placeholder">占位</div>
+          </div>
+
+          <div class="group-title">基础控件</div>
+          <div class="pill-grid">
+            <div class="pill" data-insert="input">单行输入框</div>
+            <div class="pill" data-insert="textarea">多行输入框</div>
+            <div class="pill" data-insert="number">数字输入框</div>
+            <div class="pill" data-insert="select">下拉单选</div>
+            <div class="pill" data-insert="multi">下拉多选</div>
+            <div class="pill" data-insert="date">日期</div>
+            <div class="pill" data-insert="date">出院日期</div>
+            <div class="pill" data-insert="text">自定义文本</div>
+            <div class="pill" data-insert="table">表格</div>
+            <div class="pill" data-insert="list">列表</div>
+            <div class="pill" data-insert="file">普通附件</div>
+            <div class="pill" data-insert="dicom">Dicom附件</div>
+            <div class="pill" data-insert="formula">计算公式</div>
+            <div class="pill" data-insert="area">省市区</div>
+            <div class="pill" data-insert="image">图片</div>
+            <div class="pill" data-insert="checkbox">复选框</div>
+            <div class="pill" data-insert="unit">单位</div>
+          </div>
+
+          <div class="group-title">预置控件</div>
+          <div class="pill-grid">
+            <div class="pill disabled" title="内置控件（演示禁用）">主管医生/组</div>
+            <div class="pill" data-insert="doctor">主诊医生</div>
+            <div class="pill" data-insert="physicist">计划物理师/组</div>
+            <div class="pill" data-insert="approver">审批物理师/组</div>
+            <div class="pill disabled" title="内置控件（演示禁用）">定位机器</div>
+            <div class="pill" data-insert="machine">治疗机器</div>
+          </div>
+          <div class="hint">原型说明：支持“拖拽添加（简化版）”。将控件拖入画布底部“新增控件”区域后，点击该控件可在右侧查看“设计态/应用态”预览。</div>
+        </div>
+
+        <div class="left-body" id="leftLink" style="display:none;">
+          <div class="link-search">
+            <input id="linkKeyword" placeholder="表单名称" />
+            <button class="btn" id="btnLinkSearch">搜索</button>
+          </div>
+          <button class="link-item">计划申请-test</button>
+          <button class="link-item">外照射流程--计划申请</button>
+          <button class="link-item">长海-test</button>
+          <button class="link-item">上海长海医院患者告知书 患者告知书</button>
+          <button class="link-item">放疗小结</button>
+          <button class="link-item">SJ流程--定位申请</button>
+          <button class="link-item">test23</button>
+          <div class="hint">说明：点击条目仅做占位提示；真实系统中用于插入“引用/关联字段”。</div>
+        </div>
+      </div>
+
+      <!-- 中间：画布 -->
+      <div class="panel center">
+        <div class="canvas-wrap" id="canvasWrap">
+          <div class="paper" id="paper">
+            <div class="paper-head">
+              <div class="img-ph">图片占位（左）</div>
+              <div class="img-ph">图片占位（右）</div>
+            </div>
+            <div class="paper-title" id="paperTitle">定位执行单</div>
+
+            <div class="section" data-section="basic">
+              <div class="section-hd">
+                <div class="section-title">基本信息</div>
+                <span style="font-size:12px;color:#999;">（示例分组）</span>
+              </div>
+              <div class="section-bd">
+                <div class="grid">
+                  <div class="field" data-id="name" data-type="input" data-required="true" data-label="姓名" data-placeholder="请输入">
+                    <div class="label"><span class="req">*</span><span>姓名</span></div>
+                    <div class="ctrl">请输入</div>
+                  </div>
+                  <div class="field" data-id="gender" data-type="select" data-required="true" data-label="性别" data-placeholder="请选择">
+                    <div class="label"><span class="req">*</span><span>性别</span></div>
+                    <div class="ctrl">请选择</div>
+                  </div>
+                  <div class="field" data-id="age" data-type="number" data-required="false" data-label="年龄（岁）" data-placeholder="">
+                    <div class="label"><span>年龄（岁）</span></div>
+                    <div class="ctrl">—</div>
+                  </div>
+                  <div class="field" data-id="mrn" data-type="input" data-required="true" data-label="病案号" data-placeholder="HIS">
+                    <div class="label"><span class="req">*</span><span>病案号</span></div>
+                    <div class="ctrl">HIS</div>
+                  </div>
+                  <div class="field" data-id="rtNo" data-type="input" data-required="false" data-label="放疗号" data-placeholder="">
+                    <div class="label"><span>放疗号</span></div>
+                    <div class="ctrl">—</div>
+                  </div>
+                  <div class="field" data-id="doctorGroup" data-type="cascader" data-required="true" data-label="主管医生/组" data-placeholder="请选择">
+                    <div class="label"><span class="req">*</span><span>主管医生/组</span></div>
+                    <div class="ctrl">请选择</div>
+                  </div>
+                  <div class="field" data-id="phone" data-type="input" data-required="true" data-label="患者电话" data-placeholder="请输入">
+                    <div class="label"><span class="req">*</span><span>患者电话</span></div>
+                    <div class="ctrl">请输入</div>
+                  </div>
+                  <div class="field" data-id="contact" data-type="input" data-required="false" data-label="联系人姓名" data-placeholder="">
+                    <div class="label"><span>联系人姓名</span></div>
+                    <div class="ctrl">—</div>
+                  </div>
+                  <div class="field" data-id="diag" data-type="select" data-required="false" data-label="诊断及分期" data-placeholder="请选择">
+                    <div class="label"><span>诊断及分期</span></div>
+                    <div class="ctrl">请选择</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section" data-section="exec">
+              <div class="section-hd">
+                <div class="section-title">执行信息</div>
+              </div>
+              <div class="section-bd">
+                <div class="grid">
+                  <div class="field" data-id="machine" data-type="select" data-required="false" data-label="定位机器" data-placeholder="请选择">
+                    <div class="label"><span>定位机器</span></div>
+                    <div class="ctrl">请选择</div>
+                  </div>
+                  <div class="field big-field" data-id="remark" data-type="textarea" data-required="false" data-label="定位备注" data-placeholder="请输入">
+                    <div class="label"><span>定位备注</span></div>
+                    <div class="ctrl">请输入（多行）</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="section" data-section="custom">
+              <div class="section-hd">
+                <div class="section-title">新增控件</div>
+                <span style="font-size:12px;color:#999;">（从左侧拖入）</span>
+              </div>
+              <div class="section-bd">
+                <div class="drop-hint" id="dropHint">将左侧控件拖拽到此处（原型：拖入后点击控件可查看双态预览）</div>
+                <div class="grid" id="customGrid"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 右侧：属性面板 -->
+      <div class="panel right">
+        <div class="prop-hd">
+          <strong id="propTitle">属性设置</strong>
+          <button class="btn" id="btnResetProp">清除选择</button>
+        </div>
+        <div class="prop-body">
+          <div class="prop-empty" id="propEmpty">
+            属性面板默认不显示任何字段。<br/>
+            当用户在 <b>控件库</b> 或 <b>画布</b> 上点击组件时，才展示该组件可配置的属性项。<br/>
+            <span style="color:#cf1322;">提示：画布旁“应用态浮窗”仅用于开发/测试对比，不是系统实际功能。</span>
+          </div>
+
+          <div class="kv" id="propKv" style="display:none;">
+            <div class="k">组件名称</div>
+            <div class="v"><input id="pCompName" disabled /></div>
+
+            <div class="k">标题</div>
+            <div class="v"><input id="pTitle" placeholder="可修改，默认与组件名称一致" /></div>
+
+            <div class="k" id="kReq">是否必填</div>
+            <div class="v" id="vReq">
+              <select id="pReq">
+                <option value="false">否</option>
+                <option value="true">是</option>
+              </select>
+            </div>
+
+            <div class="k" id="kPh">占位提示</div>
+            <div class="v" id="vPh"><input id="pPh" /></div>
+          </div>
+
+          <div class="prop-lock-tip" id="propLockTip" style="display:none;">
+            当前选中的是 <b>控件库组件</b>：仅用于查看默认属性。<br/>
+            <span style="color:#cf1322;font-weight:700;">请先拖入画布</span>，再编辑该控件实例的属性（标题/必填/占位等）。
+          </div>
+
+          <div class="hint">
+            - 点击控件库/画布组件后，右侧展示该组件可配置属性（不同组件可配置属性由 PM 定义）。<br/>
+            - 点击画布字段会在字段旁弹出“应用态浮窗”（红字标注），仅用于开发/测试对比说明。<br/>
+            - “保存/清空/打印预览”仅演示交互，不涉及真实存储与渲染引擎。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="runtime-popover" id="runtimePopover" role="dialog" aria-modal="false">
+    <div class="hd">
+      <strong>应用态（仅用于开发/测试对比）</strong>
+      <button type="button" id="btnRtClose">关闭</button>
+    </div>
+    <div class="bd" id="rtBody"></div>
+    <div class="ft">说明：此浮窗用于展示控件在“实际表单应用时”的显示效果，不代表系统真实功能入口。</div>
+  </div>
+
+  <div class="mask" id="mask">
+    <div class="dialog" role="dialog" aria-modal="true">
+      <div class="dialog-hd">
+        <strong>打印预览（原型）</strong>
+        <button class="btn" id="btnClosePreview">关闭</button>
+      </div>
+      <div class="dialog-bd" id="previewBody"></div>
+      <div class="dialog-ft">
+        <button class="btn" id="btnPreviewCancel">关闭</button>
+        <button class="btn primary" id="btnPreviewOk">打印</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = String(msg || '');
+      el.classList.add('show');
+      window.clearTimeout(toast._t);
+      toast._t = window.setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    function getQuery() {
+      const q = {};
+      const u = new URL(window.location.href);
+      u.searchParams.forEach((v, k) => q[k] = v);
+      return q;
+    }
+
+    const q = getQuery();
+    const formName = q.name ? decodeURIComponent(q.name) : 'SJ--定位执行';
+    const formCode = q.code ? decodeURIComponent(q.code) : 'FORMXXXX';
+    document.getElementById('formTitle').textContent = formName;
+
+    // tabs
+    document.querySelectorAll('.tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        const key = t.getAttribute('data-tab');
+        document.getElementById('leftLib').style.display = key === 'lib' ? '' : 'none';
+        document.getElementById('leftLink').style.display = key === 'link' ? '' : 'none';
+      });
+    });
+
+    // 属性面板：默认空白，选中组件后才展示
+    function setPropVisible(visible) {
+      const empty = document.getElementById('propEmpty');
+      const kv = document.getElementById('propKv');
+      if (visible) {
+        empty.style.display = 'none';
+        kv.style.display = '';
+      } else {
+        empty.style.display = '';
+        kv.style.display = 'none';
+      }
+    }
+
+    // 仅作为原型示例：部分控件支持“必填/占位”
+    function supportsReqPh(type) {
+      const t = String(type || '');
+      return ['input','textarea','number','select','multi','date','cascader'].includes(t);
+    }
+    function updateReqPhVisibility(type) {
+      const show = supportsReqPh(type);
+      document.getElementById('kReq').style.display = show ? '' : 'none';
+      document.getElementById('vReq').style.display = show ? '' : 'none';
+      document.getElementById('kPh').style.display = show ? '' : 'none';
+      document.getElementById('vPh').style.display = show ? '' : 'none';
+    }
+
+    // 组件库选择：仅展示默认属性（不可编辑）
+    let currentSelection = null; // { source:'library'|'canvas', ... }
+
+    function setPropEditable(editable) {
+      const lockTip = document.getElementById('propLockTip');
+      const title = document.getElementById('pTitle');
+      const req = document.getElementById('pReq');
+      const ph = document.getElementById('pPh');
+      // “组件名称”始终不可编辑；标题/必填/占位根据来源控制
+      title.disabled = !editable;
+      req.disabled = !editable;
+      ph.disabled = !editable;
+      lockTip.style.display = editable ? 'none' : '';
+    }
+
+    function selectLibraryComponent(pillEl) {
+      document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
+      pillEl.classList.add('selected');
+      closeRuntimePopover();
+
+      const type = pillEl.getAttribute('data-insert') || 'input';
+      const componentName = (pillEl.textContent || '').trim() || '未命名组件';
+      const title = componentName; // 默认与组件名称一致（控件库不可编辑）
+      const req = false;
+      const ph =
+        (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date') ? '请选择'
+        : (type === 'number') ? '请输入数字'
+        : (type === 'textarea') ? '请输入（多行）'
+        : '请输入';
+
+      document.getElementById('propTitle').textContent = `属性设置：${componentName}`;
+      setPropVisible(true);
+      document.getElementById('pCompName').value = componentName;
+      document.getElementById('pTitle').value = title;
+      updateReqPhVisibility(type);
+      if (supportsReqPh(type)) {
+        document.getElementById('pReq').value = req ? 'true' : 'false';
+        document.getElementById('pPh').value = ph;
+      }
+      currentSelection = { source: 'library', type, componentName };
+      setPropEditable(false);
+    }
+
+    // left actions（点击=选择显示属性，拖拽=添加到画布）
+    document.querySelectorAll('.pill').forEach(p => {
+      if (p.classList.contains('disabled')) return;
+      // 允许从控件库拖拽到画布（原型简化）
+      p.setAttribute('draggable', 'true');
+      p.addEventListener('dragstart', (e) => {
+        try {
+          const componentName = (p.textContent || '').trim() || '未命名控件';
+          const payload = {
+            type: p.getAttribute('data-insert') || 'input',
+            componentName
+          };
+          e.dataTransfer.effectAllowed = 'copy';
+          e.dataTransfer.setData('text/plain', JSON.stringify(payload));
+        } catch (err) {}
+      });
+      p.addEventListener('click', () => {
+        selectLibraryComponent(p);
+      });
+    });
+    document.getElementById('btnLinkSearch').addEventListener('click', () => toast('原型占位：搜索关联表单'));
+    document.querySelectorAll('.link-item').forEach(b => b.addEventListener('click', () => toast(`原型占位：关联表单「${b.textContent.trim()}」`)));
+
+    // selection + props
+    let activeField = null;
+    let customIdSeed = 0;
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // 画布旁“应用态浮窗”（用于对比展示，不是系统真实功能）
+    const rt = {
+      el: document.getElementById('runtimePopover'),
+      body: document.getElementById('rtBody'),
+      btnClose: document.getElementById('btnRtClose')
+    };
+
+    function runtimeCtrlText(type, ph) {
+      if (type === 'textarea') return ph || '请输入（多行）';
+      if (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date') return ph || '请选择';
+      if (type === 'number') return ph || '请输入数字';
+      return ph || '请输入';
+    }
+
+    function renderRuntimePopover(f) {
+      if (!f) return;
+      const label = f.getAttribute('data-label') || '';
+      const type = f.getAttribute('data-type') || 'input';
+      const req = (f.getAttribute('data-required') || 'false') === 'true';
+      const ph = f.getAttribute('data-placeholder') || '';
+
+      const safeLabel = escapeHtml(label);
+      const safePh = escapeHtml(ph);
+      const reqHtml = req ? '<span class="req">*</span>' : '';
+      const ctrlText = escapeHtml(runtimeCtrlText(type, ph));
+
+      const ctrlClass = type === 'textarea' ? 'rt-ctrl textarea' : 'rt-ctrl placeholder';
+
+      rt.body.innerHTML = `
+        <div class="rt-label">${reqHtml}<span>${safeLabel || '字段标题'}</span></div>
+        <div class="${ctrlClass}">${ctrlText}</div>
+        <div style="margin-top:8px;color:#999;font-size:12px;line-height:1.5;">
+          ${req ? '校验：必填（提交/保存时提示）' : '校验：非必填'}；展示为“实际表单应用态”示意
+        </div>
+      `;
+    }
+
+    function positionRuntimePopover(anchorEl) {
+      if (!anchorEl) return;
+      const rect = anchorEl.getBoundingClientRect();
+      const pop = rt.el;
+      pop.classList.add('show');
+
+      // 先让其可测量
+      const w = pop.offsetWidth || 300;
+      const h = pop.offsetHeight || 180;
+      const gap = 10;
+
+      let left = rect.right + gap;
+      let top = rect.top;
+
+      // 右侧放不下则放左侧
+      if (left + w + 10 > window.innerWidth) {
+        left = rect.left - w - gap;
+      }
+      // 仍放不下则贴边
+      left = Math.max(10, Math.min(left, window.innerWidth - w - 10));
+      // 下方溢出则上移
+      top = Math.max(10, Math.min(top, window.innerHeight - h - 10));
+
+      pop.style.left = `${left}px`;
+      pop.style.top = `${top}px`;
+    }
+
+    function openRuntimePopoverForField(f) {
+      renderRuntimePopover(f);
+      positionRuntimePopover(f);
+    }
+
+    function closeRuntimePopover() {
+      rt.el.classList.remove('show');
+    }
+
+    function makeFieldElement({ id, type, label, required, placeholder, added }) {
+      const el = document.createElement('div');
+      el.className = 'field';
+      el.setAttribute('data-id', id || '');
+      el.setAttribute('data-type', type || 'input');
+      el.setAttribute('data-required', required ? 'true' : 'false');
+      // data-component-name：组件名称（设计时确定，不允许修改）；data-label：标题（可修改）
+      el.setAttribute('data-component-name', label || '字段');
+      el.setAttribute('data-label', label || '字段');
+      el.setAttribute('data-placeholder', placeholder || '');
+      el.setAttribute('data-added', added ? 'true' : 'false');
+      if (type === 'textarea') el.classList.add('big-field');
+      el.innerHTML = `
+        <div class="label">${required ? '<span class="req">*</span>' : ''}<span>${escapeHtml(label || '字段')}</span></div>
+        <div class="ctrl">${escapeHtml(placeholder || (type === 'select' || type === 'multi' || type === 'cascader' ? '请选择' : (type === 'number' ? '请输入数字' : '请输入')))}</div>
+      `;
+      return el;
+    }
+
+    function addFieldFromLibrary(payload) {
+      const grid = document.getElementById('customGrid');
+      const hint = document.getElementById('dropHint');
+      const type = payload?.type || 'input';
+      const componentName = payload?.componentName || payload?.label || '未命名控件';
+      const title = componentName; // 拖入后默认标题=组件名称（可在画布实例中修改）
+      const id = `custom_${Date.now()}_${++customIdSeed}`;
+      const required = false;
+      const placeholder =
+        (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date') ? '请选择'
+          : (type === 'number') ? '请输入数字'
+          : (type === 'textarea') ? '请输入（多行）'
+          : '请输入';
+
+      const fieldEl = makeFieldElement({ id, type, label: title, required, placeholder, added: true });
+      fieldEl.setAttribute('data-component-name', componentName);
+      grid.appendChild(fieldEl);
+
+      // 视觉反馈：有内容后弱化提示
+      if (grid.children.length > 0) {
+        hint.textContent = '提示：可继续拖入控件；点击“新拖入控件”可查看右侧双态预览';
+      }
+      // 自动选中新加入控件
+      selectField(fieldEl);
+      toast(`已添加控件：${componentName}`);
+    }
+
+    function selectField(f) {
+      document.querySelectorAll('.field').forEach(x => x.classList.remove('active'));
+      f.classList.add('active');
+      activeField = f;
+      syncPropFromField(f);
+      // 点击组件时：浮窗展示“应用态”（红字标注，仅用于开发/测试对比）
+      openRuntimePopoverForField(f);
+    }
+
+    function clearActive() {
+      document.querySelectorAll('.field').forEach(f => f.classList.remove('active'));
+      activeField = null;
+      document.getElementById('pPh').value = '';
+      document.getElementById('pReq').value = 'false';
+      document.getElementById('propTitle').textContent = '属性设置';
+      closeRuntimePopover();
+      currentSelection = null;
+      document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
+      setPropVisible(false);
+    }
+
+    function syncPropFromField(f) {
+      const type = f.getAttribute('data-type') || 'input';
+      // 兼容旧数据：若未设置组件名称，则用当前标题补齐一次
+      if (!f.getAttribute('data-component-name')) {
+        const fallback = f.getAttribute('data-label') || '';
+        if (fallback) f.setAttribute('data-component-name', fallback);
+      }
+      const componentName = f.getAttribute('data-component-name') || (f.getAttribute('data-label') || '');
+      const title = f.getAttribute('data-label') || componentName;
+      const req = (f.getAttribute('data-required') || 'false') === 'true';
+      const ph = f.getAttribute('data-placeholder') || '';
+
+      document.getElementById('propTitle').textContent = `属性设置：${title || componentName || '组件'}`;
+      setPropVisible(true);
+      document.getElementById('pCompName').value = componentName || '';
+      document.getElementById('pTitle').value = title || componentName || '';
+      updateReqPhVisibility(type);
+      if (supportsReqPh(type)) {
+        document.getElementById('pReq').value = req ? 'true' : 'false';
+        document.getElementById('pPh').value = ph;
+      }
+      // 若浮窗打开，则同步更新内容（用于对比展示）
+      if (rt.el.classList.contains('show')) {
+        openRuntimePopoverForField(f);
+      }
+      currentSelection = { source: 'canvas', fieldEl: f, type, componentName };
+      setPropEditable(true);
+    }
+
+    function applyPropToSelection() {
+      // 需求：只有拖入画布后（选中画布实例）才能编辑属性
+      if (!currentSelection || currentSelection.source !== 'canvas') return;
+      // 画布组件：修改实例属性（标题/必填/占位）
+      if (currentSelection && currentSelection.source === 'canvas' && currentSelection.fieldEl) {
+        const f = currentSelection.fieldEl;
+        const type = f.getAttribute('data-type') || 'input';
+        const componentName = f.getAttribute('data-component-name') || '';
+        const title = (document.getElementById('pTitle').value || '').trim() || componentName || '未命名';
+
+        // 标题：可改
+        f.setAttribute('data-label', title);
+
+        // 可选属性（示例：必填/占位）
+        if (supportsReqPh(type)) {
+          const req = document.getElementById('pReq').value === 'true';
+          const ph = document.getElementById('pPh').value || '';
+          f.setAttribute('data-required', req ? 'true' : 'false');
+          f.setAttribute('data-placeholder', ph);
+        }
+
+        // update UI
+        const labelEl = f.querySelector('.label');
+        const ctrlEl = f.querySelector('.ctrl');
+        const req = (f.getAttribute('data-required') || 'false') === 'true';
+        const ph = f.getAttribute('data-placeholder') || '';
+        if (labelEl) {
+          labelEl.innerHTML = req ? `<span class="req">*</span><span>${escapeHtml(title)}</span>` : `<span>${escapeHtml(title)}</span>`;
+        }
+        if (ctrlEl) {
+          const t = f.getAttribute('data-type') || 'input';
+          ctrlEl.textContent = ph || (t === 'select' || t === 'multi' || t === 'cascader' || t === 'date' ? '请选择' : (t === 'number' ? '请输入数字' : (t === 'textarea' ? '请输入（多行）' : '请输入')));
+        }
+
+        // 同步浮窗（应用态对比）
+        if (rt.el.classList.contains('show')) openRuntimePopoverForField(f);
+        // 同步属性标题
+        document.getElementById('propTitle').textContent = `属性设置：${title}`;
+        return;
+      }
+    }
+
+    // 画布字段点击：使用事件委托，保证“拖入新增控件”也可被选中
+    document.getElementById('paper').addEventListener('click', (e) => {
+      const f = e.target && e.target.closest ? e.target.closest('.field') : null;
+      if (!f) return;
+      e.stopPropagation();
+      selectField(f);
+    });
+
+    // 画布投放区：拖拽添加控件（原型简化）
+    const canvasWrap = document.getElementById('canvasWrap');
+    const dropHint = document.getElementById('dropHint');
+    canvasWrap.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dropHint) dropHint.classList.add('active');
+      try { e.dataTransfer.dropEffect = 'copy'; } catch (err) {}
+    });
+    canvasWrap.addEventListener('dragleave', () => {
+      if (dropHint) dropHint.classList.remove('active');
+    });
+    canvasWrap.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (dropHint) dropHint.classList.remove('active');
+      let raw = '';
+      try { raw = e.dataTransfer.getData('text/plain') || ''; } catch (err) {}
+      if (!raw) return;
+      try {
+        const payload = JSON.parse(raw);
+        addFieldFromLibrary(payload);
+      } catch (err) {
+        // ignore
+      }
+    });
+
+    // 属性面板默认空
+    setPropVisible(false);
+
+    document.getElementById('canvasWrap').addEventListener('click', () => clearActive());
+    document.getElementById('btnResetProp').addEventListener('click', () => clearActive());
+    ['pTitle','pReq','pPh'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('change', applyPropToSelection);
+      el.addEventListener('input', () => {
+        if (id === 'pTitle' || id === 'pPh') applyPropToSelection();
+      });
+    });
+
+    // top actions
+    // 设计页是“独立页面”，不嵌入框架：返回优先使用浏览器返回
+    document.getElementById('btnBack').addEventListener('click', () => {
+      try {
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+      } catch (e) {}
+      window.location.href = '表单管理.html';
+    });
+    document.getElementById('btnSave').addEventListener('click', () => toast('已保存（原型）'));
+    document.getElementById('btnClear').addEventListener('click', () => {
+      if (!confirm('确定清空画布内容？（原型：仅清除选择与提示）')) return;
+      clearActive();
+      toast('已清空（原型）');
+    });
+
+    // preview
+    const mask = document.getElementById('mask');
+    const previewBody = document.getElementById('previewBody');
+    function openPreview() {
+      previewBody.innerHTML = '';
+      const clone = document.getElementById('paper').cloneNode(true);
+      clone.style.boxShadow = 'none';
+      clone.style.borderRadius = '0';
+      clone.style.width = '794px'; // A4 约 96dpi
+      clone.style.margin = '0 auto';
+      clone.querySelectorAll('.field').forEach(x => x.classList.remove('active'));
+      previewBody.appendChild(clone);
+      mask.classList.add('show');
+    }
+    function closePreview() { mask.classList.remove('show'); }
+    document.getElementById('btnPreview').addEventListener('click', openPreview);
+    document.getElementById('btnClosePreview').addEventListener('click', closePreview);
+    document.getElementById('btnPreviewCancel').addEventListener('click', closePreview);
+    document.getElementById('btnPreviewOk').addEventListener('click', () => { toast('原型占位：触发打印'); closePreview(); });
+    mask.addEventListener('click', (e) => { if (e.target === e.currentTarget) closePreview(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closePreview(); });
+
+    // runtime popover events（对比展示浮窗）
+    rt.el.addEventListener('click', (e) => e.stopPropagation());
+    rt.btnClose.addEventListener('click', (e) => { e.stopPropagation(); closeRuntimePopover(); });
+    window.addEventListener('resize', () => closeRuntimePopover());
+    // 画布滚动时关闭（避免定位错乱）
+    document.getElementById('canvasWrap').addEventListener('scroll', () => closeRuntimePopover(), { passive: true });
+  </script>
+</body>
+</html>
+

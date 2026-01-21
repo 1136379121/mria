@@ -5,11 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>患者列表 - 患者管理</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -18,228 +14,665 @@
             /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
             padding: 0;
             min-height: 100vh;
+            color: #1f1f1f;
         }
 
-        .container-header {
-            padding: 12px 16px;
+        .page {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            gap: 12px;
+        }
+
+        .tabs {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+        }
+
+        .tab {
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            padding: 10px 2px;
+            border-bottom: 2px solid transparent;
+            user-select: none;
+            font-weight: 600;
+        }
+
+        .tab.active {
+            color: #1677ff;
+            border-bottom-color: #1677ff;
+        }
+
+        .segmented {
+            display: inline-flex;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .segmented button {
+            border: none;
+            background: transparent;
+            padding: 7px 14px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .segmented button + button {
+            border-left: 1px solid #d9d9d9;
+        }
+
+        .segmented button.active {
+            background: #f0f6ff;
+            color: #1677ff;
+            font-weight: 600;
+        }
+
+        .stats {
+            background: #fafafa;
+            padding: 10px 16px;
             border-bottom: 1px solid #f0f0f0;
         }
 
-        .page-title {
-            font-size: 16px;
-            font-weight: 600;
+        .stats-row {
+            display: grid;
+            /* 横向平铺 + 自适应宽度：优先一行均分，空间不足则自动换行 */
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 0;
+            align-items: end;
+            overflow: hidden;
+            padding-bottom: 0;
+        }
+
+        .stat {
+            min-width: 0;
+            padding: 10px 6px;
+            text-align: center;
+            border-right: 1px solid #eaeaea;
+        }
+        .stat:last-child { border-right: none; }
+
+        .stat .num {
+            font-size: 34px;
+            font-weight: 700;
+            line-height: 1;
+            color: #46b6ff;
+        }
+
+        .stat .label {
+            margin-top: 6px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .filters {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+            flex-wrap: wrap;
+        }
+
+        .select, .input {
+            height: 34px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 10px;
+            outline: none;
+            font-size: 13px;
+            background: #fff;
             color: #333;
+        }
+
+        .select { min-width: 160px; }
+        .input { width: 260px; }
+
+        .btn {
+            height: 34px;
+            border-radius: 6px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            cursor: pointer;
+            padding: 0 10px;
+            font-size: 13px;
+            color: #333;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            user-select: none;
+        }
+        .btn:hover { border-color: #1677ff; color: #1677ff; }
+
+        .btn-primary {
+            background: #1677ff;
+            border-color: #1677ff;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #4096ff; border-color: #4096ff; color: #fff; }
+
+        .icon-btn {
+            width: 34px;
+            padding: 0;
+            justify-content: center;
+        }
+
+        .table-wrap {
+            overflow: auto;
+            flex: 1;
+            max-height: none;
+            /* 避免最后几行被右下角浮层遮挡 */
+            padding-bottom: 84px;
+            /* sticky 表头的参考滚动容器 */
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            /* sticky 表头在部分浏览器下与 collapse 冲突，改为 separate 更稳定 */
+            border-collapse: separate;
+            border-spacing: 0;
+            table-layout: fixed;
+            min-width: 1420px;
+        }
+
+        thead th {
+            background: #fafafa;
+            font-size: 13px;
+            color: #333;
+            font-weight: 700;
+            text-align: left;
+            padding: 10px 10px;
+            border-bottom: 1px solid #f0f0f0;
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            /* 让吸顶更"像 UI"，并避免与 tbody 内容交叠 */
+            box-shadow: 0 1px 0 #f0f0f0;
+        }
+
+        /* 操作列固定在右侧，不随横向滚动 */
+        thead th:last-child {
+            position: sticky;
+            right: 0;
+            z-index: 6;
+            background: #fafafa;
+            box-shadow: -2px 0 4px rgba(0, 0, 0, 0.08), 0 1px 0 #f0f0f0;
+        }
+
+        tbody td {
+            font-size: 13px;
+            color: #333;
+            padding: 10px 10px;
+            border-bottom: 1px solid #f0f0f0;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            vertical-align: middle;
         }
 
-        .patient-list-container {
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        /* 操作列固定在右侧，不随横向滚动 */
+        tbody td:last-child {
+            position: sticky;
+            right: 0;
+            z-index: 4;
+            background: #fff;
+            box-shadow: -2px 0 4px rgba(0, 0, 0, 0.08);
         }
 
-        .search-bar {
+        tbody tr:hover { background: #fafcff; }
+        tbody tr:hover td:last-child { background: #fafcff; }
+
+        .namecell {
             display: flex;
-            gap: 16px;
-            margin-bottom: 16px;
-            flex-wrap: wrap;
-            padding: 16px 16px 0 16px;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
 
-        .search-input {
-            flex: 1;
-            min-width: 200px;
-            padding: 8px 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .search-input:focus {
-            outline: none;
-            border-color: #1890ff;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-        }
-
-        .search-btn {
-            padding: 8px 24px;
-            background: #1890ff;
+        .avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #69b1ff;
             color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-        }
-
-        .search-btn:hover {
-            background: #40a9ff;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-            padding: 0 16px;
-        }
-
-        .patient-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .patient-table th,
-        .patient-table td {
-            padding: 10px 12px;
-            text-align: left;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .patient-table th {
-            background: #fafafa;
-            font-weight: 600;
-            color: #333;
-            font-size: 14px;
-        }
-
-        .patient-table td {
-            color: #666;
-            font-size: 14px;
-        }
-
-        .patient-table tbody tr:hover {
-            background: #fafafa;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
             font-size: 12px;
+            flex: 0 0 auto;
         }
 
-        .status-treating {
-            background: #e6f7ff;
-            color: #1890ff;
+        .namecell .text {
+            min-width: 0;
         }
 
-        .status-pending {
-            background: #fff7e6;
-            color: #fa8c16;
+        .namecell a {
+            color: #1677ff;
+            text-decoration: none;
         }
+        #patientTableBody a:hover { text-decoration: underline; }
 
-        .status-completed {
+        .stage {
+            display: inline-flex;
+            align-items: center;
+            height: 24px;
+            padding: 0 10px 0 28px;
+            border-radius: 999px;
+            border: 1px solid #74c69d;
+            color: #1f1f1f;
+            font-weight: 600;
+            position: relative;
             background: #f6ffed;
-            color: #52c41a;
+            max-width: 160px;
         }
 
-        .pagination {
+        .stage::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px;
+            height: 14px;
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(82, 196, 26, 0.75) 0px,
+                rgba(82, 196, 26, 0.75) 3px,
+                rgba(82, 196, 26, 0.15) 3px,
+                rgba(82, 196, 26, 0.15) 6px
+            );
+            border-radius: 3px;
+        }
+
+        .stage.gray {
+            border-color: #d9d9d9;
+            background: #f5f5f5;
+            color: #666;
+        }
+        .stage.gray::before {
+            background: repeating-linear-gradient(
+                45deg,
+                rgba(140, 140, 140, 0.75) 0px,
+                rgba(140, 140, 140, 0.75) 3px,
+                rgba(140, 140, 140, 0.15) 3px,
+                rgba(140, 140, 140, 0.15) 6px
+            );
+        }
+
+        .ops {
             display: flex;
-            justify-content: flex-end;
             align-items: center;
             gap: 8px;
-            margin-top: 16px;
-            padding: 0 16px 16px 16px;
         }
 
-        .pagination-btn {
-            padding: 6px 12px;
+        .op-ico {
+            width: 26px;
+            height: 26px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #1677ff;
+        }
+        .op-ico:hover { border-color: #1677ff; }
+
+        /* 右下角固定：分页器 + 状态图例 + 数据总数 */
+        .floating-footer {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            z-index: 50;
+            background: rgba(255, 255, 255, 0.96);
+            border: 1px solid #e5e5e5;
+            border-radius: 10px;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.10);
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 14px;
+            flex-wrap: wrap;
+            max-width: calc(100vw - 24px);
+        }
+
+        .legend {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            color: #666;
+            font-size: 12px;
+            flex-wrap: wrap;
+        }
+
+        .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        .dot.blue { background: #1677ff; }
+        .dot.green { background: #52c41a; }
+        .dot.orange { background: #fa8c16; }
+        .dot.gray { background: #8c8c8c; }
+
+        .pager {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .pager .page-btn {
+            height: 30px;
+            min-width: 30px;
             border: 1px solid #d9d9d9;
             background: #fff;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
+            padding: 0 8px;
+            font-size: 13px;
+            color: #333;
+        }
+        .pager .page-btn:hover { border-color: #1677ff; color: #1677ff; }
+        .pager .page-btn.active { background: #1677ff; color: #fff; border-color: #1677ff; }
+        .pager .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .pager .page-size {
+            height: 30px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 8px;
+            font-size: 13px;
+            background: #fff;
         }
 
-        .pagination-btn:hover:not(:disabled) {
-            color: #1890ff;
-            border-color: #1890ff;
-        }
-
-        .pagination-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .pagination-info {
-            color: #666;
-            font-size: 14px;
-            margin: 0 16px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-        }
+        .muted { color: #999; }
     </style>
 </head>
 <body>
-    <div class="patient-list-container">
-        <div class="container-header">
-            <div class="page-title">患者列表</div>
+    <div class="page">
+        <div class="topbar">
+            <div class="tabs">
+                <div class="tab active" data-tab="all">所有患者</div>
+                <div class="tab" data-tab="mine">我的患者</div>
         </div>
-        <div class="search-bar">
-            <input type="text" class="search-input" placeholder="搜索患者姓名、病历号..." id="searchInput">
-            <button class="search-btn" onclick="searchPatients()">搜索</button>
+            <div class="segmented" id="timeRange">
+                <button data-range="today">今日</button>
+                <button data-range="yesterday">昨日</button>
+                <button data-range="3m">近3月</button>
+                <button class="active" data-range="all">全部</button>
+        </div>
+    </div>
+
+        <div class="stats">
+            <div class="stats-row" id="statsRow"></div>
         </div>
 
-        <div class="table-wrapper">
-            <table class="patient-table" id="patientTable">
+        <div class="filters">
+            <select class="select" id="filterAttending">
+                <option value="">主管医生</option>
+            </select>
+            <select class="select" id="filterPhysicist">
+                <option value="">物理师</option>
+            </select>
+            <input class="input" id="searchInput" placeholder="姓名/病案号/放疗号/身份证号/患者ID" />
+
+            <button class="btn btn-primary icon-btn" id="btnSearch" title="搜索">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+                    <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+
+            <button class="btn" id="btnAdv">高级筛选</button>
+            <button class="btn" id="btnReset">重置</button>
+            <button class="btn" id="btnExport">
+                导出Excel
+            </button>
+            <button class="btn icon-btn" id="btnViewList" title="列表视图">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </button>
+            <button class="btn icon-btn" id="btnViewGrid" title="网格视图（占位）">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z" fill="currentColor"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="table-wrap">
+            <table>
                 <thead>
                     <tr>
-                        <th>病历号</th>
-                        <th>患者姓名</th>
-                        <th>性别</th>
-                        <th>年龄</th>
-                        <th>诊断</th>
-                        <th>治疗状态</th>
-                        <th>主治医生</th>
-                        <th>操作</th>
+                        <th style="width: 240px;">姓名 / 性别 / 年龄</th>
+                        <th style="width: 110px;">病案号</th>
+                        <th style="width: 120px;">放疗号</th>
+                        <th style="width: 130px;">患者电话</th>
+                        <th style="width: 150px;">诊断</th>
+                        <th style="width: 100px;">主管医生</th>
+                        <th style="width: 160px;">登记日期</th>
+                        <th style="width: 100px;">主诊医生</th>
+                        <th style="width: 150px;">当前阶段</th>
+                        <th style="width: 110px;">登记人员</th>
+                        <th style="width: 110px;">计划物理师</th>
+                        <th style="width: 110px;">主管医生组</th>
+                        <th style="width: 90px;">审批物</th>
+                        <th style="width: 90px;">操作</th>
                     </tr>
                 </thead>
-                <tbody id="patientTableBody">
-                    <!-- 数据将动态加载 -->
-                </tbody>
+                <tbody id="patientTableBody"></tbody>
             </table>
         </div>
 
-        <div class="pagination" id="pagination">
-            <!-- 分页将动态生成 -->
+        <div class="floating-footer">
+            <div class="legend">
+                <span id="totalInfo">共 0 条数据</span>
+                <span><i class="dot blue"></i>正常结束</span>
+                <span><i class="dot green"></i>进行中</span>
+                <span><i class="dot orange"></i>已暂停</span>
+                <span><i class="dot gray"></i>已终止</span>
+            </div>
+            <div class="pager">
+                <select class="page-size" id="pageSize">
+                    <option value="10">10条/页</option>
+                    <option value="20" selected>20条/页</option>
+                    <option value="50">50条/页</option>
+                </select>
+                <button class="page-btn" id="btnPrev">‹</button>
+                <span id="pageBtns"></span>
+                <button class="page-btn" id="btnNext">›</button>
+        </div>
         </div>
     </div>
 
     <script>
-        // 模拟患者数据
-        const mockPatients = [
-            { id: '001', name: '张三', gender: '男', age: 45, diagnosis: '肺癌', status: 'treating', doctor: '李医生' },
-            { id: '002', name: '李四', gender: '女', age: 52, diagnosis: '乳腺癌', status: 'treating', doctor: '王医生' },
-            { id: '003', name: '王五', gender: '男', age: 38, diagnosis: '鼻咽癌', status: 'pending', doctor: '张医生' },
-            { id: '004', name: '赵六', gender: '女', age: 65, diagnosis: '食管癌', status: 'treating', doctor: '李医生' },
-            { id: '005', name: '钱七', gender: '男', age: 58, diagnosis: '肝癌', status: 'completed', doctor: '王医生' },
+        // =========================
+        // mock data (prototype)
+        // =========================
+        function pad2(n) { return String(n).padStart(2, '0'); }
+        function fmt(d) {
+            return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        }
+
+        const doctors = ['chhys', '许齐真', '张三', '李小波', '测试医生'];
+        const physicists = ['--', '李小波', '王物理', '张物理'];
+        const doctorGroups = ['医生组一', '医生组二', '医生组A', '医生组B'];
+        const approvers = ['--', '二科物', '一科物'];
+        const stages = ['计划设计', '计划申请', '定位申请', '定位执行', '后装申请', '后装治疗', '正常结束', '未命名节点'];
+        const diagnoses = ['肝恶性细胞瘤', '乳腺恶性肿瘤，内侧', '肺恶性肿瘤', '大细胞（ki-1+）', 'SBRT_BRAIN'];
+        const statuses = ['running', 'paused', 'stopped', 'ended'];
+
+        function pick(arr, i) { return arr[i % arr.length]; }
+        function randPhone(i) { return `1${(8800000000 + i * 137)}`.slice(0, 11); }
+        function avatarText(name) { return name ? name.slice(0, 1) : '患'; }
+
+        const mockPatients = Array.from({ length: 152 }).map((_, i) => {
+            const name = i % 7 === 0 ? `临床目标S${250020 + i}(勿动)` : (i % 5 === 0 ? `ph tologu` : `患者${i + 1}`);
+            const gender = i % 3 === 0 ? '女' : '男';
+            const age = 22 + (i % 45);
+            const mrn = i % 4 === 0 ? `M${250000 + i}` : (i % 6 === 0 ? `CK${241000 + i}` : `000${1678000 + i}`);
+            const rtNo = `A${20250000 + i}`;
+            const phone = randPhone(i);
+            const diagnosis = pick(diagnoses, i);
+            const attending = pick(doctors, i);
+            const primary = pick(['--', '测试医生', 'chhys'], i);
+            const registrar = pick(['超级管理员', '许齐真'], i);
+            const planPhys = pick(physicists, i);
+            const group = pick(doctorGroups, i);
+            const approver = pick(approvers, i);
+            const stage = pick(stages, i);
+            const status = pick(statuses, i);
+            const now = new Date();
+            const t = new Date(now.getTime() - (i * 6 * 3600 * 1000 + (i % 13) * 60 * 1000));
+            return {
+                id: `P${pad2((i % 99) + 1)}${pad2((i % 17) + 1)}`,
+                name,
+                gender,
+                age,
+                mrn,
+                rtNo,
+                phone,
+                diagnosis,
+                attending,
+                regDate: fmt(t),
+                primary,
+                stage,
+                status,
+                registrar,
+                planPhys,
+                group,
+                approver,
+                mine: i % 4 === 0
+            };
+        });
+
+        const STAT_ITEMS = [
+            { key: 'new', label: '新登记患者' },
+            { key: 'posApply', label: '定位申请' },
+            { key: 'ctExec', label: 'CT执行' },
+            { key: 'contourArea', label: '靶区勾画' },
+            { key: 'contourReview', label: '勾画审核' },
+            { key: 'planApply', label: '计划申请' },
+            { key: 'planDesign', label: '计划设计' },
+            { key: 'leaderReview', label: '组长审核' },
+            { key: 'doctorApprove', label: '医师核准' },
+            { key: 'treatExec', label: '治疗执行' },
+            { key: 'treatEnd', label: '治疗小结' }
         ];
 
+        function calcStats(list) {
+            // 原型：用阶段/状态近似生成统计（不做严格业务）
+            const m = Object.fromEntries(STAT_ITEMS.map(s => [s.key, 0]));
+            list.forEach(p => {
+                if (p.status === 'running') m.treatExec += 1;
+                if (p.status === 'ended') m.treatEnd += 1;
+                if (p.stage.includes('CT')) m.ctExec += 1;
+                if (p.stage.includes('定位')) m.posApply += 1;
+                if (p.stage.includes('勾画')) m.contourArea += 1;
+                if (p.stage.includes('审核')) m.contourReview += 1;
+                if (p.stage.includes('计划设计')) m.planDesign += 1;
+                if (p.stage.includes('计划申请')) m.planApply += 1;
+                if (p.stage.includes('组长审核')) m.leaderReview += 1;
+                if (p.stage.includes('医师核准')) m.doctorApprove += 1;
+            });
+            // 原型：固定一个接近 UI 的“新登记患者”数字
+            m.new = Math.min(list.length, 26);
+            return m;
+        }
+
+        // =========================
+        // state & filtering
+        // =========================
+        let activeTab = 'all';
+        let activeRange = 'all';
         let currentPage = 1;
-        const pageSize = 10;
+        let pageSize = 20;
         let filteredPatients = [...mockPatients];
 
-        // 状态标签映射
-        const statusMap = {
-            treating: { text: '治疗中', class: 'status-treating' },
-            pending: { text: '待治疗', class: 'status-pending' },
-            completed: { text: '已完成', class: 'status-completed' }
-        };
+        function isInRange(dateStr, range) {
+            if (range === 'all') return true;
+            const d = new Date(dateStr.replace(/-/g, '/'));
+            const now = new Date();
+            const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+            const startOfYesterday = startOfToday - 24 * 3600 * 1000;
+            if (range === 'today') return d.getTime() >= startOfToday;
+            if (range === 'yesterday') return d.getTime() >= startOfYesterday && d.getTime() < startOfToday;
+            if (range === '3m') {
+                const threeMonthAgo = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate()).getTime();
+                return d.getTime() >= threeMonthAgo;
+            }
+            return true;
+        }
 
-        // 渲染患者列表
-        function renderPatientList() {
+        function applyFilters(resetPage = true) {
+            const kw = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+            const attending = document.getElementById('filterAttending').value;
+            const phys = document.getElementById('filterPhysicist').value;
+
+            filteredPatients = mockPatients.filter(p => {
+                if (activeTab === 'mine' && !p.mine) return false;
+                if (!isInRange(p.regDate, activeRange)) return false;
+                if (attending && p.attending !== attending) return false;
+                if (phys && p.planPhys !== phys) return false;
+                if (kw) {
+                    const hay = `${p.name} ${p.mrn} ${p.rtNo} ${p.phone} ${p.id}`.toLowerCase();
+                    if (!hay.includes(kw)) return false;
+                }
+                return true;
+            });
+
+            if (resetPage) currentPage = 1;
+            renderAll();
+        }
+
+        // =========================
+        // render
+        // =========================
+        function renderStats() {
+            const statsRow = document.getElementById('statsRow');
+            const statMap = calcStats(filteredPatients);
+            statsRow.innerHTML = STAT_ITEMS.map(s => {
+                const v = statMap[s.key] ?? 0;
+                return `<div class="stat"><div class="num">${v}</div><div class="label">${s.label}</div></div>`;
+            }).join('');
+        }
+
+        function stageClass(p) {
+            if (p.status === 'ended') return 'gray';
+            if (p.status === 'stopped') return 'gray';
+            return '';
+        }
+
+        function renderTable() {
             const tbody = document.getElementById('patientTableBody');
+            const total = filteredPatients.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
             const start = (currentPage - 1) * pageSize;
             const end = start + pageSize;
             const pageData = filteredPatients.slice(start, end);
@@ -247,77 +680,105 @@
             if (pageData.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="8" class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <div>暂无患者数据</div>
+                        <td colspan="14" style="text-align:center; padding:48px 10px; color:#999;">
+                            暂无数据
                         </td>
                     </tr>
                 `;
+                document.getElementById('totalInfo').textContent = '共 0 条数据';
                 return;
             }
 
-            tbody.innerHTML = pageData.map(patient => `
+            tbody.innerHTML = pageData.map(p => `
                 <tr>
-                    <td>${patient.id}</td>
-                    <td>${patient.name}</td>
-                    <td>${patient.gender}</td>
-                    <td>${patient.age}</td>
-                    <td>${patient.diagnosis}</td>
                     <td>
-                        <span class="status-badge ${statusMap[patient.status].class}">
-                            ${statusMap[patient.status].text}
-                        </span>
+                        <div class="namecell">
+                            <span class="avatar">${avatarText(p.name)}</span>
+                            <div class="text" title="${p.name} / ${p.gender} / ${p.age}">
+                                <a href="javascript:void(0)" onclick="viewPatient('${p.id}')">${p.name}</a>
+                                <span class="muted"> / ${p.gender} / ${p.age}</span>
+                            </div>
+                        </div>
                     </td>
-                    <td>${patient.doctor}</td>
+                    <td title="${p.mrn}">${p.mrn}</td>
+                    <td title="${p.rtNo}">${p.rtNo}</td>
+                    <td title="${p.phone}">${p.phone}</td>
+                    <td title="${p.diagnosis}">${p.diagnosis}</td>
+                    <td title="${p.attending}">${p.attending}</td>
+                    <td title="${p.regDate}">${p.regDate}</td>
+                    <td title="${p.primary}">${p.primary}</td>
+                    <td><span class="stage ${stageClass(p)}" title="${p.stage}">${p.stage}</span></td>
+                    <td title="${p.registrar}">${p.registrar}</td>
+                    <td title="${p.planPhys}">${p.planPhys}</td>
+                    <td title="${p.group}">${p.group}</td>
+                    <td title="${p.approver}">${p.approver}</td>
                     <td>
-                        <a href="#" style="color: #1890ff; text-decoration: none;" onclick="viewPatient('${patient.id}')">查看</a>
+                        <div class="ops">
+                            <button class="op-ico" title="查看" onclick="viewPatient('${p.id}')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" fill="currentColor" opacity="0.35"/>
+                                </svg>
+                            </button>
+                            <button class="op-ico" title="文档（占位）" onclick="alert('原型占位：文档')">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M9 12h6M9 16h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
                     </td>
                 </tr>
             `).join('');
 
-            renderPagination();
+            document.getElementById('totalInfo').textContent = `共 ${filteredPatients.length} 条数据`;
         }
 
-        // 渲染分页
-        function renderPagination() {
-            const pagination = document.getElementById('pagination');
-            const totalPages = Math.ceil(filteredPatients.length / pageSize);
+        function renderPager() {
+            const total = filteredPatients.length;
+            const totalPages = Math.max(1, Math.ceil(total / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
 
-            pagination.innerHTML = `
-                <button class="pagination-btn" onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}>
-                    上一页
-                </button>
-                <span class="pagination-info">
-                    第 ${currentPage} 页，共 ${totalPages} 页，共 ${filteredPatients.length} 条记录
-                </span>
-                <button class="pagination-btn" onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}>
-                    下一页
-                </button>
-            `;
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            btnPrev.disabled = currentPage <= 1;
+            btnNext.disabled = currentPage >= totalPages;
+
+            const pageBtns = document.getElementById('pageBtns');
+            pageBtns.innerHTML = '';
+
+            function addBtn(p, text, active) {
+                const b = document.createElement('button');
+                b.className = 'page-btn' + (active ? ' active' : '');
+                b.textContent = text || String(p);
+                b.disabled = text === '...';
+                if (!b.disabled) {
+                    b.addEventListener('click', () => { currentPage = p; renderAll(false); });
         }
-
-        // 跳转页面
-        function goToPage(page) {
-            const totalPages = Math.ceil(filteredPatients.length / pageSize);
-            if (page < 1 || page > totalPages) return;
-            currentPage = page;
-            renderPatientList();
-        }
-
-        // 搜索患者
-        function searchPatients() {
-            const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-            if (!keyword) {
-                filteredPatients = [...mockPatients];
-            } else {
-                filteredPatients = mockPatients.filter(patient => 
-                    patient.name.toLowerCase().includes(keyword) ||
-                    patient.id.toLowerCase().includes(keyword) ||
-                    patient.diagnosis.toLowerCase().includes(keyword)
-                );
+                pageBtns.appendChild(b);
             }
-            currentPage = 1;
-            renderPatientList();
+
+            const max = 7;
+            let start = Math.max(1, currentPage - 2);
+            let end = Math.min(totalPages, start + (max - 1));
+            start = Math.max(1, end - (max - 1));
+
+            if (start > 1) {
+                addBtn(1, '1', currentPage === 1);
+                if (start > 2) addBtn(0, '...', false);
+            }
+            for (let p = start; p <= end; p++) addBtn(p, String(p), p === currentPage);
+            if (end < totalPages) {
+                if (end < totalPages - 1) addBtn(0, '...', false);
+                addBtn(totalPages, String(totalPages), currentPage === totalPages);
+            }
+        }
+
+        function renderAll(resetPager = true) {
+            renderStats();
+            renderTable();
+            renderPager();
         }
 
         // 查看患者详情
@@ -331,7 +792,7 @@
                     if (typeof window.parent.openContent === 'function') {
                         window.parent.openContent(url);
                         return;
-                    }
+        }
 
                     // 方式2：postMessage（更通用）
                     window.parent.postMessage({ type: 'open-content', url }, '*');
@@ -349,16 +810,83 @@
             window.location.href = url;
         }
 
-        // 回车搜索
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                searchPatients();
-            }
+        // =========================
+        // init & events
+        // =========================
+        function fillSelects() {
+            const attendingSel = document.getElementById('filterAttending');
+            const physSel = document.getElementById('filterPhysicist');
+            const uniq = (arr) => Array.from(new Set(arr));
+
+            uniq(mockPatients.map(p => p.attending)).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                attendingSel.appendChild(opt);
+            });
+            uniq(mockPatients.map(p => p.planPhys)).forEach(v => {
+                const opt = document.createElement('option');
+                opt.value = v;
+                opt.textContent = v;
+                physSel.appendChild(opt);
+            });
+        }
+
+        document.querySelectorAll('.tab').forEach(t => {
+            t.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(x => x.classList.toggle('active', x === t));
+                activeTab = t.getAttribute('data-tab') || 'all';
+                applyFilters(true);
+            });
         });
 
-        // 初始化
+        document.querySelectorAll('#timeRange button').forEach(b => {
+            b.addEventListener('click', () => {
+                document.querySelectorAll('#timeRange button').forEach(x => x.classList.toggle('active', x === b));
+                activeRange = b.getAttribute('data-range') || 'today';
+                applyFilters(true);
+            });
+        });
+
+        document.getElementById('btnSearch').addEventListener('click', () => applyFilters(true));
+        document.getElementById('searchInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') applyFilters(true);
+        });
+        document.getElementById('filterAttending').addEventListener('change', () => applyFilters(true));
+        document.getElementById('filterPhysicist').addEventListener('change', () => applyFilters(true));
+
+        document.getElementById('btnReset').addEventListener('click', () => {
+            document.getElementById('filterAttending').value = '';
+            document.getElementById('filterPhysicist').value = '';
+            document.getElementById('searchInput').value = '';
+            applyFilters(true);
+        });
+
+        document.getElementById('btnAdv').addEventListener('click', () => alert('原型占位：高级筛选'));
+        document.getElementById('btnExport').addEventListener('click', () => alert('原型占位：导出Excel'));
+        document.getElementById('btnViewList').addEventListener('click', () => alert('当前为列表视图（原型）'));
+        document.getElementById('btnViewGrid').addEventListener('click', () => alert('原型占位：网格视图'));
+
+        document.getElementById('pageSize').addEventListener('change', () => {
+            pageSize = Number(document.getElementById('pageSize').value) || 20;
+            currentPage = 1;
+            renderAll();
+        });
+        document.getElementById('btnPrev').addEventListener('click', () => {
+            if (currentPage <= 1) return;
+            currentPage -= 1;
+            renderAll(false);
+        });
+        document.getElementById('btnNext').addEventListener('click', () => {
+            const totalPages = Math.max(1, Math.ceil(filteredPatients.length / pageSize));
+            if (currentPage >= totalPages) return;
+            currentPage += 1;
+            renderAll(false);
+        });
+
         window.addEventListener('DOMContentLoaded', () => {
-            renderPatientList();
+            fillSelects();
+            applyFilters(true);
         });
     </script>
 </body>
