@@ -526,7 +526,7 @@
                     ops.appendChild(b);
                 }
 
-                addOp('设计', () => toast('原型占位：设计'));
+                addOp('设计', () => openInFrame(`流程编辑.html?flowId=${encodeURIComponent(row.id)}&flowName=${encodeURIComponent(row.name)}&focus=design`));
                 addOp('核查', () => toast('原型占位：核查'));
                 addOp('文档', () => toast('原型占位：文档'));
                 addOp('关联费用', () => toast('原型占位：关联费用'));

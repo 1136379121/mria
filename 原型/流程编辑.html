@@ -13,26 +13,35 @@
             min-height: 100vh;
             color: #1f1f1f;
         }
-        .card {
+
+        .app {
             background: #fff;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: calc(100vh - 0px);
         }
-        .header {
-            padding: 12px 16px;
+
+        .topbar {
+            height: 56px;
+            padding: 0 16px;
             border-bottom: 1px solid #f0f0f0;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            background: #fff;
         }
-        .left {
+
+        .top-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             min-width: 0;
         }
+
         .back {
             border: 1px solid #d9d9d9;
             background: #fff;
@@ -43,57 +52,304 @@
             font-size: 13px;
         }
         .back:hover { border-color: #1677ff; color: #1677ff; }
+
         .title {
             font-size: 16px;
             font-weight: 600;
-            color: #333;
+            color: #1f1f1f;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            max-width: 520px;
         }
-        .body { padding: 16px; }
-        .grid {
+
+        .sub {
+            font-size: 12px;
+            color: #999;
+            white-space: nowrap;
+        }
+
+        .top-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn {
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            color: #333;
+            border-radius: 6px;
+            padding: 6px 12px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .btn:hover { border-color: #1677ff; color: #1677ff; }
+        .btn-primary {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: #fff;
+        }
+        .btn-primary:hover { background: #40a9ff; border-color: #40a9ff; color: #fff; }
+
+        .main {
+            flex: 1;
             display: grid;
-            grid-template-columns: 120px 1fr 120px 1fr;
-            gap: 12px 12px;
+            grid-template-columns: 1fr 380px;
+            min-height: 0;
+        }
+
+        .canvas-wrap {
+            position: relative;
+            background: #f7f8fa;
+            min-height: 0;
+            overflow: auto;
+            padding: 18px 18px 28px 18px;
+        }
+
+        .canvas {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 6px;
+            min-height: 720px;
+            padding: 18px;
+        }
+
+        .canvas-header {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .flow-col {
+            width: 260px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0 20px 0;
+        }
+
+        .node {
+            width: 260px;
+            height: 54px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            color: #1f1f1f;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            border: 1px solid #91caff;
+            background: #e6f4ff;
+        }
+
+        .node.start {
+            border-color: #87d3b4;
+            background: #e9f7f0;
+        }
+
+        .node.active {
+            outline: 2px solid rgba(22, 119, 255, 0.35);
+            outline-offset: 2px;
+        }
+
+        .node .del {
+            position: absolute;
+            right: 8px;
+            top: 8px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            color: #666;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .node:hover .del { display: flex; }
+        .node .del:hover { border-color: #ff4d4f; color: #ff4d4f; }
+
+        .connector {
+            width: 2px;
+            height: 22px;
+            background: #8c8c8c;
+            opacity: 0.35;
+        }
+
+        .plus {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 1px solid #91caff;
+            background: #fff;
+            color: #1677ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        .plus:hover { background: #e6f4ff; }
+
+        .panel {
+            border-left: 1px solid #f0f0f0;
+            background: #fff;
+            min-height: 0;
+            overflow: auto;
+            padding: 14px 14px 24px 14px;
+        }
+
+        .section {
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1f1f1f;
+            margin-bottom: 10px;
+        }
+
+        .form {
+            display: grid;
+            grid-template-columns: 92px 1fr;
+            gap: 10px 10px;
             align-items: center;
         }
-        label { color: #555; font-size: 13px; }
+
+        .label {
+            font-size: 12px;
+            color: #555;
+            text-align: right;
+        }
+
+        .req::before {
+            content: '*';
+            color: #ff4d4f;
+            margin-right: 4px;
+        }
+
         input, textarea, select {
             width: 100%;
             padding: 8px 10px;
             border: 1px solid #d9d9d9;
             border-radius: 6px;
             outline: none;
-            font-size: 14px;
+            font-size: 13px;
+            background: #fff;
         }
-        textarea { min-height: 84px; resize: vertical; grid-column: span 3; }
-        .row-full { grid-column: 1 / -1; }
-        .tabs {
-            margin-top: 14px;
+
+        textarea { min-height: 74px; resize: vertical; }
+
+        input:focus, select:focus, textarea:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.18);
+        }
+
+        .row {
+            grid-column: 1 / -1;
+        }
+
+        .inline {
             display: flex;
-            gap: 10px;
-            border-bottom: 1px solid #f0f0f0;
+            align-items: center;
+            gap: 8px;
         }
-        .tab {
-            padding: 10px 6px;
+
+        .tagbox {
+            min-height: 34px;
+            padding: 4px 6px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
             cursor: pointer;
-            color: #555;
-            font-size: 13px;
-            border-bottom: 2px solid transparent;
         }
-        .tab.active {
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f5f5f5;
+            border: 1px solid #e5e5e5;
+            color: #333;
+            border-radius: 999px;
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+        .tag .x { cursor: pointer; color: #999; }
+        .tag .x:hover { color: #ff4d4f; }
+
+        .mini-btn {
+            border: 1px dashed #91caff;
+            background: #fff;
             color: #1677ff;
-            border-bottom-color: #1677ff;
-            font-weight: 600;
+            border-radius: 6px;
+            padding: 7px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            text-align: center;
         }
-        .panel {
-            padding: 14px 0 0 0;
-            color: #666;
-            font-size: 13px;
-            line-height: 1.7;
+        .mini-btn:hover { background: #e6f4ff; }
+
+        .rule {
+            border: 1px dashed #e5e5e5;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
         }
-        .muted { color: #999; }
+
+        .rule-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .rule-title { font-size: 12px; color: #555; font-weight: 600; }
+        .link-danger { color: #ff4d4f; cursor: pointer; font-size: 12px; }
+        .link { color: #1677ff; cursor: pointer; font-size: 12px; }
+
+        .switch {
+            width: 40px;
+            height: 20px;
+            border-radius: 999px;
+            background: #e5e5e5;
+            position: relative;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .switch::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: #fff;
+            transition: all 0.18s ease;
+        }
+        .switch.on { background: #52c41a; }
+        .switch.on::after { left: 22px; }
+
         .toast {
             position: fixed;
             left: 50%;
@@ -113,43 +369,203 @@
     </style>
 </head>
 <body>
-    <div class="card">
-        <div class="header">
-            <div class="left">
+    <div class="app">
+        <div class="topbar">
+            <div class="top-left">
                 <button class="back" id="btnBack">返回</button>
                 <div class="title" id="pageTitle">流程编辑</div>
+                <div class="sub" id="flowMeta">flowId: -</div>
             </div>
-            <div class="muted" id="flowId">flowId: -</div>
+            <div class="top-actions">
+                <button class="btn" id="btnTest">提醒测试</button>
+                <button class="btn btn-primary" id="btnSave">保存</button>
+            </div>
         </div>
-        <div class="body">
-            <div class="grid">
-                <label>流程名称</label>
-                <input id="name" placeholder="流程名称（原型占位）" />
 
-                <label>所属科室</label>
-                <input id="dept" placeholder="所属科室（原型占位）" />
-
-                <label>状态</label>
-                <select id="enabled">
-                    <option value="true">启用</option>
-                    <option value="false">禁用</option>
-                </select>
-
-                <label>更新人</label>
-                <input id="updater" placeholder="系统自动记录（原型占位）" />
-
-                <label class="row-full">备注</label>
-                <textarea id="remark" placeholder="备注（原型占位）"></textarea>
+        <div class="main">
+            <div class="canvas-wrap">
+                <div class="canvas">
+                    <div class="canvas-header">
+                        <button class="btn" id="btnAddNode">新增下一节点</button>
+                        <button class="btn" id="btnDeleteNode">删除节点</button>
+                    </div>
+                    <div class="flow-col" id="flowCol"></div>
+                </div>
             </div>
 
-            <div class="tabs" id="tabs">
-                <div class="tab active" data-k="design">设计</div>
-                <div class="tab" data-k="review">核查</div>
-                <div class="tab" data-k="doc">文档</div>
-                <div class="tab" data-k="fee">关联费用</div>
-            </div>
-            <div class="panel" id="panel">
-                当前为「设计」区域（原型占位）。<span class="muted">后续可按需求逐步补充组件与交互。</span>
+            <div class="panel">
+                <div class="section">
+                    <div class="section-title">基本设置</div>
+                    <div class="form">
+                        <div class="label">序号</div>
+                        <div class="inline"><span id="fOrder">-</span></div>
+
+                        <div class="label">结束节点</div>
+                        <select id="fIsEnd">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label req">节点名称</div>
+                        <div class="inline">
+                            <input id="fNodeName" maxlength="20" placeholder="请输入节点名称" />
+                            <span class="sub" id="fNameCount">0/20</span>
+                        </div>
+
+                        <div class="label req">所属分类</div>
+                        <select id="fCategory">
+                            <option value="">请选择</option>
+                            <option value="登记">登记</option>
+                            <option value="定位">定位</option>
+                            <option value="勾画">勾画</option>
+                            <option value="计划">计划</option>
+                            <option value="复位">复位</option>
+                            <option value="治疗">治疗</option>
+                            <option value="完成">完成</option>
+                        </select>
+
+                        <div class="label req">前置节点</div>
+                        <select id="fPreNode"></select>
+
+                        <div class="label">子流程</div>
+                        <div class="inline">
+                            <select id="fSubFlow">
+                                <option value="">请选择</option>
+                                <option value="后装流程">后装流程</option>
+                                <option value="定位流程">定位流程</option>
+                                <option value="计划流程">计划流程</option>
+                            </select>
+                            <label class="inline" style="gap:6px; font-size:12px; color:#555;">
+                                <input type="checkbox" id="fCopyPrev" /> 拷贝上一分次数据
+                            </label>
+                        </div>
+
+                        <div class="label">自动跳过</div>
+                        <div class="inline">
+                            <div class="switch" id="fAutoSkip" role="switch" aria-checked="false"></div>
+                            <span class="sub" id="fAutoSkipText">关闭</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">任务超时设置</div>
+                    <div class="mini-btn" id="btnAddRule">+ 添加规则</div>
+                    <div id="ruleList"></div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">关联表单</div>
+                    <div class="form">
+                        <div class="label req">表单选择</div>
+                        <select id="fFormSelect">
+                            <option value="">请选择</option>
+                            <option value="妇科-后装流程置入-内部射">妇科-后装流程置入-内部射</option>
+                            <option value="定位预约">定位预约</option>
+                            <option value="治疗执行">治疗执行</option>
+                            <option value="计划设计">计划设计</option>
+                        </select>
+
+                        <div class="label">流转记录</div>
+                        <div class="tagbox" id="fFlowRecords"></div>
+
+                        <div class="label">功能系统</div>
+                        <select id="fFuncSystem">
+                            <option value="">请选择</option>
+                            <option value="远程桌面">远程桌面</option>
+                            <option value="art助手">art助手</option>
+                            <option value="MOZI">MOZI</option>
+                            <option value="AccuCheck">AccuCheck</option>
+                        </select>
+
+                        <div class="label">打开方式</div>
+                        <select id="fOpenMode">
+                            <option value="远程桌面">远程桌面</option>
+                            <option value="客户端自启动">客户端自启动</option>
+                        </select>
+
+                        <div class="label">自启动地址</div>
+                        <input id="fAutoUrl" placeholder="客户端自启动地址（可选）" />
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">动作设置</div>
+                    <div class="form">
+                        <div class="label req">按钮名称</div>
+                        <div class="tagbox" id="fActionBtns"></div>
+
+                        <div class="label">二次校验</div>
+                        <div class="tagbox" id="fSecondCheck"></div>
+
+                        <div class="label req">按钮角色</div>
+                        <div class="tagbox" id="fBtnRoles"></div>
+
+                        <div class="label">修改权限</div>
+                        <div class="tagbox" id="fModifyRoles"></div>
+
+                        <div class="label">生成文档</div>
+                        <div class="tagbox" id="fGenDocs"></div>
+
+                        <div class="label">打印提交人签名</div>
+                        <select id="fPrintSign">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">高风险核查</div>
+                        <select id="fHighRisk">
+                            <option value="否">否</option>
+                            <option value="是">是</option>
+                            <option value="CDSS校验">CDSS校验</option>
+                        </select>
+
+                        <div class="label">CA授权校验</div>
+                        <select id="fCA">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">回传PDF</div>
+                        <select id="fReturnPdf">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">同步TPS计划</div>
+                        <select id="fSyncTps">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">条码标签</div>
+                        <select id="fBarcode">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">同步模具</div>
+                        <select id="fSyncMold">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+
+                        <div class="label">触发耗材统计</div>
+                        <select id="fConsumable">
+                            <option value="false">否</option>
+                            <option value="true">是</option>
+                        </select>
+                    </div>
+                    <div class="row" style="margin-top:10px;">
+                        <div class="mini-btn" id="btnCtxEdit">右键按钮编辑</div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-title">消息提醒</div>
+                    <div class="mini-btn" id="btnAddMsg">+ 添加触发动作</div>
+                    <div id="msgList"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -157,6 +573,9 @@
     <div class="toast" id="toast"></div>
 
     <script>
+        // =========================
+        // util
+        // =========================
         function toast(msg) {
             const el = document.getElementById('toast');
             el.textContent = String(msg || '');
@@ -187,25 +606,724 @@
             return u.searchParams.get(key);
         }
 
-        const flowId = getQuery('flowId') || '-';
-        document.getElementById('flowId').textContent = 'flowId: ' + flowId;
+        function uuid() { return 'n_' + Math.random().toString(16).slice(2) + '_' + Date.now().toString(16); }
+        function toBool(v) { return v === true || v === 'true'; }
 
-        document.getElementById('btnBack').addEventListener('click', () => {
-            // 优先回到列表页（可被页面框架接管）
-            openInFrame('流程设置.html');
+        // =========================
+        // data model (prototype)
+        // =========================
+        const flowId = getQuery('flowId') || 'flow_1';
+        const flowNameFromQuery = getQuery('flowName') || '';
+        const initialFocus = getQuery('focus') || 'design';
+
+        const OPTIONS = {
+            actionBtns: ['暂存', '提交', '清空', '回退上一步', '驳回', '打印', '提交并打印'],
+            roles: ['医生', '主任医生', '科室管理员', '物理师', '定位技师', '治疗技师', '护士', '超级管理员'],
+            records: ['提交', '驳回', '回退', '疗程新增', '疗程修改', '疗程暂停', '疗程恢复', '疗程完成', '疗程终止', '分次提交', '分次修改'],
+            ops: ['处理', '暂停治疗', '继续暂停', '终止治疗', '恢复治疗'],
+            msgVars: ['患者姓名', '审批备注', '首次治疗时间', '治疗机房', '驳回节点', '是否留模', '留模时长'],
+            msgPeople: ['个人/主管医生', '个人/计划物理师', '个人/审批物理师', '个人/患者本人', '医生组/放疗科医生组', '物理组/放疗科物理组', '定位组/定位组A', '治疗组/治疗组A', '护理组/护理组A']
+        };
+
+        const state = {
+            flow: {
+                id: flowId,
+                name: flowNameFromQuery || '后装流程_子流程',
+                dept: '放疗科'
+            },
+            nodes: [
+                {
+                    id: uuid(),
+                    name: '总体流程置入',
+                    category: '定位',
+                    isEnd: true,
+                    preNodeId: '新增程/段',
+                    subFlow: '',
+                    copyPrev: false,
+                    autoSkip: false,
+                    timeoutRules: [],
+                    formSelect: '妇科-后装流程置入-内部射',
+                    flowRecords: [],
+                    funcSystem: '',
+                    openMode: '远程桌面',
+                    autoUrl: '',
+                    actionBtns: ['暂存', '提交', '打印'],
+                    secondCheck: ['提交'],
+                    btnRoles: ['医生', '主任医生', '科室管理员'],
+                    modifyRoles: ['科室管理员'],
+                    genDocs: ['妇科-后装流程置入-内部射'],
+                    printSign: false,
+                    highRisk: '否',
+                    ca: false,
+                    returnPdf: true,
+                    syncTps: false,
+                    barcode: false,
+                    syncMold: false,
+                    consumable: false,
+                    msgTriggers: []
+                },
+                {
+                    id: uuid(),
+                    name: '后装患者定位',
+                    category: '定位',
+                    isEnd: false,
+                    preNodeId: null,
+                    subFlow: '',
+                    copyPrev: false,
+                    autoSkip: false,
+                    timeoutRules: [],
+                    formSelect: '',
+                    flowRecords: [],
+                    funcSystem: '',
+                    openMode: '远程桌面',
+                    autoUrl: '',
+                    actionBtns: ['提交'],
+                    secondCheck: [],
+                    btnRoles: ['定位技师'],
+                    modifyRoles: [],
+                    genDocs: [],
+                    printSign: false,
+                    highRisk: '否',
+                    ca: false,
+                    returnPdf: false,
+                    syncTps: false,
+                    barcode: false,
+                    syncMold: false,
+                    consumable: false,
+                    msgTriggers: []
+                },
+                {
+                    id: uuid(),
+                    name: '后装计划设计',
+                    category: '计划',
+                    isEnd: false,
+                    preNodeId: null,
+                    subFlow: '',
+                    copyPrev: false,
+                    autoSkip: false,
+                    timeoutRules: [],
+                    formSelect: '计划设计',
+                    flowRecords: [],
+                    funcSystem: 'MOZI',
+                    openMode: '远程桌面',
+                    autoUrl: '',
+                    actionBtns: ['提交', '回退上一步'],
+                    secondCheck: ['提交'],
+                    btnRoles: ['物理师', '科室管理员'],
+                    modifyRoles: ['科室管理员'],
+                    genDocs: [],
+                    printSign: false,
+                    highRisk: '否',
+                    ca: false,
+                    returnPdf: false,
+                    syncTps: true,
+                    barcode: false,
+                    syncMold: false,
+                    consumable: false,
+                    msgTriggers: []
+                }
+            ],
+            activeNodeId: null
+        };
+
+        state.activeNodeId = state.nodes[0]?.id || null;
+
+        // =========================
+        // DOM refs
+        // =========================
+        const elFlowCol = document.getElementById('flowCol');
+        const elTitle = document.getElementById('pageTitle');
+        const elMeta = document.getElementById('flowMeta');
+
+        const elOrder = document.getElementById('fOrder');
+        const elIsEnd = document.getElementById('fIsEnd');
+        const elNodeName = document.getElementById('fNodeName');
+        const elNameCount = document.getElementById('fNameCount');
+        const elCategory = document.getElementById('fCategory');
+        const elPreNode = document.getElementById('fPreNode');
+        const elSubFlow = document.getElementById('fSubFlow');
+        const elCopyPrev = document.getElementById('fCopyPrev');
+        const elAutoSkip = document.getElementById('fAutoSkip');
+        const elAutoSkipText = document.getElementById('fAutoSkipText');
+        const elRuleList = document.getElementById('ruleList');
+        const elFormSelect = document.getElementById('fFormSelect');
+        const elFlowRecords = document.getElementById('fFlowRecords');
+        const elFuncSystem = document.getElementById('fFuncSystem');
+        const elOpenMode = document.getElementById('fOpenMode');
+        const elAutoUrl = document.getElementById('fAutoUrl');
+        const elActionBtns = document.getElementById('fActionBtns');
+        const elSecondCheck = document.getElementById('fSecondCheck');
+        const elBtnRoles = document.getElementById('fBtnRoles');
+        const elModifyRoles = document.getElementById('fModifyRoles');
+        const elGenDocs = document.getElementById('fGenDocs');
+        const elPrintSign = document.getElementById('fPrintSign');
+        const elHighRisk = document.getElementById('fHighRisk');
+        const elCA = document.getElementById('fCA');
+        const elReturnPdf = document.getElementById('fReturnPdf');
+        const elSyncTps = document.getElementById('fSyncTps');
+        const elBarcode = document.getElementById('fBarcode');
+        const elSyncMold = document.getElementById('fSyncMold');
+        const elConsumable = document.getElementById('fConsumable');
+        const elMsgList = document.getElementById('msgList');
+
+        // =========================
+        // rendering
+        // =========================
+        function getActiveNode() {
+            return state.nodes.find(n => n.id === state.activeNodeId) || null;
+        }
+
+        function setActiveNode(id) {
+            state.activeNodeId = id;
+            renderAll();
+        }
+
+        function renderFlow() {
+            elFlowCol.innerHTML = '';
+
+            state.nodes.forEach((node, idx) => {
+                if (idx > 0) {
+                    const connector = document.createElement('div');
+                    connector.className = 'connector';
+                    elFlowCol.appendChild(connector);
+
+                    const plus = document.createElement('div');
+                    plus.className = 'plus';
+                    plus.textContent = '+';
+                    plus.title = '在此处插入节点';
+                    plus.addEventListener('click', () => insertNodeAt(idx));
+                    elFlowCol.appendChild(plus);
+
+                    const connector2 = document.createElement('div');
+                    connector2.className = 'connector';
+                    elFlowCol.appendChild(connector2);
+                }
+
+                const card = document.createElement('div');
+                card.className = 'node' + (idx === 0 ? ' start' : '') + (node.id === state.activeNodeId ? ' active' : '');
+                card.textContent = node.name || '(未命名节点)';
+                card.addEventListener('click', () => setActiveNode(node.id));
+
+                const del = document.createElement('div');
+                del.className = 'del';
+                del.textContent = '×';
+                del.title = '删除节点';
+                del.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    deleteNode(node.id);
+                });
+                card.appendChild(del);
+
+                elFlowCol.appendChild(card);
+            });
+        }
+
+        function renderPreNodeOptions() {
+            const node = getActiveNode();
+            const activeIdx = state.nodes.findIndex(n => n.id === node?.id);
+
+            const opts = [];
+            opts.push({ value: '新增程/段', label: '新增程/段' });
+            for (let i = 0; i < activeIdx; i++) {
+                opts.push({ value: state.nodes[i].id, label: state.nodes[i].name });
+            }
+
+            elPreNode.innerHTML = '';
+            opts.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o.value;
+                opt.textContent = o.label;
+                elPreNode.appendChild(opt);
+            });
+
+            if (node) {
+                const val = node.preNodeId || '新增程/段';
+                elPreNode.value = opts.some(o => o.value === val) ? val : '新增程/段';
+            }
+        }
+
+        function makeTagbox(container, selected, options) {
+            container.innerHTML = '';
+            const sel = Array.isArray(selected) ? selected : [];
+
+            sel.forEach(item => {
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.innerHTML = `<span>${item}</span><span class="x">×</span>`;
+                tag.querySelector('.x').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const node = getActiveNode();
+                    if (!node) return;
+                    const key = container.getAttribute('data-key');
+                    if (!key) return;
+                    node[key] = (node[key] || []).filter(x => x !== item);
+                    renderAll();
+                });
+                container.appendChild(tag);
+            });
+
+            const add = document.createElement('span');
+            add.className = 'tag';
+            add.style.borderStyle = 'dashed';
+            add.style.color = '#1677ff';
+            add.textContent = '+ 选择';
+            add.addEventListener('click', () => {
+                const node = getActiveNode();
+                if (!node) return;
+                const key = container.getAttribute('data-key');
+                if (!key) return;
+
+                const left = options.filter(o => !(node[key] || []).includes(o));
+                if (left.length === 0) { toast('已全部选择'); return; }
+                // prototype：每次点一下加一个
+                (node[key] || (node[key] = [])).push(left[0]);
+                renderAll();
+            });
+            container.appendChild(add);
+        }
+
+        function renderRules() {
+            const node = getActiveNode();
+            elRuleList.innerHTML = '';
+            const rules = node?.timeoutRules || [];
+
+            rules.forEach((r, idx) => {
+                const box = document.createElement('div');
+                box.className = 'rule';
+                box.innerHTML = `
+                    <div class="rule-head">
+                        <div class="rule-title">规则 ${idx + 1}</div>
+                        <div class="link-danger" data-act="del">删除</div>
+                    </div>
+                    <div class="form">
+                        <div class="label req">触发事件</div>
+                        <select data-k="event">
+                            <option value="">请选择</option>
+                            <option value="逾期超过">逾期超过_天</option>
+                            <option value="暂停超过">暂停超过_天</option>
+                        </select>
+
+                        <div class="label req">天数</div>
+                        <input data-k="days" type="number" min="1" max="999" placeholder="1-999" />
+
+                        <div class="label req">提醒人员</div>
+                        <div class="tagbox" data-k="people"></div>
+
+                        <div class="label req">可执行操作</div>
+                        <div class="tagbox" data-k="ops"></div>
+                    </div>
+                `;
+
+                const selEvent = box.querySelector('select[data-k="event"]');
+                const inpDays = box.querySelector('input[data-k="days"]');
+                selEvent.value = r.event || '';
+                inpDays.value = r.days || 1;
+
+                const tagPeople = box.querySelector('.tagbox[data-k="people"]');
+                const tagOps = box.querySelector('.tagbox[data-k="ops"]');
+
+                // tagboxes inside rule (simple)
+                function renderRuleTags(target, key, opts) {
+                    target.innerHTML = '';
+                    (r[key] || []).forEach(item => {
+                        const tag = document.createElement('span');
+                        tag.className = 'tag';
+                        tag.innerHTML = `<span>${item}</span><span class="x">×</span>`;
+                        tag.querySelector('.x').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            r[key] = (r[key] || []).filter(x => x !== item);
+                            renderAll();
+                        });
+                        target.appendChild(tag);
+                    });
+                    const add = document.createElement('span');
+                    add.className = 'tag';
+                    add.style.borderStyle = 'dashed';
+                    add.style.color = '#1677ff';
+                    add.textContent = '+ 选择';
+                    add.addEventListener('click', () => {
+                        const left = opts.filter(o => !(r[key] || []).includes(o));
+                        if (left.length === 0) { toast('已全部选择'); return; }
+                        (r[key] || (r[key] = [])).push(left[0]);
+                        renderAll();
+                    });
+                    target.appendChild(add);
+                }
+
+                renderRuleTags(tagPeople, 'people', OPTIONS.msgPeople);
+                renderRuleTags(tagOps, 'ops', OPTIONS.ops);
+
+                selEvent.addEventListener('change', () => {
+                    r.event = selEvent.value;
+                });
+                inpDays.addEventListener('change', () => {
+                    r.days = Math.max(1, Math.min(999, Number(inpDays.value) || 1));
+                });
+
+                box.querySelector('[data-act="del"]').addEventListener('click', () => {
+                    node.timeoutRules.splice(idx, 1);
+                    renderAll();
+                });
+
+                elRuleList.appendChild(box);
+            });
+        }
+
+        function renderMsgs() {
+            const node = getActiveNode();
+            elMsgList.innerHTML = '';
+            const list = node?.msgTriggers || [];
+
+            list.forEach((m, idx) => {
+                const box = document.createElement('div');
+                box.className = 'rule';
+                box.innerHTML = `
+                    <div class="rule-head">
+                        <div class="rule-title">触发动作 ${idx + 1}</div>
+                        <div class="link-danger" data-act="del">删除</div>
+                    </div>
+                    <div class="form">
+                        <div class="label req">触发动作</div>
+                        <select data-k="act">
+                            <option value="">请选择</option>
+                            <option value="提交">提交</option>
+                            <option value="提交并打印">提交并打印</option>
+                            <option value="驳回">驳回</option>
+                            <option value="回退">回退</option>
+                        </select>
+
+                        <div class="label">发送渠道</div>
+                        <div class="inline">
+                            <label class="inline" style="gap:6px; font-size:12px; color:#555;"><input type="checkbox" data-k="ch-sys" /> 系统消息</label>
+                            <label class="inline" style="gap:6px; font-size:12px; color:#555;"><input type="checkbox" data-k="ch-sms" /> 短信平台</label>
+                        </div>
+
+                        <div class="label req">提醒人员</div>
+                        <div class="tagbox" data-k="people"></div>
+
+                        <div class="label">插入变量</div>
+                        <div class="tagbox" data-k="vars"></div>
+
+                        <div class="label">消息内容</div>
+                        <textarea data-k="tpl" placeholder="例如：{患者姓名} 在 {首次治疗时间} 需要..."></textarea>
+                    </div>
+                `;
+
+                const sel = box.querySelector('select[data-k="act"]');
+                sel.value = m.act || '';
+                sel.addEventListener('change', () => { m.act = sel.value; });
+
+                const chSys = box.querySelector('input[data-k="ch-sys"]');
+                const chSms = box.querySelector('input[data-k="ch-sms"]');
+                chSys.checked = !!m.channelSys;
+                chSms.checked = !!m.channelSms;
+                chSys.addEventListener('change', () => { m.channelSys = chSys.checked; });
+                chSms.addEventListener('change', () => { m.channelSms = chSms.checked; });
+
+                const ta = box.querySelector('textarea[data-k="tpl"]');
+                ta.value = m.tpl || '';
+                ta.addEventListener('input', () => { m.tpl = ta.value; });
+
+                const tagPeople = box.querySelector('.tagbox[data-k="people"]');
+                const tagVars = box.querySelector('.tagbox[data-k="vars"]');
+
+                function renderBoxTags(target, key, opts) {
+                    target.innerHTML = '';
+                    (m[key] || []).forEach(item => {
+                        const tag = document.createElement('span');
+                        tag.className = 'tag';
+                        tag.innerHTML = `<span>${item}</span><span class="x">×</span>`;
+                        tag.querySelector('.x').addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            m[key] = (m[key] || []).filter(x => x !== item);
+                            renderAll();
+                        });
+                        target.appendChild(tag);
+                    });
+                    const add = document.createElement('span');
+                    add.className = 'tag';
+                    add.style.borderStyle = 'dashed';
+                    add.style.color = '#1677ff';
+                    add.textContent = '+ 选择';
+                    add.addEventListener('click', () => {
+                        const left = opts.filter(o => !(m[key] || []).includes(o));
+                        if (left.length === 0) { toast('已全部选择'); return; }
+                        (m[key] || (m[key] = [])).push(left[0]);
+                        renderAll();
+                    });
+                    target.appendChild(add);
+                }
+
+                renderBoxTags(tagPeople, 'people', OPTIONS.msgPeople);
+                renderBoxTags(tagVars, 'vars', OPTIONS.msgVars);
+
+                box.querySelector('[data-act="del"]').addEventListener('click', () => {
+                    node.msgTriggers.splice(idx, 1);
+                    renderAll();
+                });
+
+                elMsgList.appendChild(box);
+            });
+        }
+
+        function renderForm() {
+            const node = getActiveNode();
+            if (!node) return;
+
+            const idx = state.nodes.findIndex(n => n.id === node.id);
+            elOrder.textContent = String(idx + 1);
+            elIsEnd.value = String(!!node.isEnd);
+            elNodeName.value = node.name || '';
+            elNameCount.textContent = `${(node.name || '').length}/20`;
+            elCategory.value = node.category || '';
+
+            renderPreNodeOptions();
+
+            elSubFlow.value = node.subFlow || '';
+            elCopyPrev.checked = !!node.copyPrev;
+
+            elAutoSkip.classList.toggle('on', !!node.autoSkip);
+            elAutoSkip.setAttribute('aria-checked', String(!!node.autoSkip));
+            elAutoSkipText.textContent = node.autoSkip ? '开启' : '关闭';
+
+            elFormSelect.value = node.formSelect || '';
+            elFuncSystem.value = node.funcSystem || '';
+            elOpenMode.value = node.openMode || '远程桌面';
+            elAutoUrl.value = node.autoUrl || '';
+
+            // tagboxes
+            elFlowRecords.setAttribute('data-key', 'flowRecords');
+            elActionBtns.setAttribute('data-key', 'actionBtns');
+            elSecondCheck.setAttribute('data-key', 'secondCheck');
+            elBtnRoles.setAttribute('data-key', 'btnRoles');
+            elModifyRoles.setAttribute('data-key', 'modifyRoles');
+            elGenDocs.setAttribute('data-key', 'genDocs');
+
+            makeTagbox(elFlowRecords, node.flowRecords, OPTIONS.records);
+            makeTagbox(elActionBtns, node.actionBtns, OPTIONS.actionBtns);
+            makeTagbox(elSecondCheck, node.secondCheck, OPTIONS.actionBtns);
+            makeTagbox(elBtnRoles, node.btnRoles, OPTIONS.roles);
+            makeTagbox(elModifyRoles, node.modifyRoles, OPTIONS.roles);
+            makeTagbox(elGenDocs, node.genDocs, ['妇科-后装流程置入-内部射', '定位预约', '治疗执行', '计划设计']);
+
+            elPrintSign.value = String(!!node.printSign);
+            elHighRisk.value = node.highRisk || '否';
+            elCA.value = String(!!node.ca);
+            elReturnPdf.value = String(!!node.returnPdf);
+            elSyncTps.value = String(!!node.syncTps);
+            elBarcode.value = String(!!node.barcode);
+            elSyncMold.value = String(!!node.syncMold);
+            elConsumable.value = String(!!node.consumable);
+
+            renderRules();
+            renderMsgs();
+        }
+
+        function renderAll() {
+            elTitle.textContent = state.flow.name;
+            elMeta.textContent = `flowId: ${state.flow.id}`;
+            renderFlow();
+            renderForm();
+        }
+
+        // =========================
+        // actions
+        // =========================
+        function insertNodeAt(index) {
+            const prev = state.nodes[index - 1];
+            const newNode = {
+                id: uuid(),
+                name: '新节点',
+                category: '',
+                isEnd: false,
+                preNodeId: prev ? prev.id : '新增程/段',
+                subFlow: '',
+                copyPrev: false,
+                autoSkip: false,
+                timeoutRules: [],
+                formSelect: '',
+                flowRecords: [],
+                funcSystem: '',
+                openMode: '远程桌面',
+                autoUrl: '',
+                actionBtns: [],
+                secondCheck: [],
+                btnRoles: [],
+                modifyRoles: [],
+                genDocs: [],
+                printSign: false,
+                highRisk: '否',
+                ca: false,
+                returnPdf: false,
+                syncTps: false,
+                barcode: false,
+                syncMold: false,
+                consumable: false,
+                msgTriggers: []
+            };
+            state.nodes.splice(index, 0, newNode);
+            setActiveNode(newNode.id);
+            toast('已新增节点');
+        }
+
+        function addNextNode() {
+            const idx = state.nodes.findIndex(n => n.id === state.activeNodeId);
+            insertNodeAt(idx >= 0 ? idx + 1 : state.nodes.length);
+        }
+
+        function deleteNode(nodeId) {
+            const idx = state.nodes.findIndex(n => n.id === nodeId);
+            if (idx < 0) return;
+            const node = state.nodes[idx];
+            // prototype: basic "被引用"检查（前置节点）
+            const refs = state.nodes.filter(n => n.preNodeId === node.id);
+            if (refs.length > 0) {
+                toast(`该节点已被「${refs[0].name}」作为前置节点，请解除关联后再尝试`);
+                return;
+            }
+            if (!confirm(`确定删除节点「${node.name}」？`)) return;
+            state.nodes.splice(idx, 1);
+            if (state.nodes.length === 0) {
+                toast('至少保留一个节点');
+                state.nodes.push({ ...node, id: uuid() });
+            }
+            state.activeNodeId = state.nodes[Math.max(0, idx - 1)]?.id || state.nodes[0].id;
+            renderAll();
+            toast('已删除节点');
+        }
+
+        function validateBeforeSave() {
+            // 必填校验：节点名称、所属分类、表单选择（可选但我们按图的红星要求）
+            for (const n of state.nodes) {
+                if (!String(n.name || '').trim()) return '节点存在必填项未配置，无法保存!（节点名称）';
+                if (!String(n.category || '').trim()) return '节点存在必填项未配置，无法保存!（所属分类）';
+                // 表单选择：仅当你们按文档做必填时，这里做提示（原型简化）
+                if (!String(n.formSelect || '').trim()) return '节点存在必填项未配置，无法保存!（表单选择）';
+            }
+
+            // 重复表单：如果多个节点选择了相同表单，则保存失败
+            const map = new Map();
+            for (const n of state.nodes) {
+                const f = String(n.formSelect || '').trim();
+                if (!f) continue;
+                if (map.has(f)) {
+                    return `「${map.get(f)}」和「${n.name}」关联了相同的表单，请勿重复关联。`;
+                }
+                map.set(f, n.name);
+            }
+
+            // 超时规则：同个事件只允许一次（原型校验）
+            for (const n of state.nodes) {
+                const seen = new Set();
+                for (const r of (n.timeoutRules || [])) {
+                    if (!r.event) continue;
+                    if (seen.has(r.event)) return `节点「${n.name}」的任务超时设置中，同个事件只允许添加一次。`;
+                    seen.add(r.event);
+                }
+            }
+
+            return '';
+        }
+
+        // =========================
+        // wire up
+        // =========================
+        document.getElementById('btnBack').addEventListener('click', () => openInFrame('流程设置.html'));
+        document.getElementById('btnTest').addEventListener('click', () => toast('原型占位：提醒测试'));
+        document.getElementById('btnSave').addEventListener('click', () => {
+            const err = validateBeforeSave();
+            if (err) { toast(err); return; }
+            toast('保存成功（原型）');
         });
 
-        const tabs = document.getElementById('tabs');
-        const panel = document.getElementById('panel');
-        const labelByKey = { design: '设计', review: '核查', doc: '文档', fee: '关联费用' };
-        tabs.addEventListener('click', (e) => {
-            const el = e.target.closest('.tab');
-            if (!el) return;
-            const k = el.getAttribute('data-k');
-            [...tabs.querySelectorAll('.tab')].forEach(t => t.classList.toggle('active', t === el));
-            panel.innerHTML = `当前为「${labelByKey[k] || k}」区域（原型占位）。<span class="muted">后续可按需求逐步补充组件与交互。</span>`;
-            toast(`切换到：${labelByKey[k] || k}`);
+        document.getElementById('btnAddNode').addEventListener('click', addNextNode);
+        document.getElementById('btnDeleteNode').addEventListener('click', () => {
+            const node = getActiveNode();
+            if (!node) return;
+            deleteNode(node.id);
         });
+
+        // 基本设置联动
+        elIsEnd.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.isEnd = toBool(elIsEnd.value);
+        });
+        elNodeName.addEventListener('input', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.name = elNodeName.value.slice(0, 20);
+            elNameCount.textContent = `${n.name.length}/20`;
+            renderFlow();
+        });
+        elCategory.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.category = elCategory.value;
+        });
+        elPreNode.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.preNodeId = elPreNode.value === '新增程/段' ? '新增程/段' : elPreNode.value;
+        });
+        elSubFlow.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.subFlow = elSubFlow.value;
+        });
+        elCopyPrev.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.copyPrev = elCopyPrev.checked;
+        });
+        elAutoSkip.addEventListener('click', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.autoSkip = !n.autoSkip;
+            renderForm();
+        });
+
+        // 任务超时
+        document.getElementById('btnAddRule').addEventListener('click', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.timeoutRules.push({ event: '', days: 1, people: [], ops: [] });
+            renderAll();
+        });
+
+        // 关联表单
+        elFormSelect.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.formSelect = elFormSelect.value;
+        });
+        elFuncSystem.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.funcSystem = elFuncSystem.value;
+        });
+        elOpenMode.addEventListener('change', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.openMode = elOpenMode.value;
+        });
+        elAutoUrl.addEventListener('input', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.autoUrl = elAutoUrl.value;
+        });
+
+        // 动作设置
+        elPrintSign.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.printSign = toBool(elPrintSign.value); });
+        elHighRisk.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.highRisk = elHighRisk.value; });
+        elCA.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.ca = toBool(elCA.value); });
+        elReturnPdf.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.returnPdf = toBool(elReturnPdf.value); });
+        elSyncTps.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.syncTps = toBool(elSyncTps.value); });
+        elBarcode.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.barcode = toBool(elBarcode.value); });
+        elSyncMold.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.syncMold = toBool(elSyncMold.value); });
+        elConsumable.addEventListener('change', () => { const n = getActiveNode(); if (!n) return; n.consumable = toBool(elConsumable.value); });
+        document.getElementById('btnCtxEdit').addEventListener('click', () => toast('原型占位：右键按钮编辑'));
+
+        // 消息提醒
+        document.getElementById('btnAddMsg').addEventListener('click', () => {
+            const n = getActiveNode(); if (!n) return;
+            n.msgTriggers.push({ act: '', channelSys: true, channelSms: false, people: [], vars: [], tpl: '' });
+            renderAll();
+        });
+
+        // init
+        renderAll();
+        if (initialFocus === 'design') {
+            // UI 图是设计模式；这里仅作为参数保留
+        }
     </script>
 </body>
 </html>
