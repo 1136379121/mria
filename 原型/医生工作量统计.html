@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>医生工作量统计 - 统计分析</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background:#f5f5f5;
+      color:#1f1f1f;
+      /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
+      padding:0;
+      overflow:hidden;
+    }
+
+    :root{
+      --primary:#1677ff;
+      --border:#f0f0f0;
+      --card:#fff;
+      --muted:#8c8c8c;
+      --shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    .page{
+      height: 100vh;
+      min-height: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .header{
+      background: var(--card);
+      box-shadow: var(--shadow);
+      border-radius: 0;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+
+    .title{
+      font-size: 18px;
+      font-weight: 700;
+      color:#333;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .tabs{
+      display:flex;
+      align-items:center;
+      gap: 16px;
+    }
+    .tab{
+      font-size: 13px;
+      color:#666;
+      padding: 6px 0;
+      cursor:pointer;
+      border-bottom: 2px solid transparent;
+      user-select:none;
+    }
+    .tab.active{
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 700;
+    }
+
+    .hidden{ display:none !important; }
+
+    .filters{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .select, .input{
+      height: 32px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 13px;
+      outline:none;
+      background:#fff;
+      color:#333;
+    }
+    .select:focus, .input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(22,119,255,.18);
+    }
+    .input{ width: 240px; }
+
+    .btn{
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size: 13px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.primary{
+      background: var(--primary);
+      border-color: var(--primary);
+      color:#fff;
+    }
+    .btn.primary:hover{ background:#4096ff; border-color:#4096ff; color:#fff; }
+
+    .radio-group{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .radio{
+      display:flex;
+      align-items:center;
+      gap: 4px;
+      cursor:pointer;
+      font-size: 13px;
+      color:#666;
+      user-select:none;
+    }
+    .radio input[type="radio"]{
+      margin: 0;
+      cursor:pointer;
+    }
+    .radio input[type="radio"]:checked + span{
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .content{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow:auto;
+      padding: 0 10px 10px 10px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .card-hd{
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .card-hd strong{
+      font-size: 14px;
+      color:#333;
+    }
+
+    /* 数据图视图：2x2图表网格 */
+    .chart-grid{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .chart-module{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 300px;
+    }
+    .chart-module-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .chart-module-title{
+      font-weight: 700;
+      font-size: 13px;
+      color:#333;
+    }
+    .chart-module-actions{
+      display:flex;
+      gap: 6px;
+    }
+    .chart-module-body{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .bar-chart-area{
+      flex: 1;
+      min-height: 150px;
+      background:#fafafa;
+      border-radius: 6px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#999;
+      font-size: 13px;
+      position: relative;
+      padding: 20px 10px 40px 50px;
+    }
+    .bar-chart-container{
+      flex: 1;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap: 8px;
+      position: relative;
+      height: 100%;
+    }
+    .bar-group{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 4px;
+      flex: 1;
+      max-width: 80px;
+    }
+    .bar-wrapper{
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+    .bar{
+      width: 100%;
+      border-radius: 2px 2px 0 0;
+      background: var(--primary);
+      position: relative;
+      min-height: 2px;
+      transition: all .2s ease;
+    }
+    .bar:hover{
+      opacity: 0.8;
+    }
+    .bar-value{
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 600;
+      color:#333;
+      white-space: nowrap;
+    }
+    .bar-label{
+      font-size: 11px;
+      color:#666;
+      text-align:center;
+      margin-top: 4px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      width: 100%;
+    }
+    .y-axis{
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 40px;
+      width: 40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size: 11px;
+      color:#999;
+      padding-right: 8px;
+      text-align:right;
+    }
+    .chart-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#fff;
+    }
+    .chart-table th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid var(--border);
+    }
+    .chart-table td{
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid #f5f5f5;
+      color:#333;
+    }
+    .chart-table .col-name{
+      text-align:left;
+      padding-left: 12px;
+    }
+    .no-data{
+      color:#999;
+      font-size: 13px;
+      text-align:center;
+      padding: 40px;
+    }
+
+    /* 汇总表视图：四个环形图 */
+    .donut-cards{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(200px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .donut-card{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 250px;
+    }
+    .donut-card-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .donut-title{
+      font-weight: 700;
+      font-size: 13px;
+      color:#333;
+    }
+    .donut-body{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      align-items:center;
+      min-height: 0;
+    }
+    .donut{
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: conic-gradient(#4a7dff 0 120deg, #61d836 120deg 200deg, #ffcf3f 200deg 260deg, #ff5a5a 260deg 300deg, #5bc5f7 300deg 340deg, #9c27b0 340deg 360deg);
+      position: relative;
+      margin: 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+    }
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset: 24px;
+      background:#fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .donut-center{
+      position:absolute;
+      inset: 24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index: 2;
+      padding: 10px;
+      font-weight: 800;
+      color:#333;
+      line-height: 1.2;
+    }
+    .donut-center .total{ font-size: 14px; }
+    .donut-center .label{ margin-top: 6px; font-size: 12px; color:#666; font-weight: 600; }
+
+    .donut-legend{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      font-size: 12px;
+      color:#333;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .donut-legend-item{
+      display:grid;
+      grid-template-columns: 12px 1fr auto auto;
+      gap: 8px;
+      align-items:center;
+      padding: 3px 6px;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .donut-legend-item:hover{
+      background:#f5f5f5;
+    }
+    .dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background:#4a7dff;
+    }
+    .dot.c2{ background:#61d836; }
+    .dot.c3{ background:#ffcf3f; }
+    .dot.c4{ background:#ff5a5a; }
+    .dot.c5{ background:#5bc5f7; }
+    .dot.c6{ background:#9c27b0; }
+
+    .table-wrap{
+      overflow:auto;
+      padding: 0 10px 12px 10px;
+    }
+
+    table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      min-width: 600px;
+      border: 1px solid var(--border);
+      background:#fff;
+    }
+    thead th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align:center;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    tbody td{
+      font-size: 12px;
+      color:#333;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f5f5f5;
+      text-align:center;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    tbody tr:hover{ background:#fafcff; }
+    .col-name{ text-align:left; }
+
+    .who{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      min-width:0;
+    }
+    .avatar{
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background:#e6f4ff;
+      border: 1px solid #bae0ff;
+      color:#1677ff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    /* 弹窗样式 */
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show{
+      display: flex;
+    }
+    .modal{
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+      min-width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header{
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title{
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    .modal-close{
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover{
+      color: #333;
+    }
+    .modal-body{
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer{
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-form-item{
+      margin-bottom: 16px;
+    }
+    .modal-form-label{
+      display: block;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .detail-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+    .detail-table th{
+      background: #fafafa;
+      color: #333;
+      font-weight: 600;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+    .detail-table td{
+      padding: 10px 12px;
+      border-bottom: 1px solid #f5f5f5;
+      color: #333;
+    }
+    .detail-table tbody tr:hover{
+      background: #fafcff;
+    }
+    .patient-name-link{
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .patient-name-link:hover{
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="title">
+        <span>医生工作量统计</span>
+        <div class="tabs" role="tablist" aria-label="视图切换">
+          <div class="tab active" id="tabChart">数据图</div>
+          <div class="tab" id="tabTable">汇总表</div>
+        </div>
+      </div>
+      <div class="filters">
+        <select class="select" id="doctorGroup">
+          <option value="all" selected>按主管医生/组</option>
+        </select>
+        <select class="select" id="doctorSelect">
+          <option value="wang" selected>王医生组</option>
+        </select>
+        <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+        <div class="radio-group">
+          <label class="radio">
+            <input type="radio" name="timeGranularity" value="day" />
+            <span>按日</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="timeGranularity" value="month" checked />
+            <span>按月</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- 视图1：数据图（默认显示） -->
+      <div class="card" id="viewChart">
+        <div class="chart-grid">
+          <!-- 收治统计 -->
+          <div class="chart-module">
+            <div class="chart-module-hd">
+              <div class="chart-module-title">收治统计</div>
+              <div class="chart-module-actions">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div class="chart-module-body">
+              <div class="bar-chart-area">
+                <div class="y-axis" id="admissionYAxis"></div>
+                <div class="bar-chart-container" id="admissionBarChart"></div>
+              </div>
+              <table class="chart-table">
+                <thead>
+                  <tr>
+                    <th class="col-name" style="text-align:left; padding-left:12px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="col-name" style="padding-left:12px;">王医生组</td>
+                    <td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>6</td><td>0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 靶区勾画统计（可配置：关联菜单） -->
+          <div class="chart-module">
+            <div class="chart-module-hd">
+              <div class="chart-module-title" id="contouringPanelTitleA">靶区勾画统计</div>
+              <div class="chart-module-actions">
+                <button class="btn" id="btnContouringDetailA" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" id="btnContouringDownloadA" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+                <button class="btn" id="btnContouringSettingA" title="设置" aria-label="设置" style="height: 24px; width: 24px; padding: 0; font-size: 14px; line-height: 24px;">⚙</button>
+              </div>
+            </div>
+            <div class="chart-module-body">
+              <div class="bar-chart-area">
+                <div class="y-axis" id="contouringYAxisA"></div>
+                <div class="bar-chart-container" id="contouringBarChartA"></div>
+              </div>
+              <table class="chart-table">
+                <thead>
+                  <tr>
+                    <th class="col-name" style="text-align:left; padding-left:12px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="contouringTableBodyA">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 靶区勾画统计（可配置：关联菜单） - 替换原 CT预约统计 -->
+          <div class="chart-module">
+            <div class="chart-module-hd">
+              <div class="chart-module-title" id="contouringPanelTitleB">靶区勾画统计</div>
+              <div class="chart-module-actions">
+                <button class="btn" id="btnContouringDetailB" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" id="btnContouringDownloadB" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+                <button class="btn" id="btnContouringSettingB" title="设置" aria-label="设置" style="height: 24px; width: 24px; padding: 0; font-size: 14px; line-height: 24px;">⚙</button>
+              </div>
+            </div>
+            <div class="chart-module-body">
+              <div class="bar-chart-area">
+                <div class="y-axis" id="contouringYAxisB"></div>
+                <div class="bar-chart-container" id="contouringBarChartB"></div>
+              </div>
+              <table class="chart-table">
+                <thead>
+                  <tr>
+                    <th class="col-name" style="text-align:left; padding-left:12px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="contouringTableBodyB">
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 靶区勾画统计（可配置：关联菜单） - 替换原 勾画审核统计 -->
+          <div class="chart-module">
+            <div class="chart-module-hd">
+              <div class="chart-module-title" id="contouringPanelTitleC">靶区勾画统计</div>
+              <div class="chart-module-actions">
+                <button class="btn" id="btnContouringDetailC" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" id="btnContouringDownloadC" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+                <button class="btn" id="btnContouringSettingC" title="设置" aria-label="设置" style="height: 24px; width: 24px; padding: 0; font-size: 14px; line-height: 24px;">⚙</button>
+              </div>
+            </div>
+            <div class="chart-module-body">
+              <div class="bar-chart-area">
+                <div class="y-axis" id="contouringYAxisC"></div>
+                <div class="bar-chart-container" id="contouringBarChartC"></div>
+              </div>
+              <table class="chart-table">
+                <thead>
+                  <tr>
+                    <th class="col-name" style="text-align:left; padding-left:12px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="contouringTableBodyC">
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 视图2：汇总表 -->
+      <div class="card hidden" id="viewTable">
+        <div class="donut-cards">
+          <!-- 收治统计 -->
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">收治统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">35</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legend1"></div>
+            </div>
+          </div>
+
+          <!-- CT预约统计 -->
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">CT预约统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">10</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legend2"></div>
+            </div>
+          </div>
+
+          <!-- 勾画审核统计1 -->
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">勾画审核统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">1</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legend3"></div>
+            </div>
+          </div>
+
+          <!-- 勾画审核统计2 -->
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">勾画审核统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">1</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legend4"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 汇总表 -->
+        <div class="card-hd">
+          <strong>汇总表</strong>
+          <button class="btn primary" id="btnExport">导出</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 200px; text-align:left; padding-left:12px;">主管医生</th>
+                <th>收治</th>
+                <th>CT预约</th>
+                <th>勾画审核</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div class="modal-overlay" id="settingModal">
+    <div class="modal" style="min-width: 400px;">
+      <div class="modal-header">
+        <div class="modal-title">设置</div>
+        <button class="modal-close" onclick="closeModal('settingModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-item">
+          <label class="modal-form-label">关联菜单</label>
+          <select class="select" id="menuSelect" style="width: 100%;">
+            <option value="patient-list">患者列表</option>
+            <option value="patient-register">患者登记</option>
+            <option value="ct-appointment">CT预约</option>
+            <option value="ct-queue-call">CT排队叫号</option>
+            <option value="organ-contouring">正常组织勾画</option>
+            <option value="target-contouring" selected>靶区勾画</option>
+            <option value="review">勾画审核</option>
+            <option value="plan-design">计划设计</option>
+            <option value="plan-evaluate">计划评估</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('settingModal')">取消</button>
+        <button class="btn primary" onclick="saveSetting()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 明细弹窗 -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" style="min-width: 900px; max-width: 95vw;">
+      <div class="modal-header">
+        <div class="modal-title">勾画明细</div>
+        <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px; display: flex; justify-content: flex-end;">
+          <button class="btn primary" id="btnExportDetail" style="height: 32px;">导出到XLS</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>患者名称</th>
+                <th>病案号</th>
+                <th>放疗号</th>
+                <th>主管医生</th>
+                <th>医生组</th>
+                <th>诊断</th>
+                <th>流程</th>
+                <th>提交时间</th>
+              </tr>
+            </thead>
+            <tbody id="detailTableBody">
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal('detailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 收治统计柱状图数据（按月）
+    const admissionChartData = [
+      { month: '2025-07', value: 0 },
+      { month: '2025-08', value: 0 },
+      { month: '2025-09', value: 0 },
+      { month: '2025-10', value: 2 },
+      { month: '2025-11', value: 0 },
+      { month: '2025-12', value: 6 },
+      { month: '2026-01', value: 0 }
+    ];
+
+    // 三个“靶区勾画统计”面板数据（按月）——用于替换 CT预约统计、勾画审核统计
+    const contouringPanelKeys = ['A', 'B', 'C'];
+    const contouringPanelChartData = {
+      A: [
+        { month: '2025-07', value: 3 },
+        { month: '2025-08', value: 5 },
+        { month: '2025-09', value: 2 },
+        { month: '2025-10', value: 8 },
+        { month: '2025-11', value: 4 },
+        { month: '2025-12', value: 12 },
+        { month: '2026-01', value: 6 }
+      ],
+      B: [
+        { month: '2025-07', value: 1 },
+        { month: '2025-08', value: 2 },
+        { month: '2025-09', value: 4 },
+        { month: '2025-10', value: 3 },
+        { month: '2025-11', value: 6 },
+        { month: '2025-12', value: 7 },
+        { month: '2026-01', value: 5 }
+      ],
+      C: [
+        { month: '2025-07', value: 0 },
+        { month: '2025-08', value: 3 },
+        { month: '2025-09', value: 1 },
+        { month: '2025-10', value: 2 },
+        { month: '2025-11', value: 2 },
+        { month: '2025-12', value: 4 },
+        { month: '2026-01', value: 3 }
+      ]
+    };
+
+    // 三个面板的“关联菜单”配置（默认：A=靶区勾画，B=勾画审核，C=计划评估）
+    const contouringPanelConfig = {
+      A: { menuValue: 'target-contouring', menuLabel: '靶区勾画' },
+      B: { menuValue: 'review', menuLabel: '勾画审核' },
+      C: { menuValue: 'plan-evaluate', menuLabel: '计划评估' }
+    };
+    let activeContouringPanelKey = 'A';
+
+    // 勾画明细数据
+    const contouringDetailData = [
+      { patientName: '张三', caseNo: 'C202501001', rtNo: 'RT202501001', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-15 14:30:25' },
+      { patientName: '李四', caseNo: 'C202501002', rtNo: 'RT202501002', doctor: '王医生', group: '王医生组', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-15 16:20:10' },
+      { patientName: '王五', caseNo: 'C202501003', rtNo: 'RT202501003', doctor: '刘医生', group: '刘医生组', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-16 09:15:30' },
+      { patientName: '赵六', caseNo: 'C202501004', rtNo: 'RT202501004', doctor: '王医生', group: '王医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-16 11:45:20' },
+      { patientName: '钱七', caseNo: 'C202501005', rtNo: 'RT202501005', doctor: '陈医生', group: '陈医生组', diagnosis: '肝癌', process: 'SBRT流程', submitTime: '2025-12-17 08:30:15' },
+      { patientName: '孙八', caseNo: 'C202501006', rtNo: 'RT202501006', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-17 14:20:40' },
+      { patientName: '周九', caseNo: 'C202501007', rtNo: 'RT202501007', doctor: '刘医生', group: '刘医生组', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-18 10:10:25' },
+      { patientName: '吴十', caseNo: 'C202501008', rtNo: 'RT202501008', doctor: '王医生', group: '王医生组', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-18 15:35:50' },
+      { patientName: '郑十一', caseNo: 'C202501009', rtNo: 'RT202501009', doctor: '陈医生', group: '陈医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-19 09:25:30' },
+      { patientName: '王十二', caseNo: 'C202501010', rtNo: 'RT202501010', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-19 16:40:15' }
+    ];
+
+    // 收治统计数据
+    const admissionData = [
+      { name: 'LILI', count: 10, pct: 28.57, dot: 'c1' },
+      { name: '刘振', count: 8, pct: 22.86, dot: 'c2' },
+      { name: 'lisi', count: 4, pct: 11.43, dot: 'c3' },
+      { name: '陈启', count: 4, pct: 11.43, dot: 'c4' },
+      { name: '李建', count: 2, pct: 5.71, dot: 'c5' },
+      { name: '赵喜全', count: 2, pct: 5.71, dot: 'c1' },
+      { name: '阿郎', count: 2, pct: 5.71, dot: 'c2' },
+      { name: 'nemo', count: 1, pct: 2.86, dot: 'c3' }
+    ];
+
+    // CT预约统计数据
+    const ctAppointmentData = [
+      { name: '阿郎', count: 6, pct: 60.00, dot: 'c1' },
+      { name: '邓霞', count: 4, pct: 40.00, dot: 'c2' }
+    ];
+
+    // 勾画审核统计数据
+    const contouringData = [
+      { name: '邓霞', count: 1, pct: 100.00, dot: 'c1' }
+    ];
+
+    // 汇总表数据
+    const summaryTableData = [
+      { name: 'LILI', init: 'L', admission: 10, ct: 0, contouring: 0 },
+      { name: '刘振', init: '刘', admission: 8, ct: 0, contouring: 0 },
+      { name: 'lisi', init: 'l', admission: 4, ct: 0, contouring: 0 },
+      { name: '陈启', init: '陈', admission: 4, ct: 0, contouring: 0 },
+      { name: '李建', init: '李', admission: 2, ct: 0, contouring: 0 },
+      { name: '赵喜全', init: '赵', admission: 2, ct: 0, contouring: 0 },
+      { name: '阿郎', init: '阿', admission: 2, ct: 6, contouring: 0 },
+      { name: 'nemo', init: 'n', admission: 1, ct: 0, contouring: 0 },
+      { name: 'test2', init: 't', admission: 1, ct: 0, contouring: 0 },
+      { name: '许朵', init: '许', admission: 1, ct: 0, contouring: 0 },
+      { name: '邓霞', init: '邓', admission: 0, ct: 4, contouring: 1 }
+    ];
+
+    function renderLegend(containerId, data) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = '';
+      data.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'donut-legend-item';
+        row.innerHTML = `
+          <span class="dot ${it.dot}"></span>
+          <span class="name" title="${it.name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${it.name}</span>
+          <span class="num" style="color:#555; font-variant-numeric: tabular-nums;">${it.count}</span>
+          <span class="pct" style="color:#999; font-variant-numeric: tabular-nums;">${it.pct.toFixed(2)}%</span>
+        `;
+        el.appendChild(row);
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = '';
+      summaryTableData.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="col-name" style="padding-left:12px;">
+            <span class="who"><span class="avatar">${row.init}</span><span title="${row.name}">${row.name}</span></span>
+          </td>
+          <td>${row.admission}</td>
+          <td>${row.ct}</td>
+          <td>${row.contouring}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // 渲染通用柱状图（单序列）
+    function renderSimpleBarChart(containerId, yAxisId, data) {
+      const container = document.getElementById(containerId);
+      const yAxis = document.getElementById(yAxisId);
+      if (!container || !yAxis) return;
+      
+      container.innerHTML = '';
+      yAxis.innerHTML = '';
+      
+      const maxValue = Math.max(...data.map(d => d.value), 1);
+      const barHeight = 120; // 柱子最大高度（px）
+      
+      // 渲染Y轴刻度
+      for (let i = maxValue; i >= 0; i--) {
+        const tick = document.createElement('div');
+        tick.textContent = i;
+        yAxis.appendChild(tick);
+      }
+      
+      // 渲染柱状图
+      data.forEach(item => {
+        const barGroup = document.createElement('div');
+        barGroup.className = 'bar-group';
+        
+        const barWrapper = document.createElement('div');
+        barWrapper.className = 'bar-wrapper';
+        
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const height = (item.value / maxValue) * barHeight;
+        bar.style.height = height + 'px';
+        
+        // 显示数值
+        if (item.value > 0) {
+          const valueLabel = document.createElement('div');
+          valueLabel.className = 'bar-value';
+          valueLabel.textContent = item.value;
+          bar.appendChild(valueLabel);
+        }
+        
+        barWrapper.appendChild(bar);
+        
+        // 月份标签
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = item.month.substring(5); // 只显示月份部分，如 "07"
+        label.title = item.month;
+        
+        barGroup.appendChild(barWrapper);
+        barGroup.appendChild(label);
+        container.appendChild(barGroup);
+      });
+    }
+
+    // 渲染面板表格（与柱状图同数据）
+    function renderContouringPanelTable(tbodyId, data, groupLabel = '王医生组') {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="col-name" style="padding-left:12px;">${groupLabel}</td>
+        <td>${data[0]?.value ?? 0}</td>
+        <td>${data[1]?.value ?? 0}</td>
+        <td>${data[2]?.value ?? 0}</td>
+        <td>${data[3]?.value ?? 0}</td>
+        <td>${data[4]?.value ?? 0}</td>
+        <td>${data[5]?.value ?? 0}</td>
+        <td>${data[6]?.value ?? 0}</td>
+      `;
+      tbody.appendChild(row);
+    }
+
+    // 渲染勾画明细表格
+    function renderContouringDetailTable() {
+      const tbody = document.getElementById('detailTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      
+      contouringDetailData.forEach(item => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><a href="#" class="patient-name-link" onclick="alert('原型占位：跳转到患者详情页 - ${item.patientName}'); return false;">${item.patientName}</a></td>
+          <td>${item.caseNo}</td>
+          <td>${item.rtNo}</td>
+          <td>${item.doctor}</td>
+          <td>${item.group}</td>
+          <td>${item.diagnosis}</td>
+          <td>${item.process}</td>
+          <td>${item.submitTime}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    // 弹窗控制函数
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.add('show');
+      }
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.classList.remove('show');
+      }
+    }
+
+    function updateContouringPanelTitle(panelKey) {
+      const cfg = contouringPanelConfig[panelKey];
+      const titleEl = document.getElementById(`contouringPanelTitle${panelKey}`);
+      if (!cfg || !titleEl) return;
+      titleEl.textContent = `${cfg.menuLabel}统计`;
+    }
+
+    function saveSetting() {
+      const menuSelect = document.getElementById('menuSelect');
+      const label = menuSelect.options[menuSelect.selectedIndex]?.text || '靶区勾画';
+      contouringPanelConfig[activeContouringPanelKey] = {
+        menuValue: menuSelect.value,
+        menuLabel: label
+      };
+      updateContouringPanelTitle(activeContouringPanelKey);
+      alert(`原型占位：保存设置 - 关联菜单：${label}`);
+      closeModal('settingModal');
+    }
+
+    function openContouringSetting(panelKey) {
+      activeContouringPanelKey = panelKey;
+      const menuSelect = document.getElementById('menuSelect');
+      if (menuSelect) {
+        menuSelect.value = contouringPanelConfig[panelKey]?.menuValue || 'target-contouring';
+      }
+      openModal('settingModal');
+    }
+
+    // 渲染收治统计柱状图
+    function renderAdmissionBarChart() {
+      const container = document.getElementById('admissionBarChart');
+      const yAxis = document.getElementById('admissionYAxis');
+      if (!container || !yAxis) return;
+      
+      container.innerHTML = '';
+      yAxis.innerHTML = '';
+      
+      const maxValue = 6; // Y轴最大值
+      const barHeight = 120; // 柱子最大高度（px）
+      
+      // 渲染Y轴刻度
+      for (let i = maxValue; i >= 0; i--) {
+        const tick = document.createElement('div');
+        tick.textContent = i;
+        yAxis.appendChild(tick);
+      }
+      
+      // 渲染柱状图
+      admissionChartData.forEach(item => {
+        const barGroup = document.createElement('div');
+        barGroup.className = 'bar-group';
+        
+        const barWrapper = document.createElement('div');
+        barWrapper.className = 'bar-wrapper';
+        
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const height = (item.value / maxValue) * barHeight;
+        bar.style.height = height + 'px';
+        
+        // 显示数值
+        if (item.value > 0) {
+          const valueLabel = document.createElement('div');
+          valueLabel.className = 'bar-value';
+          valueLabel.textContent = item.value;
+          bar.appendChild(valueLabel);
+        }
+        
+        barWrapper.appendChild(bar);
+        
+        // 月份标签
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = item.month.substring(5); // 只显示月份部分，如 "07"
+        label.title = item.month;
+        
+        barGroup.appendChild(barWrapper);
+        barGroup.appendChild(label);
+        container.appendChild(barGroup);
+      });
+    }
+
+    // Tab切换逻辑
+    function setView(view) {
+      const chart = document.getElementById('viewChart');
+      const table = document.getElementById('viewTable');
+      const tabChart = document.getElementById('tabChart');
+      const tabTable = document.getElementById('tabTable');
+
+      const isChart = view === 'chart';
+      chart.classList.toggle('hidden', !isChart);
+      table.classList.toggle('hidden', isChart);
+      tabChart.classList.toggle('active', isChart);
+      tabTable.classList.toggle('active', !isChart);
+    }
+
+    // 初始化
+    renderAdmissionBarChart();
+    renderContouringDetailTable();
+    contouringPanelKeys.forEach((k) => {
+      updateContouringPanelTitle(k);
+      renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, contouringPanelChartData[k]);
+      renderContouringPanelTable(`contouringTableBody${k}`, contouringPanelChartData[k]);
+    });
+    renderLegend('legend1', admissionData);
+    renderLegend('legend2', ctAppointmentData);
+    renderLegend('legend3', contouringData);
+    renderLegend('legend4', contouringData);
+    renderTable();
+
+    // 默认显示数据图视图
+    setView('chart');
+    
+    // Tab点击事件
+    document.getElementById('tabChart').addEventListener('click', () => setView('chart'));
+    document.getElementById('tabTable').addEventListener('click', () => setView('table'));
+    document.getElementById('btnExport').addEventListener('click', () => alert('原型占位：导出'));
+
+    // 三个面板按钮事件（设置/明细/下载）
+    contouringPanelKeys.forEach((k) => {
+      document.getElementById(`btnContouringSetting${k}`)?.addEventListener('click', () => {
+        // 仅超级管理员有此配置权限（原型中直接显示）
+        openContouringSetting(k);
+      });
+      document.getElementById(`btnContouringDetail${k}`)?.addEventListener('click', () => {
+        const title = contouringPanelConfig[k]?.menuLabel || '靶区勾画';
+        const modalTitle = document.querySelector('#detailModal .modal-title');
+        if (modalTitle) modalTitle.textContent = `${title}明细`;
+        openModal('detailModal');
+      });
+      document.getElementById(`btnContouringDownload${k}`)?.addEventListener('click', () => {
+        const title = contouringPanelConfig[k]?.menuLabel || '靶区勾画';
+        const now = new Date();
+        const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        alert(`原型占位：下载PNG格式图表 - 文件名：${title}统计${dateStr}.png`);
+      });
+    });
+    document.getElementById('btnExportDetail').addEventListener('click', () => {
+      const now = new Date();
+      const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+      const title = contouringPanelConfig[activeContouringPanelKey]?.menuLabel || '靶区勾画';
+      alert(`原型占位：导出到XLS - 文件名：${title}明细${dateStr}.xls`);
+    });
+
+    // 点击遮罩层关闭弹窗
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('show');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

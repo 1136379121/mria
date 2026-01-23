@@ -214,6 +214,8 @@
             padding: 16px 0;
             /* 给右下角收起按钮留空间，避免遮挡底部菜单 */
             padding-bottom: 56px;
+            /* 与顶部标题栏内容左边缘对齐 */
+            padding-left: 24px;
             overflow-y: auto;
             overflow-x: hidden;
         }
@@ -223,7 +225,7 @@
         }
 
         .sidebar-group-title {
-            padding: 10px 14px 6px 14px;
+            padding: 10px 14px;
             /* 按需求：父子级文字大小一致（与菜单项一致） */
             font-size: 14px;
             color: #999;
@@ -587,6 +589,13 @@
                 { name: '流程预警', enabled: true, url: '' }
             ] },
             { name: '统计分析', enabled: true, children: [
+                { name: '患者统计', enabled: true, url: '患者统计.html' },
+                { name: '医生工作量', enabled: true, url: '医生工作量统计.html' },
+                { name: '物理师工作量', enabled: true, url: '物理师工作量.html' },
+                { name: '定位技师工作量', enabled: true, url: '定位技师工作量统计.html' },
+                { name: '治疗技师工作量', enabled: true, url: '治疗技师工作量统计.html' },
+                { name: '加速器工作量', enabled: true, url: '加速器工作量统计.html' },
+                { name: '其他设备工作量', enabled: true, url: '其他设备工作量统计.html' },
                 { name: '全部统计模块', enabled: true, url: '' }
             ] },
             {
@@ -625,6 +634,7 @@
         const DOC_CHILD_ORDER_BY_PARENT = {
             '患者管理': ['患者列表', '患者登记'],
             '定位管理': ['CT预约', 'CT排队叫号'],
+            '统计分析': ['患者统计', '医生工作量', '物理师工作量', '定位技师工作量', '治疗技师工作量', '加速器工作量', '其他设备工作量', '全部统计模块'],
             '流程管理配置': ['流程设置', '表单管理', '菜单管理', '任务分配设置', '机房设置', '收费项目', '字典维护', '病案文档']
         };
 

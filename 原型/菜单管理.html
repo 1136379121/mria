@@ -419,7 +419,14 @@
                 { id: 'flow-warning', name: '流程预警', enabled: true, builtin: true, url: '', order: 1 }
             ] },
             { id: 'stats', name: '统计分析', enabled: true, builtin: true, children: [
-                { id: 'all-stats', name: '全部统计模块', enabled: true, builtin: true, url: '', order: 1 }
+                { id: 'patient-stats', name: '患者统计', enabled: true, builtin: true, url: '患者统计.html', order: 1 },
+                { id: 'doctor-workload', name: '医生工作量', enabled: true, builtin: true, url: '医生工作量统计.html', order: 2 },
+                { id: 'physicist-workload', name: '物理师工作量', enabled: true, builtin: true, url: '物理师工作量.html', order: 3 },
+                { id: 'position-tech-workload', name: '定位技师工作量', enabled: true, builtin: true, url: '定位技师工作量统计.html', order: 4 },
+                { id: 'treatment-tech-workload', name: '治疗技师工作量', enabled: true, builtin: true, url: '治疗技师工作量统计.html', order: 5 },
+                { id: 'linac-workload', name: '加速器工作量', enabled: true, builtin: true, url: '加速器工作量统计.html', order: 6 },
+                { id: 'other-device-workload', name: '其他设备工作量', enabled: true, builtin: true, url: '其他设备工作量统计.html', order: 7 },
+                { id: 'all-stats', name: '全部统计模块', enabled: true, builtin: true, url: '', order: 8 }
             ] },
             {
                 id: 'flow-config',
@@ -459,6 +466,7 @@
         const DOC_CHILD_ORDER_BY_PARENT = {
             '患者管理': ['患者列表', '患者登记'],
             '定位管理': ['CT预约', 'CT排队叫号'],
+            '统计分析': ['患者统计', '医生工作量', '物理师工作量', '定位技师工作量', '治疗技师工作量', '加速器工作量', '其他设备工作量', '全部统计模块'],
             '流程管理配置': ['流程设置', '表单管理', '菜单管理', '任务分配设置', '机房设置', '收费项目', '字典维护', '病案文档']
         };
 

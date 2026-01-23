@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>物理师工作量 - 统计分析</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background:#f5f5f5;
+      color:#1f1f1f;
+      padding:0;
+      overflow:hidden;
+    }
+
+    :root{
+      --primary:#1677ff;
+      --border:#f0f0f0;
+      --card:#fff;
+      --muted:#8c8c8c;
+      --shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    .page{
+      height: 100vh;
+      min-height: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .header{
+      background: var(--card);
+      box-shadow: var(--shadow);
+      border-radius: 0;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+
+    .title{
+      font-size: 18px;
+      font-weight: 700;
+      color:#333;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .tabs{
+      display:flex;
+      align-items:center;
+      gap: 16px;
+    }
+    .tab{
+      font-size: 13px;
+      color:#666;
+      padding: 6px 0;
+      cursor:pointer;
+      border-bottom: 2px solid transparent;
+      user-select:none;
+    }
+    .tab.active{
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 700;
+    }
+
+    .hidden{ display:none !important; }
+
+    .filters{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+
+    .select, .input{
+      height: 32px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 13px;
+      outline:none;
+      background:#fff;
+      color:#333;
+    }
+    .select:focus, .input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(22,119,255,.18);
+    }
+    .input{ width: 260px; }
+
+    .content{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow:auto;
+      padding: 0 10px 10px 10px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      padding: 10px;
+    }
+
+    /* 两列布局容器 */
+    .panel-grid{
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    /* 面板：复制自“医生工作量统计-靶区勾画统计” */
+    .chart-module{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 320px;
+      box-shadow: var(--shadow);
+      margin-bottom: 0;
+    }
+    .chart-module-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .chart-module-title{
+      font-weight: 800;
+      font-size: 14px;
+      color:#333;
+    }
+    .chart-module-actions{
+      display:flex;
+      gap: 6px;
+      align-items:center;
+    }
+    .btn{
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 6px;
+      border: 1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size: 11px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.icon{
+      width: 24px;
+      padding: 0;
+      font-size: 14px;
+      line-height: 24px;
+    }
+
+    .chart-module-body{
+      flex: 1;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 0;
+    }
+    .bar-chart-area{
+      flex: 1;
+      min-height: 150px;
+      background:#fafafa;
+      border-radius: 6px;
+      position: relative;
+      padding: 20px 10px 40px 50px;
+      display:flex;
+      align-items:stretch;
+      justify-content:stretch;
+    }
+    .y-axis{
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 40px;
+      width: 40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size: 11px;
+      color:#999;
+      padding-right: 8px;
+      text-align:right;
+      pointer-events:none;
+    }
+    .bar-chart-container{
+      flex: 1;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap: 8px;
+      position: relative;
+      height: 100%;
+    }
+    .bar-group{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 4px;
+      flex: 1;
+      max-width: 80px;
+    }
+    .bar-wrapper{
+      width: 100%;
+      height: 100%;
+      position: relative;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+    .bar{
+      width: 100%;
+      border-radius: 2px 2px 0 0;
+      background: var(--primary);
+      position: relative;
+      min-height: 2px;
+      transition: all .2s ease;
+    }
+    .bar:hover{ opacity: 0.85; }
+    .bar-value{
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 700;
+      color:#333;
+      white-space: nowrap;
+    }
+    .bar-label{
+      font-size: 11px;
+      color:#666;
+      text-align:center;
+      margin-top: 4px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      width: 100%;
+    }
+
+    .chart-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+      border: 1px solid var(--border);
+      background:#fff;
+    }
+    .chart-table th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid var(--border);
+    }
+    .chart-table td{
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid #f5f5f5;
+      color:#333;
+    }
+    .chart-table .col-name{
+      text-align:left;
+      padding-left: 12px;
+      white-space: nowrap;
+    }
+
+    /* 弹窗样式（复用医生工作量统计的交互） */
+    .modal-overlay{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.45);
+      z-index: 10000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.show{ display:flex; }
+    .modal{
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 6px 16px rgba(0,0,0,.12);
+      min-width: 500px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header{
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-title{
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+    }
+    .modal-close{
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 18px;
+      color: #999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-close:hover{ color:#333; }
+    .modal-body{
+      padding: 20px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer{
+      padding: 12px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .modal-form-item{ margin-bottom: 16px; }
+    .modal-form-label{
+      display: block;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 8px;
+    }
+    .detail-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 13px;
+      border: 1px solid var(--border);
+    }
+    .detail-table th{
+      background: #fafafa;
+      color: #333;
+      font-weight: 600;
+      padding: 10px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .detail-table td{
+      padding: 10px 12px;
+      border-bottom: 1px solid #f5f5f5;
+      color: #333;
+      white-space: nowrap;
+    }
+    .detail-table tbody tr:hover{ background: #fafcff; }
+    .patient-name-link{
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .patient-name-link:hover{ text-decoration: underline; }
+
+    /* 汇总表（参考医生工作量统计页面） */
+    .donut-cards{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .donut-card{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 260px;
+    }
+    .donut-card-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .donut-title{
+      font-weight: 800;
+      font-size: 13px;
+      color:#333;
+    }
+    .donut-body{
+      display:grid;
+      grid-template-columns: 140px 1fr;
+      gap: 10px;
+      align-items:center;
+      min-height: 0;
+    }
+    .donut{
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: conic-gradient(#4a7dff 0 120deg, #61d836 120deg 220deg, #ffcf3f 220deg 300deg, #ff5a5a 300deg 360deg);
+      position: relative;
+      margin: 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+    }
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset: 24px;
+      background:#fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .donut-center{
+      position:absolute;
+      inset: 24px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index: 2;
+      padding: 10px;
+      font-weight: 800;
+      color:#333;
+      line-height: 1.2;
+    }
+    .donut-center .total{ font-size: 14px; }
+    .donut-center .label{ margin-top: 6px; font-size: 12px; color:#666; font-weight: 600; }
+
+    .donut-legend{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      font-size: 12px;
+      color:#333;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+    .donut-legend-item{
+      display:grid;
+      grid-template-columns: 12px 1fr auto auto;
+      gap: 8px;
+      align-items:center;
+      padding: 3px 6px;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .donut-legend-item:hover{ background:#f5f5f5; }
+    .dot{ width: 8px; height: 8px; border-radius: 50%; background:#4a7dff; }
+    .dot.c2{ background:#61d836; }
+    .dot.c3{ background:#ffcf3f; }
+    .dot.c4{ background:#ff5a5a; }
+
+    .card-hd{
+      padding: 10px 0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      border-top: 1px solid var(--border);
+      margin-top: 10px;
+    }
+    .table-wrap{ overflow:auto; }
+    .summary-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      table-layout: fixed;
+      min-width: 720px;
+      border: 1px solid var(--border);
+      background:#fff;
+    }
+    .summary-table thead th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align:center;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .summary-table tbody td{
+      font-size: 12px;
+      color:#333;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f5f5f5;
+      text-align:center;
+      white-space: nowrap;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .summary-table tbody tr:hover{ background:#fafcff; }
+    .who{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      min-width:0;
+    }
+    .avatar{
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      background:#e6f4ff;
+      border: 1px solid #bae0ff;
+      color:#1677ff;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+
+    @media (max-width: 1100px){
+      .panel-grid{ grid-template-columns: 1fr; }
+      .donut-cards{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="title">
+        <span>物理师工作量统计</span>
+        <div class="tabs" role="tablist" aria-label="视图切换">
+          <div class="tab active" id="tabChart">数据图</div>
+          <div class="tab" id="tabTable">汇总表</div>
+        </div>
+      </div>
+      <div class="filters">
+        <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- 视图1：数据图 -->
+      <div class="card" id="viewChart">
+      <div class="panel-grid">
+      <!-- 面板 1 -->
+      <div class="chart-module" id="panel1">
+        <div class="chart-module-hd">
+          <div class="chart-module-title" id="panelTitle1">计划设计统计</div>
+          <div class="chart-module-actions">
+            <button class="btn" data-panel="1" data-action="detail">明细</button>
+            <button class="btn" data-panel="1" data-action="download">下载</button>
+            <button class="btn icon" data-panel="1" data-action="setting" title="设置" aria-label="设置">⚙</button>
+          </div>
+        </div>
+        <div class="chart-module-body">
+          <div class="bar-chart-area">
+            <div class="y-axis" id="yAxis1"></div>
+            <div class="bar-chart-container" id="barChart1"></div>
+          </div>
+          <table class="chart-table">
+            <thead>
+              <tr>
+                <th class="col-name" style="width: 90px;">技术</th>
+                <th>12-01</th><th>12-02</th><th>12-03</th><th>12-04</th><th>12-05</th><th>12-06</th><th>12-07</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody1"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 面板 2 -->
+      <div class="chart-module" id="panel2">
+        <div class="chart-module-hd">
+          <div class="chart-module-title" id="panelTitle2">计划审核统计</div>
+          <div class="chart-module-actions">
+            <button class="btn" data-panel="2" data-action="detail">明细</button>
+            <button class="btn" data-panel="2" data-action="download">下载</button>
+            <button class="btn icon" data-panel="2" data-action="setting" title="设置" aria-label="设置">⚙</button>
+          </div>
+        </div>
+        <div class="chart-module-body">
+          <div class="bar-chart-area">
+            <div class="y-axis" id="yAxis2"></div>
+            <div class="bar-chart-container" id="barChart2"></div>
+          </div>
+          <table class="chart-table">
+            <thead>
+              <tr>
+                <th class="col-name" style="width: 90px;">技术</th>
+                <th>12-01</th><th>12-02</th><th>12-03</th><th>12-04</th><th>12-05</th><th>12-06</th><th>12-07</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody2"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 面板 3 -->
+      <div class="chart-module" id="panel3">
+        <div class="chart-module-hd">
+          <div class="chart-module-title" id="panelTitle3">计划复核统计</div>
+          <div class="chart-module-actions">
+            <button class="btn" data-panel="3" data-action="detail">明细</button>
+            <button class="btn" data-panel="3" data-action="download">下载</button>
+            <button class="btn icon" data-panel="3" data-action="setting" title="设置" aria-label="设置">⚙</button>
+          </div>
+        </div>
+        <div class="chart-module-body">
+          <div class="bar-chart-area">
+            <div class="y-axis" id="yAxis3"></div>
+            <div class="bar-chart-container" id="barChart3"></div>
+          </div>
+          <table class="chart-table">
+            <thead>
+              <tr>
+                <th class="col-name" style="width: 90px;">技术</th>
+                <th>12-01</th><th>12-02</th><th>12-03</th><th>12-04</th><th>12-05</th><th>12-06</th><th>12-07</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody3"></tbody>
+          </table>
+        </div>
+      </div>
+      </div>
+      </div>
+
+      <!-- 视图2：汇总表 -->
+      <div class="card hidden" id="viewTable">
+        <div class="donut-cards">
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">计划设计统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total" id="sumTotalDesign">0</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legendDesign"></div>
+            </div>
+          </div>
+
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">计划审核统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total" id="sumTotalAudit">0</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legendAudit"></div>
+            </div>
+          </div>
+
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">计划复核统计</div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total" id="sumTotalRecheck">0</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="legendRecheck"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-hd">
+          <strong style="font-size:14px; color:#333;">汇总表</strong>
+          <button class="btn" id="btnExportSummary" style="height: 32px; background: var(--primary); border-color: var(--primary); color:#fff;">导出</button>
+        </div>
+        <div class="table-wrap">
+          <table class="summary-table">
+            <thead>
+              <tr>
+                <th style="width: 220px; text-align:left; padding-left:12px;">物理师</th>
+                <th>计划设计</th>
+                <th>计划审核</th>
+                <th>计划复核</th>
+              </tr>
+            </thead>
+            <tbody id="summaryTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 设置弹窗 -->
+  <div class="modal-overlay" id="settingModal">
+    <div class="modal" style="min-width: 420px;">
+      <div class="modal-header">
+        <div class="modal-title">设置</div>
+        <button class="modal-close" onclick="closeModal('settingModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-form-item">
+          <label class="modal-form-label">关联菜单</label>
+          <select class="select" id="menuSelect" style="width: 100%;">
+            <option value="patient-list">患者列表</option>
+            <option value="patient-register">患者登记</option>
+            <option value="ct-appointment">CT预约</option>
+            <option value="ct-queue-call">CT排队叫号</option>
+            <option value="organ-contouring">正常组织勾画</option>
+            <option value="target-contouring">靶区勾画</option>
+            <option value="review">勾画审核</option>
+            <option value="plan-design">计划设计</option>
+            <option value="plan-audit">计划审核</option>
+            <option value="plan-recheck">计划复核</option>
+            <option value="plan-evaluate">计划评估</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" style="height: 32px;" onclick="closeModal('settingModal')">取消</button>
+        <button class="btn" style="height: 32px; background: var(--primary); border-color: var(--primary); color:#fff;" onclick="saveSetting()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 明细弹窗 -->
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal" style="min-width: 900px; max-width: 95vw;">
+      <div class="modal-header">
+        <div class="modal-title" id="detailModalTitle">明细</div>
+        <button class="modal-close" onclick="closeModal('detailModal')">×</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 12px; display: flex; justify-content: flex-end;">
+          <button class="btn" id="btnExportDetail" style="height: 32px; background: var(--primary); border-color: var(--primary); color:#fff;">导出到XLS</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>患者名称</th>
+                <th>病案号</th>
+                <th>放疗号</th>
+                <th>主管医生</th>
+                <th>医生组</th>
+                <th>诊断</th>
+                <th>流程</th>
+                <th>提交时间</th>
+              </tr>
+            </thead>
+            <tbody id="detailTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" style="height: 32px;" onclick="closeModal('detailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const chartData = {
+      1: [
+        { x: '12-01', value: 3 },
+        { x: '12-02', value: 5 },
+        { x: '12-03', value: 2 },
+        { x: '12-04', value: 8 },
+        { x: '12-05', value: 4 },
+        { x: '12-06', value: 12 },
+        { x: '12-07', value: 6 }
+      ],
+      2: [
+        { x: '12-01', value: 1 },
+        { x: '12-02', value: 2 },
+        { x: '12-03', value: 4 },
+        { x: '12-04', value: 3 },
+        { x: '12-05', value: 6 },
+        { x: '12-06', value: 7 },
+        { x: '12-07', value: 5 }
+      ],
+      3: [
+        { x: '12-01', value: 0 },
+        { x: '12-02', value: 3 },
+        { x: '12-03', value: 1 },
+        { x: '12-04', value: 2 },
+        { x: '12-05', value: 2 },
+        { x: '12-06', value: 4 },
+        { x: '12-07', value: 3 }
+      ]
+    };
+
+    // 每个面板下方表格：行参考截图（IMRT / SBRT / TOMO / 总计）
+    const techniqueTableData = {
+      1: {
+        IMRT: [12, 10, 11, 13, 9, 14, 12],
+        SBRT: ['--', 2, '--', 1, '--', 2, '--'],
+        TOMO: [3, '--', 1, '--', 2, '--', 1]
+      },
+      2: {
+        IMRT: [8, 7, 9, 6, 8, 10, 9],
+        SBRT: [1, '--', 2, '--', 1, '--', 1],
+        TOMO: ['--', 1, '--', 1, '--', 2, '--']
+      },
+      3: {
+        IMRT: [6, 5, 6, 7, 5, 8, 6],
+        SBRT: ['--', '--', 1, '--', '--', 1, '--'],
+        TOMO: [1, '--', '--', 1, '--', '--', 1]
+      }
+    };
+
+    // 三个面板的“关联菜单”配置（默认：1=计划设计，2=计划审核，3=计划复核）
+    const panelConfig = {
+      1: { menuValue: 'plan-design', menuLabel: '计划设计' },
+      2: { menuValue: 'plan-audit', menuLabel: '计划审核' },
+      3: { menuValue: 'plan-recheck', menuLabel: '计划复核' }
+    };
+    let activePanel = 1;
+
+    // 明细数据（复用一份模拟数据）
+    const detailData = [
+      { patientName: '张三', caseNo: 'C202501001', rtNo: 'RT202501001', doctor: '王医生', group: '物理师面板1', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-15 14:30:25' },
+      { patientName: '李四', caseNo: 'C202501002', rtNo: 'RT202501002', doctor: '王医生', group: '物理师面板1', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-15 16:20:10' },
+      { patientName: '王五', caseNo: 'C202501003', rtNo: 'RT202501003', doctor: '刘医生', group: '物理师面板2', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-16 09:15:30' },
+      { patientName: '赵六', caseNo: 'C202501004', rtNo: 'RT202501004', doctor: '王医生', group: '物理师面板2', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-16 11:45:20' },
+      { patientName: '钱七', caseNo: 'C202501005', rtNo: 'RT202501005', doctor: '陈医生', group: '物理师面板3', diagnosis: '肝癌', process: 'SBRT流程', submitTime: '2025-12-17 08:30:15' }
+    ];
+
+    function renderSimpleBarChart(containerId, yAxisId, data) {
+      const container = document.getElementById(containerId);
+      const yAxis = document.getElementById(yAxisId);
+      if (!container || !yAxis) return;
+
+      container.innerHTML = '';
+      yAxis.innerHTML = '';
+
+      const maxValue = Math.max(...data.map(d => d.value), 1);
+      const barHeight = 120;
+
+      for (let i = maxValue; i >= 0; i--) {
+        const tick = document.createElement('div');
+        tick.textContent = i;
+        yAxis.appendChild(tick);
+      }
+
+      data.forEach(item => {
+        const barGroup = document.createElement('div');
+        barGroup.className = 'bar-group';
+
+        const barWrapper = document.createElement('div');
+        barWrapper.className = 'bar-wrapper';
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = ((item.value / maxValue) * barHeight) + 'px';
+
+        if (item.value > 0) {
+          const valueLabel = document.createElement('div');
+          valueLabel.className = 'bar-value';
+          valueLabel.textContent = item.value;
+          bar.appendChild(valueLabel);
+        }
+
+        barWrapper.appendChild(bar);
+
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = item.x;
+        label.title = item.x;
+
+        barGroup.appendChild(barWrapper);
+        barGroup.appendChild(label);
+        container.appendChild(barGroup);
+      });
+    }
+
+    function renderPanelTable(tbodyId, panelNo) {
+      const tbody = document.getElementById(tbodyId);
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      const t = techniqueTableData[panelNo];
+      const rows = [
+        { name: 'IMRT', vals: t.IMRT },
+        { name: 'SBRT', vals: t.SBRT },
+        { name: 'TOMO', vals: t.TOMO }
+      ];
+      const total = Array.from({ length: 7 }).map((_, i) => {
+        const vals = rows.map(r => r.vals[i]);
+        const nums = vals.map(v => (typeof v === 'number' ? v : 0));
+        return nums.reduce((a, b) => a + b, 0);
+      });
+      rows.push({ name: '总计', vals: total, isTotal: true });
+
+      rows.forEach((r) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="col-name">${r.name}</td>
+          <td>${r.vals[0]}</td>
+          <td>${r.vals[1]}</td>
+          <td>${r.vals[2]}</td>
+          <td>${r.vals[3]}</td>
+          <td>${r.vals[4]}</td>
+          <td>${r.vals[5]}</td>
+          <td>${r.vals[6]}</td>
+        `;
+        if (r.isTotal) {
+          tr.style.background = '#fafcff';
+          tr.style.fontWeight = '700';
+        }
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.add('show');
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) modal.classList.remove('show');
+    }
+
+    function updatePanelTitle(panel) {
+      const el = document.getElementById(`panelTitle${panel}`);
+      if (!el) return;
+      const label = panelConfig[panel]?.menuLabel || '靶区勾画';
+      el.textContent = `${label}统计`;
+    }
+
+    function openSetting(panel) {
+      activePanel = Number(panel) || 1;
+      const select = document.getElementById('menuSelect');
+      if (select) select.value = panelConfig[activePanel]?.menuValue || 'target-contouring';
+      openModal('settingModal');
+    }
+
+    function saveSetting() {
+      const select = document.getElementById('menuSelect');
+      const label = select?.options?.[select.selectedIndex]?.text || '靶区勾画';
+      const value = select?.value || 'target-contouring';
+      panelConfig[activePanel] = { menuValue: value, menuLabel: label };
+      updatePanelTitle(activePanel);
+      alert(`原型占位：保存设置 - 面板${activePanel} 关联菜单：${label}`);
+      closeModal('settingModal');
+    }
+
+    function renderDetailTable() {
+      const tbody = document.getElementById('detailTableBody');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      detailData.forEach((item) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><a href="#" class="patient-name-link" onclick="alert('原型占位：跳转到患者详情页 - ${item.patientName}'); return false;">${item.patientName}</a></td>
+          <td>${item.caseNo}</td>
+          <td>${item.rtNo}</td>
+          <td>${item.doctor}</td>
+          <td>${item.group}</td>
+          <td>${item.diagnosis}</td>
+          <td>${item.process}</td>
+          <td>${item.submitTime}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // init render
+    [1, 2, 3].forEach((idx) => {
+      renderSimpleBarChart(`barChart${idx}`, `yAxis${idx}`, chartData[idx]);
+      renderPanelTable(`tableBody${idx}`, idx);
+      updatePanelTitle(idx);
+    });
+    renderDetailTable();
+
+    // 汇总表数据（模拟）
+    const summaryRows = [
+      { name: '张物理师', init: '张', design: 42, audit: 18, recheck: 9 },
+      { name: '李物理师', init: '李', design: 26, audit: 22, recheck: 12 },
+      { name: '王物理师', init: '王', design: 18, audit: 14, recheck: 6 },
+      { name: '刘物理师', init: '刘', design: 12, audit: 9, recheck: 4 }
+    ];
+
+    function renderDonutLegend(containerId, data) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = '';
+      data.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = 'donut-legend-item';
+        row.innerHTML = `
+          <span class="dot ${it.dot}"></span>
+          <span class="name" title="${it.name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${it.name}</span>
+          <span class="num" style="color:#555; font-variant-numeric: tabular-nums;">${it.count}</span>
+          <span class="pct" style="color:#999; font-variant-numeric: tabular-nums;">${it.pct.toFixed(2)}%</span>
+        `;
+        el.appendChild(row);
+      });
+    }
+
+    function buildLegendData(key) {
+      const total = summaryRows.reduce((s, r) => s + (r[key] || 0), 0) || 1;
+      const dots = ['c1','c2','c3','c4'];
+      return summaryRows.map((r, idx) => ({
+        name: r.name,
+        count: r[key] || 0,
+        pct: ((r[key] || 0) / total) * 100,
+        dot: dots[idx % dots.length]
+      }));
+    }
+
+    function renderSummary() {
+      const tbody = document.getElementById('summaryTbody');
+      if (tbody) {
+        tbody.innerHTML = '';
+        summaryRows.forEach((r) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="text-align:left; padding-left:12px;">
+              <span class="who"><span class="avatar">${r.init}</span><span title="${r.name}">${r.name}</span></span>
+            </td>
+            <td>${r.design}</td>
+            <td>${r.audit}</td>
+            <td>${r.recheck}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      const totalDesign = summaryRows.reduce((s, r) => s + r.design, 0);
+      const totalAudit = summaryRows.reduce((s, r) => s + r.audit, 0);
+      const totalRecheck = summaryRows.reduce((s, r) => s + r.recheck, 0);
+      const el1 = document.getElementById('sumTotalDesign');
+      const el2 = document.getElementById('sumTotalAudit');
+      const el3 = document.getElementById('sumTotalRecheck');
+      if (el1) el1.textContent = totalDesign;
+      if (el2) el2.textContent = totalAudit;
+      if (el3) el3.textContent = totalRecheck;
+
+      renderDonutLegend('legendDesign', buildLegendData('design'));
+      renderDonutLegend('legendAudit', buildLegendData('audit'));
+      renderDonutLegend('legendRecheck', buildLegendData('recheck'));
+    }
+
+    renderSummary();
+
+    // Tab切换逻辑（参考医生工作量统计）
+    function setView(view) {
+      const chart = document.getElementById('viewChart');
+      const table = document.getElementById('viewTable');
+      const tabChart = document.getElementById('tabChart');
+      const tabTable = document.getElementById('tabTable');
+      const isChart = view === 'chart';
+      chart?.classList.toggle('hidden', !isChart);
+      table?.classList.toggle('hidden', isChart);
+      tabChart?.classList.toggle('active', isChart);
+      tabTable?.classList.toggle('active', !isChart);
+    }
+    setView('chart');
+    document.getElementById('tabChart')?.addEventListener('click', () => setView('chart'));
+    document.getElementById('tabTable')?.addEventListener('click', () => setView('table'));
+    document.getElementById('btnExportSummary')?.addEventListener('click', () => alert('原型占位：导出汇总表'));
+
+    // button actions (prototype)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-panel][data-action]');
+      if (!btn) return;
+      const panel = btn.getAttribute('data-panel');
+      const action = btn.getAttribute('data-action');
+      if (action === 'setting') {
+        openSetting(panel);
+      } else if (action === 'detail') {
+        activePanel = Number(panel) || 1;
+        const title = panelConfig[activePanel]?.menuLabel || '靶区勾画';
+        const titleEl = document.getElementById('detailModalTitle');
+        if (titleEl) titleEl.textContent = `${title}明细`;
+        openModal('detailModal');
+      } else if (action === 'download') {
+        activePanel = Number(panel) || 1;
+        const title = panelConfig[activePanel]?.menuLabel || '靶区勾画';
+        const now = new Date();
+        const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+        alert(`原型占位：下载PNG - 文件名：${title}统计${activePanel}-${dateStr}.png`);
+      }
+    });
+
+    document.getElementById('btnExportDetail')?.addEventListener('click', () => {
+      const title = panelConfig[activePanel]?.menuLabel || '靶区勾画';
+      const now = new Date();
+      const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+      alert(`原型占位：导出到XLS - 文件名：${title}明细${dateStr}.xls`);
+    });
+
+    // 点击遮罩层关闭弹窗
+    document.querySelectorAll('.modal-overlay').forEach(overlay => {
+      overlay.addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('show');
+      });
+    });
+  </script>
+</body>
+</html>
+

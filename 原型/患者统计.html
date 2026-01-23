@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>患者统计 - 统计分析</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background:#f5f5f5;
+      color:#1f1f1f;
+      /* 由页面框架统一控制边距（避免与框架 padding 叠加） */
+      padding:0;
+      overflow:hidden;
+    }
+
+    :root{
+      --primary:#1677ff;
+      --border:#f0f0f0;
+      --card:#fff;
+      --muted:#8c8c8c;
+      --shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+
+    .page{
+      height: 100vh;
+      min-height: 0;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+
+    .header{
+      background: var(--card);
+      box-shadow: var(--shadow);
+      border-radius: 0;
+      padding: 12px 16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      flex: 0 0 auto;
+    }
+
+    .title{
+      font-size: 18px;
+      font-weight: 700;
+      color:#333;
+      display:flex;
+      align-items:center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .filters{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
+    .filter-label{
+      font-size: 13px;
+      color:#666;
+      margin-right: 4px;
+    }
+    .select, .input{
+      height: 32px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      padding: 0 10px;
+      font-size: 13px;
+      outline:none;
+      background:#fff;
+      color:#333;
+    }
+    .select:focus, .input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(22,119,255,.18);
+    }
+    .select{ min-width: 120px; }
+    .input{ width: 240px; }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      gap: 4px;
+      padding: 0 8px;
+      height: 24px;
+      background:#e6f4ff;
+      color: var(--primary);
+      border-radius: 4px;
+      font-size: 12px;
+    }
+
+    .content{
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow:auto;
+      padding: 0 16px 10px 16px;
+    }
+
+    .card{
+      background: var(--card);
+      border-radius: 0;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      margin-bottom: 10px;
+    }
+
+    .card-hd{
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .card-hd strong{
+      font-size: 14px;
+      color:#333;
+    }
+
+    .btn{
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 6px;
+      border: 1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size: 12px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.primary{
+      background: var(--primary);
+      border-color: var(--primary);
+      color:#fff;
+    }
+    .btn.primary:hover{ background:#4096ff; border-color:#4096ff; color:#fff; }
+
+    /* 病种统计标题 */
+    .disease-title{
+      font-size: 14px;
+      font-weight: 700;
+      color:#333;
+      padding: 6px 0;
+      cursor:default;
+    }
+    /* Tab切换 */
+    .tabs{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .tabs-left{
+      display:flex;
+      align-items:center;
+      gap: 16px;
+      padding-left: 12px;
+    }
+    .tabs-right{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .tab{
+      font-size: 13px;
+      color:#666;
+      padding: 6px 0;
+      cursor:pointer;
+      border-bottom: 2px solid transparent;
+      user-select:none;
+    }
+    .tab.active{
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+      font-weight: 700;
+    }
+    .tab.static{
+      cursor:default;
+      color:#333;
+    }
+
+    /* 病种统计区域 */
+    .disease-section{
+      padding: 10px 0;
+    }
+    .disease-filters{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .disease-chart{
+      min-height: 300px;
+      background:#fafafa;
+      border-radius: 6px;
+      position: relative;
+      padding: 20px 40px 40px 60px;
+      display:flex;
+      flex-direction:column;
+    }
+    .bar-chart-container{
+      flex: 1;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap: 8px;
+      position: relative;
+    }
+    .bar-group{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 4px;
+      flex: 1;
+      max-width: 80px;
+    }
+    .bar-wrapper{
+      width: 100%;
+      height: 200px;
+      position: relative;
+      display:flex;
+      align-items:flex-end;
+      justify-content:center;
+    }
+    .bar{
+      width: 100%;
+      border-radius: 2px 2px 0 0;
+      position: relative;
+      display:flex;
+      flex-direction:column;
+      justify-content:flex-end;
+    }
+    .bar-segment{
+      width: 100%;
+      transition: all .2s ease;
+    }
+    .bar-value{
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 600;
+      color:#333;
+      white-space: nowrap;
+    }
+    .bar-label{
+      font-size: 11px;
+      color:#666;
+      text-align:center;
+      margin-top: 4px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+      width: 100%;
+    }
+    .y-axis{
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 40px;
+      width: 40px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size: 11px;
+      color:#999;
+      padding-right: 8px;
+      text-align:right;
+    }
+    .chart-legend{
+      position:absolute;
+      top: 12px;
+      right: 12px;
+      display:flex;
+      gap: 16px;
+      font-size: 12px;
+    }
+    .legend-item{
+      display:flex;
+      align-items:center;
+      gap: 6px;
+    }
+    .legend-dot{
+      width: 12px;
+      height: 12px;
+      border-radius: 2px;
+    }
+    .legend-dot.female{ background:#4a7dff; }
+    .legend-dot.male{ background:#61d836; }
+
+    /* 三个环形图卡片 */
+    .donut-cards{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(240px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .donut-card{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 250px;
+    }
+    .donut-card-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .donut-title{
+      font-weight: 700;
+      font-size: 13px;
+      color:#333;
+    }
+    .donut-body{
+      display:grid;
+      grid-template-columns: 160px 1fr;
+      gap: 10px;
+      align-items:center;
+      min-height: 0;
+    }
+    .donut{
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: conic-gradient(#4a7dff 0 240deg, #61d836 240deg 300deg, #ffcf3f 300deg 360deg);
+      position: relative;
+      margin: 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+    }
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset: 26px;
+      background:#fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .donut-center{
+      position:absolute;
+      inset: 26px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index: 2;
+      padding: 10px;
+      font-weight: 800;
+      color:#333;
+      line-height: 1.2;
+    }
+    .donut-center .total{ font-size: 14px; }
+    .donut-center .label{ margin-top: 6px; font-size: 12px; color:#666; font-weight: 600; }
+
+    .donut-legend{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      font-size: 12px;
+      color:#333;
+    }
+    .donut-legend-item{
+      display:grid;
+      grid-template-columns: 12px 1fr auto auto;
+      gap: 8px;
+      align-items:center;
+      padding: 4px 6px;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .donut-legend-item:hover{
+      background:#f5f5f5;
+    }
+    .dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background:#4a7dff;
+    }
+    .dot.c2{ background:#61d836; }
+    .dot.c3{ background:#ffcf3f; }
+    .dot.c4{ background:#ff5a5a; }
+    .dot.c5{ background:#5bc5f7; }
+
+    /* 底部两个卡片 */
+    .bottom-cards{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .process-card, .reason-card{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px;
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      min-height: 300px;
+    }
+
+    .process-donut{
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: conic-gradient(#4a7dff 0 120deg, #61d836 120deg 200deg, #ffcf3f 200deg 260deg, #ff5a5a 260deg 300deg, #5bc5f7 300deg 340deg, #9c27b0 340deg 360deg);
+      position: relative;
+      margin: 0 auto;
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.04);
+    }
+    .process-donut::after{
+      content:"";
+      position:absolute;
+      inset: 30px;
+      background:#fff;
+      border-radius: 50%;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.05);
+    }
+    .process-donut-center{
+      position:absolute;
+      inset: 30px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      z-index: 2;
+      font-weight: 800;
+      color:#333;
+      line-height: 1.2;
+    }
+    .process-donut-center .total{ font-size: 16px; }
+    .process-donut-center .label{ margin-top: 6px; font-size: 12px; color:#666; font-weight: 600; }
+
+    .process-legend{
+      max-height: 200px;
+      overflow-y: auto;
+      display:flex;
+      flex-direction:column;
+      gap: 4px;
+      font-size: 12px;
+      color:#333;
+    }
+    .process-legend-item{
+      display:grid;
+      grid-template-columns: 12px 1fr auto auto;
+      gap: 8px;
+      align-items:center;
+      padding: 4px 6px;
+      border-radius: 8px;
+      cursor: default;
+    }
+    .process-legend-item:hover{
+      background:#f5f5f5;
+    }
+
+    .reason-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 12px;
+    }
+    .reason-table th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid var(--border);
+    }
+    .reason-table td{
+      padding: 8px;
+      text-align:center;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .reason-table .col-rank{ width: 60px; }
+    .reason-table .col-reason{ width: auto; }
+    .reason-table .col-pct{ width: 100px; }
+    .reason-table .col-count{ width: 80px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div class="title">
+        <span>患者统计</span>
+      </div>
+      <div class="filters">
+        <span class="filter-label">患者人数</span>
+        <span style="font-size: 14px; font-weight: 600; color:#333;">30</span>
+        <select class="select" id="patientGroup">
+          <option value="all" selected>全部患者</option>
+        </select>
+        <select class="select" id="attendingDoctor">
+          <option value="all" selected>全部主诊医生</option>
+        </select>
+        <select class="select" id="residentDoctor">
+          <option value="all" selected>全部主管医生</option>
+        </select>
+        <select class="select" id="processType">
+          <option value="sbrt" selected>SBRT流程</option>
+        </select>
+        <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- 病种统计卡片 -->
+      <div class="card">
+        <div class="tabs">
+          <div class="tabs-left">
+            <div class="disease-title">病种统计</div>
+            <div class="tab active" id="tabGender">性别</div>
+            <div class="tab" id="tabAge">年龄</div>
+            <div class="tab" id="tabSurgery">乳腺手术方式</div>
+          </div>
+          <div class="tabs-right">
+            <select class="select" id="diagnosisFilter" style="height: 28px; font-size: 12px;">
+              <option value="all" selected>按诊断</option>
+            </select>
+            <input class="input" id="diagnosisKeyword" placeholder="诊断关键词" style="width: 150px; height: 28px; font-size: 12px;" />
+            <button class="btn" id="btnSearch" style="height: 28px; padding: 0 10px; font-size: 12px;">🔍</button>
+            <button class="btn" id="btnDetail">明细</button>
+            <button class="btn" id="btnDownload">下载</button>
+          </div>
+        </div>
+        <div class="disease-section">
+          <div class="disease-chart">
+            <div class="chart-legend">
+              <div class="legend-item">
+                <span class="legend-dot female"></span>
+                <span>女</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-dot male"></span>
+                <span>男</span>
+              </div>
+            </div>
+            <div class="y-axis">
+              <span>10</span>
+              <span>8</span>
+              <span>6</span>
+              <span>4</span>
+              <span>2</span>
+              <span>0</span>
+            </div>
+            <div class="bar-chart-container" id="barChart"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 三个环形图卡片 -->
+      <div class="card">
+        <div class="donut-cards">
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">年龄段统计</div>
+              <div style="display:flex; gap: 6px;">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">30</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="ageLegend"></div>
+            </div>
+          </div>
+
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">性别统计</div>
+              <div style="display:flex; gap: 6px;">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">30</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="genderLegend"></div>
+            </div>
+          </div>
+
+          <div class="donut-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">来源统计</div>
+              <div style="display:flex; gap: 6px;">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div class="donut-body">
+              <div class="donut">
+                <div class="donut-center">
+                  <div>
+                    <div class="total">30</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="donut-legend" id="sourceLegend"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部两个卡片 -->
+      <div class="card">
+        <div class="bottom-cards">
+          <div class="process-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">流程统计</div>
+              <div style="display:flex; gap: 6px;">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns: 200px 1fr; gap: 16px; align-items:start;">
+              <div class="process-donut">
+                <div class="process-donut-center">
+                  <div>
+                    <div class="total">69</div>
+                    <div class="label">总数</div>
+                  </div>
+                </div>
+              </div>
+              <div class="process-legend" id="processLegend"></div>
+            </div>
+          </div>
+
+          <div class="reason-card">
+            <div class="donut-card-hd">
+              <div class="donut-title">暂停原因统计</div>
+              <div style="display:flex; gap: 6px;">
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">明细</button>
+                <button class="btn" style="height: 24px; padding: 0 8px; font-size: 11px;">下载</button>
+              </div>
+            </div>
+            <div style="flex: 1; display:flex; align-items:center; justify-content:center;">
+              <table class="reason-table">
+                <thead>
+                  <tr>
+                    <th class="col-rank">排名</th>
+                    <th class="col-reason">原因</th>
+                    <th class="col-pct">占比</th>
+                    <th class="col-count">次数</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td colspan="4" style="color:#999; padding: 40px;">暂无数据</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 病种统计数据（支持多种分类方式）
+    const diseaseData = [
+      { 
+        name: '鼻咽原位癌', 
+        total: 10,
+        gender: { male: 9, female: 1 },
+        age: { '0-15岁': 0, '15-45岁': 5, '45-60岁': 3, '60-80岁': 1, '80岁以上': 0, '未录入': 1 },
+        surgery: { '保乳手术': 2, '全切手术': 6, '未录入': 2 }
+      },
+      { 
+        name: '鼻咽上壁恶...', 
+        total: 3,
+        gender: { male: 3, female: 0 },
+        age: { '0-15岁': 0, '15-45岁': 2, '45-60岁': 1, '60-80岁': 0, '80岁以上': 0, '未录入': 0 },
+        surgery: { '保乳手术': 0, '全切手术': 1, '未录入': 2 }
+      },
+      { 
+        name: '左肺上叶恶...', 
+        total: 2,
+        gender: { male: 2, female: 0 },
+        age: { '0-15岁': 0, '15-45岁': 1, '45-60岁': 1, '60-80岁': 0, '80岁以上': 0, '未录入': 0 },
+        surgery: { '保乳手术': 0, '全切手术': 0, '未录入': 2 }
+      },
+      { 
+        name: '瘢痕疙瘩', 
+        total: 1,
+        gender: { male: 0, female: 1 },
+        age: { '0-15岁': 0, '15-45岁': 1, '45-60岁': 0, '60-80岁': 0, '80岁以上': 0, '未录入': 0 },
+        surgery: { '保乳手术': 1, '全切手术': 0, '未录入': 0 }
+      },
+      { 
+        name: '鼻咽原位癌...', 
+        total: 1,
+        gender: { male: 1, female: 0 },
+        age: { '0-15岁': 0, '15-45岁': 0, '45-60岁': 1, '60-80岁': 0, '80岁以上': 0, '未录入': 0 },
+        surgery: { '保乳手术': 0, '全切手术': 0, '未录入': 1 }
+      },
+      { 
+        name: '肺门恶性肿...', 
+        total: 1,
+        gender: { male: 1, female: 0 },
+        age: { '0-15岁': 0, '15-45岁': 0, '45-60岁': 0, '60-80岁': 1, '80岁以上': 0, '未录入': 0 },
+        surgery: { '保乳手术': 0, '全切手术': 0, '未录入': 1 }
+      },
+      { 
+        name: '鼻咽原位癌...', 
+        total: 1,
+        gender: { male: 1, female: 0 },
+        age: { '0-15岁': 0, '15-45岁': 0, '45-60岁': 0, '60-80岁': 0, '80岁以上': 1, '未录入': 0 },
+        surgery: { '保乳手术': 0, '全切手术': 0, '未录入': 1 }
+      }
+    ];
+
+    // 分类方式配置
+    const categoryConfig = {
+      gender: {
+        segments: [
+          { key: 'female', label: '女', color: '#4a7dff' },
+          { key: 'male', label: '男', color: '#61d836' }
+        ],
+        order: ['female', 'male']
+      },
+      age: {
+        segments: [
+          { key: '0-15岁', label: '0-15岁', color: '#4a7dff' },
+          { key: '15-45岁', label: '15-45岁', color: '#61d836' },
+          { key: '45-60岁', label: '45-60岁', color: '#ffcf3f' },
+          { key: '60-80岁', label: '60-80岁', color: '#ff5a5a' },
+          { key: '80岁以上', label: '80岁以上', color: '#5bc5f7' },
+          { key: '未录入', label: '未录入', color: '#9c27b0' }
+        ],
+        order: ['0-15岁', '15-45岁', '45-60岁', '60-80岁', '80岁以上', '未录入']
+      },
+      surgery: {
+        segments: [
+          { key: '保乳手术', label: '保乳手术', color: '#4a7dff' },
+          { key: '全切手术', label: '全切手术', color: '#61d836' },
+          { key: '未录入', label: '未录入', color: '#ffcf3f' }
+        ],
+        order: ['保乳手术', '全切手术', '未录入']
+      }
+    };
+
+    // 当前选中的分类方式
+    let currentCategory = 'gender';
+
+    // 年龄段数据
+    const ageData = [
+      { name: '15-45岁', count: 20, pct: 66.67, dot: 'c1' },
+      { name: '未录入', count: 6, pct: 20.00, dot: 'c2' },
+      { name: '80岁及以上', count: 4, pct: 13.33, dot: 'c3' }
+    ];
+
+    // 性别数据
+    const genderData = [
+      { name: '男', count: 28, pct: 93.33, dot: 'c1' },
+      { name: '女', count: 1, pct: 3.33, dot: 'c2' },
+      { name: '3', count: 1, pct: 3.33, dot: 'c3' }
+    ];
+
+    // 来源数据
+    const sourceData = [
+      { name: '未知', count: 29, pct: 96.67, dot: 'c1' },
+      { name: '门诊', count: 1, pct: 3.33, dot: 'c2' }
+    ];
+
+    // 流程数据
+    const processData = [
+      { name: '外照射流程', count: 23, pct: 33.33, dot: 'c1' },
+      { name: '外照射流程_1', count: 10, pct: 14.49, dot: 'c2' },
+      { name: '外照射流程+随访', count: 9, pct: 13.04, dot: 'c3' },
+      { name: '后装流程_子流程', count: 7, pct: 10.14, dot: 'c4' },
+      { name: 'ART主流程', count: 5, pct: 7.25, dot: 'c5' },
+      { name: '外照射流程+计...', count: 5, pct: 7.25, dot: 'c1' },
+      { name: 'ZZZ外照射流程', count: 5, pct: 7.25, dot: 'c2' },
+      { name: '后装流程', count: 2, pct: 2.90, dot: 'c3' }
+    ];
+
+    function renderBarChart() {
+      const container = document.getElementById('barChart');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const maxValue = 10; // Y轴最大值
+      const barHeight = 200; // 柱子最大高度（px）
+      const config = categoryConfig[currentCategory];
+      
+      diseaseData.forEach(item => {
+        const barGroup = document.createElement('div');
+        barGroup.className = 'bar-group';
+        
+        const barWrapper = document.createElement('div');
+        barWrapper.className = 'bar-wrapper';
+        
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        const totalHeight = (item.total / maxValue) * barHeight;
+        bar.style.height = totalHeight + 'px';
+        
+        // 根据当前分类方式渲染堆叠段
+        const categoryData = item[currentCategory];
+        config.order.forEach(key => {
+          const value = categoryData[key] || 0;
+          if (value > 0) {
+            const segment = document.createElement('div');
+            segment.className = 'bar-segment';
+            segment.style.height = (value / item.total) * 100 + '%';
+            const segmentConfig = config.segments.find(s => s.key === key);
+            if (segmentConfig) {
+              segment.style.backgroundColor = segmentConfig.color;
+            }
+            bar.appendChild(segment);
+          }
+        });
+        
+        // 数值标签
+        const valueLabel = document.createElement('div');
+        valueLabel.className = 'bar-value';
+        valueLabel.textContent = item.total;
+        bar.appendChild(valueLabel);
+        
+        barWrapper.appendChild(bar);
+        barGroup.appendChild(barWrapper);
+        
+        // 病种名称标签
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'bar-label';
+        nameLabel.textContent = item.name;
+        nameLabel.title = item.name;
+        barGroup.appendChild(nameLabel);
+        
+        container.appendChild(barGroup);
+      });
+    }
+
+    function renderLegend(containerId, data) {
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = '';
+      data.forEach((it) => {
+        const row = document.createElement('div');
+        row.className = containerId.includes('process') ? 'process-legend-item' : 'donut-legend-item';
+        row.innerHTML = `
+          <span class="dot ${it.dot}"></span>
+          <span class="name" title="${it.name}" style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${it.name}</span>
+          <span class="num" style="color:#555; font-variant-numeric: tabular-nums;">${it.count}</span>
+          <span class="pct" style="color:#999; font-variant-numeric: tabular-nums;">${it.pct.toFixed(2)}%</span>
+        `;
+        el.appendChild(row);
+      });
+    }
+
+    // 初始化
+    updateChartLegend(); // 初始化图例
+    renderBarChart(); // 渲染柱状图
+    renderLegend('ageLegend', ageData);
+    renderLegend('genderLegend', genderData);
+    renderLegend('sourceLegend', sourceData);
+    renderLegend('processLegend', processData);
+
+    // Tab切换
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        this.classList.add('active');
+        
+        // 根据Tab切换分类方式
+        const tabId = this.id;
+        if (tabId === 'tabGender') {
+          currentCategory = 'gender';
+        } else if (tabId === 'tabAge') {
+          currentCategory = 'age';
+        } else if (tabId === 'tabSurgery') {
+          currentCategory = 'surgery';
+        }
+        
+        // 更新图例
+        updateChartLegend();
+        // 重新渲染柱状图
+        renderBarChart();
+      });
+    });
+
+    // 更新图例
+    function updateChartLegend() {
+      const legendContainer = document.querySelector('.chart-legend');
+      if (!legendContainer) return;
+      
+      const config = categoryConfig[currentCategory];
+      legendContainer.innerHTML = '';
+      
+      config.segments.forEach(segment => {
+        const legendItem = document.createElement('div');
+        legendItem.className = 'legend-item';
+        legendItem.innerHTML = `
+          <span class="legend-dot" style="background: ${segment.color};"></span>
+          <span>${segment.label}</span>
+        `;
+        legendContainer.appendChild(legendItem);
+      });
+    }
+
+    // 事件监听
+    document.getElementById('btnSearch').addEventListener('click', () => alert('原型占位：搜索'));
+    document.getElementById('btnDetail').addEventListener('click', () => alert('原型占位：明细'));
+    document.getElementById('btnDownload').addEventListener('click', () => alert('原型占位：下载'));
+    document.getElementById('dateRange').addEventListener('click', () => alert('原型占位：日期选择器'));
+  </script>
+</body>
+</html>
