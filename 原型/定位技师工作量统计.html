@@ -354,9 +354,10 @@
       background:#fafafa;
       min-height: 220px;
       display:flex;
+      flex-direction: column;
       align-items:center;
       justify-content:center;
-      position: relative;
+      gap: 10px;
     }
     .donut{
       width: 160px;
@@ -395,14 +396,13 @@
       color:#666;
     }
     .donut-legend{
-      position:absolute;
-      right: 14px;
-      bottom: 12px;
       display:flex;
       align-items:center;
       gap: 8px;
       font-size: 12px;
       color:#666;
+      width: 100%;
+      justify-content: flex-end;
     }
     .donut-legend .dot{
       width: 8px;

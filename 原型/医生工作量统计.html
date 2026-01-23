@@ -92,6 +92,7 @@
       background:#fff;
       color:#333;
     }
+    .select{ min-width: 140px; }
     .select:focus, .input:focus{
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(22,119,255,.18);
@@ -601,6 +602,12 @@
         </div>
       </div>
       <div class="filters">
+        <select class="select" id="campusSelect" title="院区">
+          <option value="all" selected>全部院区</option>
+        </select>
+        <select class="select" id="deptSelect" title="科室">
+          <option value="all" selected>全部科室</option>
+        </select>
         <select class="select" id="doctorGroup">
           <option value="all" selected>按主管医生/组</option>
         </select>
@@ -646,12 +653,7 @@
                     <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
                   </tr>
                 </thead>
-                <tbody>
-                  <tr>
-                    <td class="col-name" style="padding-left:12px;">王医生组</td>
-                    <td>0</td><td>0</td><td>0</td><td>2</td><td>0</td><td>6</td><td>0</td>
-                  </tr>
-                </tbody>
+                <tbody id="admissionTableBody"></tbody>
               </table>
             </div>
           </div>
@@ -907,48 +909,143 @@
   </div>
 
   <script>
-    // 收治统计柱状图数据（按月）
-    const admissionChartData = [
-      { month: '2025-07', value: 0 },
-      { month: '2025-08', value: 0 },
-      { month: '2025-09', value: 0 },
-      { month: '2025-10', value: 2 },
-      { month: '2025-11', value: 0 },
-      { month: '2025-12', value: 6 },
-      { month: '2026-01', value: 0 }
+    // -----------------------------
+    // 全局筛选：院区 / 科室（方案A）
+    // 说明：原型使用模拟事件数据，通过筛选后重新聚合，驱动所有图表/表格/明细/导出占位
+    // -----------------------------
+    const campusOptions = [
+      { id: 'all', name: '全部院区' },
+      { id: 'c1', name: '本部院区' },
+      { id: 'c2', name: '东院区' }
+    ];
+    const deptOptions = [
+      { id: 'all', campusId: 'all', name: '全部科室' },
+      { id: 'd1', campusId: 'c1', name: '放疗科' },
+      { id: 'd2', campusId: 'c1', name: '肿瘤科' },
+      { id: 'd3', campusId: 'c2', name: '放疗科' },
+      { id: 'd4', campusId: 'c2', name: '介入科' }
     ];
 
-    // 三个“靶区勾画统计”面板数据（按月）——用于替换 CT预约统计、勾画审核统计
+    function $(id){ return document.getElementById(id); }
+
+    function getFilters(){
+      return {
+        campusId: $('campusSelect')?.value || 'all',
+        deptId: $('deptSelect')?.value || 'all'
+      };
+    }
+
+    function updateDeptOptions(){
+      const campusId = $('campusSelect')?.value || 'all';
+      const deptSelect = $('deptSelect');
+      if (!deptSelect) return;
+      const prev = deptSelect.value || 'all';
+
+      const list = deptOptions.filter(d => d.id === 'all' || campusId === 'all' || d.campusId === campusId);
+      deptSelect.innerHTML = '';
+      list.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        deptSelect.appendChild(opt);
+      });
+
+      // 若之前选择的科室不在新列表中，则回退为 all
+      const stillExists = Array.from(deptSelect.options).some(o => o.value === prev);
+      deptSelect.value = stillExists ? prev : 'all';
+    }
+
+    function initCampusDeptFilters(){
+      const campusSelect = $('campusSelect');
+      if (campusSelect) {
+        campusSelect.innerHTML = '';
+        campusOptions.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          campusSelect.appendChild(opt);
+        });
+        campusSelect.value = 'all';
+      }
+      updateDeptOptions();
+    }
+
+    // -----------------------------
+    // 模拟数据（事件级）——用于展示筛选联动效果
+    // -----------------------------
+    const months = ['2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01'];
+
+    function dotClassByIndex(i){
+      const dots = ['c1','c2','c3','c4','c5','c6'];
+      return dots[i % dots.length];
+    }
+
+    // type: admission | ct | contour
+    // menuValue 仅 contour 使用（对应面板“关联菜单”）
+    const mockEvents = [
+      // admission（收治）
+      { type:'admission', month:'2025-10', count:2, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'admission', month:'2025-11', count:1, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+
+      // ct（CT预约）——用于汇总表 donut/总表展示
+      { type:'ct', month:'2025-12', count:6, doctor:'阿郎', doctorGroup:'王医生组', campusId:'c1', deptId:'d2' },
+      { type:'ct', month:'2025-12', count:4, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+
+      // contour（勾画/审核/计划评估）
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', count:12, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-10', count:8, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'review', month:'2025-11', count:6, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-08', count:3, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' }
+    ];
+    function applyCampusDeptFilter(list){
+      const { campusId, deptId } = getFilters();
+      return (list || []).filter(e => {
+        const okCampus = campusId === 'all' ? true : e.campusId === campusId;
+        const okDept = deptId === 'all' ? true : e.deptId === deptId;
+        return okCampus && okDept;
+      });
+    }
+
+    function sumByMonth(list){
+      const map = new Map();
+      months.forEach(m => map.set(m, 0));
+      (list || []).forEach(e => {
+        map.set(e.month, (map.get(e.month) || 0) + (e.count || 0));
+      });
+      return months.map(m => ({ month: m, value: map.get(m) || 0 }));
+    }
+
+    function groupByDoctor(list){
+      const map = new Map();
+      (list || []).forEach(e => {
+        const k = e.doctor || '未知';
+        map.set(k, (map.get(k) || 0) + (e.count || 0));
+      });
+      const arr = Array.from(map.entries()).map(([name, count]) => ({ name, count }));
+      const total = arr.reduce((s, it) => s + it.count, 0) || 1;
+      return arr
+        .sort((a,b) => b.count - a.count)
+        .map((it, idx) => ({ name: it.name, count: it.count, pct: (it.count / total) * 100, dot: dotClassByIndex(idx) }));
+    }
+
+    function buildSummaryRows(listAdmission, listCt, listContour){
+      const doctors = new Map();
+      function add(list, key){
+        (list || []).forEach(e => {
+          const name = e.doctor || '未知';
+          if (!doctors.has(name)) doctors.set(name, { name, init: name.slice(0,1), admission:0, ct:0, contouring:0 });
+          doctors.get(name)[key] += (e.count || 0);
+        });
+      }
+      add(listAdmission, 'admission');
+      add(listCt, 'ct');
+      add(listContour, 'contouring');
+      return Array.from(doctors.values()).sort((a,b) => (b.admission+b.ct+b.contouring) - (a.admission+a.ct+a.contouring));
+    }
+
     const contouringPanelKeys = ['A', 'B', 'C'];
-    const contouringPanelChartData = {
-      A: [
-        { month: '2025-07', value: 3 },
-        { month: '2025-08', value: 5 },
-        { month: '2025-09', value: 2 },
-        { month: '2025-10', value: 8 },
-        { month: '2025-11', value: 4 },
-        { month: '2025-12', value: 12 },
-        { month: '2026-01', value: 6 }
-      ],
-      B: [
-        { month: '2025-07', value: 1 },
-        { month: '2025-08', value: 2 },
-        { month: '2025-09', value: 4 },
-        { month: '2025-10', value: 3 },
-        { month: '2025-11', value: 6 },
-        { month: '2025-12', value: 7 },
-        { month: '2026-01', value: 5 }
-      ],
-      C: [
-        { month: '2025-07', value: 0 },
-        { month: '2025-08', value: 3 },
-        { month: '2025-09', value: 1 },
-        { month: '2025-10', value: 2 },
-        { month: '2025-11', value: 2 },
-        { month: '2025-12', value: 4 },
-        { month: '2026-01', value: 3 }
-      ]
-    };
 
     // 三个面板的“关联菜单”配置（默认：A=靶区勾画，B=勾画审核，C=计划评估）
     const contouringPanelConfig = {
@@ -958,57 +1055,14 @@
     };
     let activeContouringPanelKey = 'A';
 
-    // 勾画明细数据
     const contouringDetailData = [
-      { patientName: '张三', caseNo: 'C202501001', rtNo: 'RT202501001', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-15 14:30:25' },
-      { patientName: '李四', caseNo: 'C202501002', rtNo: 'RT202501002', doctor: '王医生', group: '王医生组', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-15 16:20:10' },
-      { patientName: '王五', caseNo: 'C202501003', rtNo: 'RT202501003', doctor: '刘医生', group: '刘医生组', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-16 09:15:30' },
-      { patientName: '赵六', caseNo: 'C202501004', rtNo: 'RT202501004', doctor: '王医生', group: '王医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-16 11:45:20' },
-      { patientName: '钱七', caseNo: 'C202501005', rtNo: 'RT202501005', doctor: '陈医生', group: '陈医生组', diagnosis: '肝癌', process: 'SBRT流程', submitTime: '2025-12-17 08:30:15' },
-      { patientName: '孙八', caseNo: 'C202501006', rtNo: 'RT202501006', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-17 14:20:40' },
-      { patientName: '周九', caseNo: 'C202501007', rtNo: 'RT202501007', doctor: '刘医生', group: '刘医生组', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-18 10:10:25' },
-      { patientName: '吴十', caseNo: 'C202501008', rtNo: 'RT202501008', doctor: '王医生', group: '王医生组', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-18 15:35:50' },
-      { patientName: '郑十一', caseNo: 'C202501009', rtNo: 'RT202501009', doctor: '陈医生', group: '陈医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-19 09:25:30' },
-      { patientName: '王十二', caseNo: 'C202501010', rtNo: 'RT202501010', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-19 16:40:15' }
+      { patientName: '张三', caseNo: 'C202501001', rtNo: 'RT202501001', doctor: '王医生', group: '王医生组', diagnosis: '鼻咽癌', process: '外照射流程', submitTime: '2025-12-15 14:30:25', campusId:'c1', deptId:'d1' },
+      { patientName: '李四', caseNo: 'C202501002', rtNo: 'RT202501002', doctor: '王医生', group: '王医生组', diagnosis: '肺癌', process: '外照射流程', submitTime: '2025-12-15 16:20:10', campusId:'c1', deptId:'d2' },
+      { patientName: '王五', caseNo: 'C202501003', rtNo: 'RT202501003', doctor: '刘医生', group: '刘医生组', diagnosis: '乳腺癌', process: 'SBRT流程', submitTime: '2025-12-16 09:15:30', campusId:'c2', deptId:'d3' },
+      { patientName: '赵六', caseNo: 'C202501004', rtNo: 'RT202501004', doctor: '王医生', group: '王医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-16 11:45:20', campusId:'c1', deptId:'d1' }
     ];
 
-    // 收治统计数据
-    const admissionData = [
-      { name: 'LILI', count: 10, pct: 28.57, dot: 'c1' },
-      { name: '刘振', count: 8, pct: 22.86, dot: 'c2' },
-      { name: 'lisi', count: 4, pct: 11.43, dot: 'c3' },
-      { name: '陈启', count: 4, pct: 11.43, dot: 'c4' },
-      { name: '李建', count: 2, pct: 5.71, dot: 'c5' },
-      { name: '赵喜全', count: 2, pct: 5.71, dot: 'c1' },
-      { name: '阿郎', count: 2, pct: 5.71, dot: 'c2' },
-      { name: 'nemo', count: 1, pct: 2.86, dot: 'c3' }
-    ];
-
-    // CT预约统计数据
-    const ctAppointmentData = [
-      { name: '阿郎', count: 6, pct: 60.00, dot: 'c1' },
-      { name: '邓霞', count: 4, pct: 40.00, dot: 'c2' }
-    ];
-
-    // 勾画审核统计数据
-    const contouringData = [
-      { name: '邓霞', count: 1, pct: 100.00, dot: 'c1' }
-    ];
-
-    // 汇总表数据
-    const summaryTableData = [
-      { name: 'LILI', init: 'L', admission: 10, ct: 0, contouring: 0 },
-      { name: '刘振', init: '刘', admission: 8, ct: 0, contouring: 0 },
-      { name: 'lisi', init: 'l', admission: 4, ct: 0, contouring: 0 },
-      { name: '陈启', init: '陈', admission: 4, ct: 0, contouring: 0 },
-      { name: '李建', init: '李', admission: 2, ct: 0, contouring: 0 },
-      { name: '赵喜全', init: '赵', admission: 2, ct: 0, contouring: 0 },
-      { name: '阿郎', init: '阿', admission: 2, ct: 6, contouring: 0 },
-      { name: 'nemo', init: 'n', admission: 1, ct: 0, contouring: 0 },
-      { name: 'test2', init: 't', admission: 1, ct: 0, contouring: 0 },
-      { name: '许朵', init: '许', admission: 1, ct: 0, contouring: 0 },
-      { name: '邓霞', init: '邓', admission: 0, ct: 4, contouring: 1 }
-    ];
+    // （原型）汇总表与 donut 图例数据将由 refreshAll() 动态生成
 
     function renderLegend(containerId, data) {
       const el = document.getElementById(containerId);
@@ -1030,7 +1084,7 @@
     function renderTable() {
       const tbody = document.getElementById('tbody');
       tbody.innerHTML = '';
-      summaryTableData.forEach(row => {
+      (window.__summaryRows || []).forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="col-name" style="padding-left:12px;">
@@ -1056,12 +1110,13 @@
       const maxValue = Math.max(...data.map(d => d.value), 1);
       const barHeight = 120; // 柱子最大高度（px）
       
-      // 渲染Y轴刻度
-      for (let i = maxValue; i >= 0; i--) {
+      // 渲染Y轴刻度（简化：3段）
+      const ticks = maxValue <= 1 ? [1,0] : [maxValue, Math.floor(maxValue/2), 0];
+      ticks.forEach(t => {
         const tick = document.createElement('div');
-        tick.textContent = i;
+        tick.textContent = t;
         yAxis.appendChild(tick);
-      }
+      });
       
       // 渲染柱状图
       data.forEach(item => {
@@ -1123,8 +1178,8 @@
       const tbody = document.getElementById('detailTableBody');
       if (!tbody) return;
       tbody.innerHTML = '';
-      
-      contouringDetailData.forEach(item => {
+      const filtered = applyCampusDeptFilter(contouringDetailData);
+      filtered.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
           <td><a href="#" class="patient-name-link" onclick="alert('原型占位：跳转到患者详情页 - ${item.patientName}'); return false;">${item.patientName}</a></td>
@@ -1191,19 +1246,18 @@
       
       container.innerHTML = '';
       yAxis.innerHTML = '';
-      
-      const maxValue = 6; // Y轴最大值
-      const barHeight = 120; // 柱子最大高度（px）
-      
-      // 渲染Y轴刻度
-      for (let i = maxValue; i >= 0; i--) {
+
+      const series = window.__admissionSeries || months.map(m => ({ month:m, value:0 }));
+      const maxValue = Math.max(...series.map(d => d.value), 1);
+      const barHeight = 120;
+      const ticks = maxValue <= 1 ? [1,0] : [maxValue, Math.floor(maxValue/2), 0];
+      ticks.forEach(t => {
         const tick = document.createElement('div');
-        tick.textContent = i;
+        tick.textContent = t;
         yAxis.appendChild(tick);
-      }
-      
-      // 渲染柱状图
-      admissionChartData.forEach(item => {
+      });
+
+      series.forEach(item => {
         const barGroup = document.createElement('div');
         barGroup.className = 'bar-group';
         
@@ -1237,6 +1291,53 @@
       });
     }
 
+    function renderAdmissionTable(){
+      const tbody = $('admissionTableBody');
+      if (!tbody) return;
+      const groupLabel = $('doctorSelect')?.options[$('doctorSelect').selectedIndex]?.text || '王医生组';
+      const series = window.__admissionSeries || months.map(m => ({ month:m, value:0 }));
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="col-name" style="padding-left:12px;">${groupLabel}</td>
+        ${series.map(it => `<td>${it.value}</td>`).join('')}
+      `;
+      tbody.innerHTML = '';
+      tbody.appendChild(row);
+    }
+
+    function refreshAll(){
+      // 事件按院区/科室过滤
+      const filtered = applyCampusDeptFilter(mockEvents);
+      const admissions = filtered.filter(e => e.type === 'admission');
+      const cts = filtered.filter(e => e.type === 'ct');
+      const contours = filtered.filter(e => e.type === 'contour');
+
+      // 图表：收治
+      window.__admissionSeries = sumByMonth(admissions);
+      renderAdmissionBarChart();
+      renderAdmissionTable();
+
+      // 三个面板：按 menuValue 聚合
+      contouringPanelKeys.forEach((k) => {
+        const menuValue = contouringPanelConfig[k]?.menuValue;
+        const series = sumByMonth(contours.filter(e => e.menuValue === menuValue));
+        renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, series);
+        renderContouringPanelTable(`contouringTableBody${k}`, series);
+      });
+
+      // 汇总表 donut & 总表
+      const admissionLegend = groupByDoctor(admissions);
+      const ctLegend = groupByDoctor(cts);
+      const contourLegend = groupByDoctor(contours);
+      renderLegend('legend1', admissionLegend);
+      renderLegend('legend2', ctLegend);
+      renderLegend('legend3', contourLegend);
+      renderLegend('legend4', contourLegend);
+
+      window.__summaryRows = buildSummaryRows(admissions, cts, contours);
+      renderTable();
+    }
+
     // Tab切换逻辑
     function setView(view) {
       const chart = document.getElementById('viewChart');
@@ -1252,18 +1353,10 @@
     }
 
     // 初始化
-    renderAdmissionBarChart();
+    initCampusDeptFilters();
+    contouringPanelKeys.forEach((k) => updateContouringPanelTitle(k));
+    refreshAll();
     renderContouringDetailTable();
-    contouringPanelKeys.forEach((k) => {
-      updateContouringPanelTitle(k);
-      renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, contouringPanelChartData[k]);
-      renderContouringPanelTable(`contouringTableBody${k}`, contouringPanelChartData[k]);
-    });
-    renderLegend('legend1', admissionData);
-    renderLegend('legend2', ctAppointmentData);
-    renderLegend('legend3', contouringData);
-    renderLegend('legend4', contouringData);
-    renderTable();
 
     // 默认显示数据图视图
     setView('chart');
@@ -1272,6 +1365,10 @@
     document.getElementById('tabChart').addEventListener('click', () => setView('chart'));
     document.getElementById('tabTable').addEventListener('click', () => setView('table'));
     document.getElementById('btnExport').addEventListener('click', () => alert('原型占位：导出'));
+
+    // 全局筛选事件
+    $('campusSelect')?.addEventListener('change', () => { updateDeptOptions(); refreshAll(); renderContouringDetailTable(); });
+    $('deptSelect')?.addEventListener('change', () => { refreshAll(); renderContouringDetailTable(); });
 
     // 三个面板按钮事件（设置/明细/下载）
     contouringPanelKeys.forEach((k) => {
