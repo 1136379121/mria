@@ -74,7 +74,7 @@
       flex-wrap: wrap;
       justify-content:flex-end;
     }
-    .input{
+    .select, .input{
       height: 32px;
       border: 1px solid #d9d9d9;
       border-radius: 6px;
@@ -83,11 +83,88 @@
       outline:none;
       background:#fff;
       color:#333;
-      width: 260px;
     }
-    .input:focus{
+    .select{ min-width: 160px; }
+    .input{ width: 260px; }
+    .select:focus, .input:focus{
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(22,119,255,.18);
+    }
+
+    .btn{
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size: 13px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.sm{
+      height: 24px;
+      padding: 0 10px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+
+    .seg{
+      display:flex;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      overflow:hidden;
+      height: 32px;
+      background:#fff;
+    }
+    .seg button{
+      border: none;
+      background: transparent;
+      padding: 0 12px;
+      height: 32px;
+      font-size: 13px;
+      cursor:pointer;
+      color:#666;
+    }
+    .seg button.active{
+      background: #e6f4ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .badge.blue{ background:#e6f4ff; color: var(--primary); border-color:#bae0ff; }
+    .badge.green{ background:#f6ffed; color:#389e0d; border-color:#b7eb8f; }
+    .tech-cell{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .avatar{
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      background:#f0f5ff;
+      border: 1px solid #d6e4ff;
+      color:#2f54eb;
+      font-size: 12px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight: 800;
     }
     .content{
       flex: 1 1 auto;
@@ -100,8 +177,246 @@
       border-radius: 0;
       box-shadow: var(--shadow);
       overflow:hidden;
-      padding: 10px;
-      min-height: 520px; /* 仅骨架占位 */
+      padding: 0;
+    }
+
+    .section-hd{
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .section-title{
+      font-size: 14px;
+      font-weight: 800;
+      color:#333;
+    }
+    .section-actions{ display:flex; gap: 8px; align-items:center; }
+
+    .chart-wrap{ padding: 12px 14px 10px 14px; }
+    .chart-box{
+      height: 220px;
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      /* 图例独占一行，绘图区在其下方 */
+      padding: 8px 10px 10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      overflow:hidden;
+    }
+    .plot-area{
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 12px 10px 24px 52px;
+      overflow:hidden;
+    }
+    .y-axis{
+      position:absolute;
+      left: 0;
+      top: 12px;
+      bottom: 18px;
+      width: 46px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size: 11px;
+      color:#999;
+      padding-right: 8px;
+      text-align:right;
+      pointer-events:none;
+    }
+    .bars{
+      height: 100%;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap: 14px;
+    }
+    .bar-group{
+      flex: 1;
+      max-width: 120px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 6px;
+    }
+    .bar{
+      width: 46px;
+      background: #5470C6;
+      border-radius: 2px 2px 0 0;
+      position: relative;
+      min-height: 2px;
+    }
+    .bar-value{
+      position:absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      font-weight: 700;
+      color:#333;
+      white-space: nowrap;
+    }
+    .bar-label{
+      font-size: 11px;
+      color:#666;
+      white-space: nowrap;
+    }
+    .legend{
+      position: static;
+      width: 100%;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color:#666;
+      justify-content:flex-end;
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      border: none;
+    }
+    .legend-dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      background:#5470C6;
+    }
+
+    .subsection{
+      padding: 10px 14px 14px 14px;
+      border-top: 1px solid var(--border);
+    }
+    .sub-title{
+      font-size: 12px;
+      font-weight: 800;
+      color:#333;
+      margin: 6px 0 10px 0;
+    }
+    .table-wrap{
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow:auto;
+      background:#fff;
+    }
+    table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 860px;
+    }
+    thead th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align:center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody td{
+      font-size: 12px;
+      color:#333;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f5f5f5;
+      text-align:center;
+      white-space: nowrap;
+    }
+    tbody tr:hover{ background:#fafcff; }
+    .col-left{
+      text-align:left !important;
+      padding-left: 12px !important;
+    }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 999px;
+      background:#e6f4ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .donut-area{
+      padding: 22px 14px 14px 14px;
+      border-bottom: 1px solid var(--border);
+      background:#fafafa;
+      min-height: 220px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position: relative;
+    }
+    .donut{
+      width: 160px;
+      height: 160px;
+      border-radius: 999px;
+      background: conic-gradient(#5470C6 0 360deg);
+      position: relative;
+    }
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset: 26px;
+      background:#fff;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .donut-center{
+      position:absolute;
+      inset: 0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index: 1;
+      gap: 2px;
+    }
+    .donut-center .n{
+      font-size: 20px;
+      font-weight: 900;
+      color:#333;
+      line-height: 1;
+    }
+    .donut-center .t{
+      font-size: 12px;
+      font-weight: 700;
+      color:#666;
+    }
+    .donut-legend{
+      position:absolute;
+      right: 14px;
+      bottom: 12px;
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color:#666;
+    }
+    .donut-legend .dot{
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background:#5470C6;
+    }
+
+    .sub-hd{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
     }
   </style>
 </head>
@@ -116,36 +431,278 @@
         </div>
       </div>
       <div class="filters">
+        <span id="filterTech">
+          <select class="select" id="techSelect">
+            <option value="chen" selected>陈山</option>
+          </select>
+        </span>
         <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+        <span id="filterGranularity">
+          <div class="seg" role="group" aria-label="时间粒度">
+            <button type="button" id="btnDay">按日</button>
+            <button type="button" id="btnMonth" class="active">按月</button>
+          </div>
+        </span>
       </div>
     </div>
 
     <div class="content">
-      <!-- 视图1：数据图（内容后续补充，先置空） -->
-      <div class="card" id="viewChart"></div>
+      <!-- 视图1：数据图 -->
+      <div class="card" id="viewChart">
+        <div class="section-hd">
+          <div class="section-title">定位统计</div>
+          <div class="section-actions">
+            <button class="btn sm" id="btnDetail">明细</button>
+            <button class="btn sm" id="btnDownload">下载</button>
+          </div>
+        </div>
+
+        <div class="chart-wrap">
+          <div class="chart-box" aria-label="定位统计柱状图">
+            <div class="legend"><span class="legend-dot"></span><span>定位执行</span></div>
+            <div class="plot-area">
+              <div class="y-axis" id="yAxis"></div>
+              <div class="bars" id="bars"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">按项目统计</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-left" style="width: 160px;">项目</th>
+                  <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-left"><span class="tag">定位执行</span></td>
+                  <td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td>
+                </tr>
+                <tr>
+                  <td class="col-left"><span class="tag">总计</span></td>
+                  <td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-title">按流程统计</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th class="col-left" style="width: 160px;">流程</th>
+                  <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-left"><span class="tag">外照射流程</span></td>
+                  <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>1</td>
+                </tr>
+                <tr>
+                  <td class="col-left"><span class="tag">外照射流程_20241014</span></td>
+                  <td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>0</td>
+                </tr>
+                <tr>
+                  <td class="col-left"><span class="tag">总计</span></td>
+                  <td>0</td><td>0</td><td>0</td><td>0</td><td>1</td><td>0</td><td>1</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       <!-- 视图2：汇总表（内容后续补充，先置空） -->
-      <div class="card hidden" id="viewTable"></div>
+      <div class="card hidden" id="viewTable">
+        <div class="section-hd">
+          <div class="section-title">定位统计</div>
+          <div class="section-actions"></div>
+        </div>
+
+        <div class="donut-area">
+          <div class="donut" aria-label="定位统计汇总环形图">
+            <div class="donut-center">
+              <div class="n" id="donutTotal">2</div>
+              <div class="t">总数</div>
+            </div>
+          </div>
+          <div class="donut-legend" id="donutLegend">
+            <span class="dot"></span>
+            <span>陈山</span>
+            <span>2次</span>
+            <span>(100%)</span>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-hd">
+            <div class="sub-title" style="margin:0;">按项目汇总</div>
+            <button class="btn sm" id="btnExportByItem">导出</button>
+          </div>
+          <div class="table-wrap">
+            <table style="min-width: 860px;">
+              <thead>
+                <tr>
+                  <th class="col-left" style="width: 220px;">技师</th>
+                  <th>定位执行</th>
+                  <th>合计</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-left">
+                    <div class="tech-cell">
+                      <span class="avatar">陈</span><span>陈山</span>
+                    </div>
+                  </td>
+                  <td>2</td>
+                  <td><span class="badge blue">2</span></td>
+                </tr>
+                <tr>
+                  <td class="col-left"><b>合计</b></td>
+                  <td><span class="badge green">2</span></td>
+                  <td><span class="badge green">2</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="subsection">
+          <div class="sub-hd">
+            <div class="sub-title" style="margin:0;">按流程汇总</div>
+            <button class="btn sm" id="btnExportByFlow">导出</button>
+          </div>
+          <div class="table-wrap">
+            <table style="min-width: 980px;">
+              <thead>
+                <tr>
+                  <th class="col-left" style="width: 220px;">技师</th>
+                  <th>外照射流程</th>
+                  <th>外照射流程_20241014</th>
+                  <th>合计</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-left">
+                    <div class="tech-cell">
+                      <span class="avatar">陈</span><span>陈山</span>
+                    </div>
+                  </td>
+                  <td>1</td>
+                  <td>1</td>
+                  <td><span class="badge blue">2</span></td>
+                </tr>
+                <tr>
+                  <td class="col-left"><b>合计</b></td>
+                  <td><span class="badge green">1</span></td>
+                  <td><span class="badge green">1</span></td>
+                  <td><span class="badge green">2</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+    const monthSeries = [
+      { x: '2025-08', v: 0 },
+      { x: '2025-09', v: 0 },
+      { x: '2025-10', v: 0 },
+      { x: '2025-11', v: 1 }
+    ];
+
+    function renderBarChart(data) {
+      const bars = document.getElementById('bars');
+      const yAxis = document.getElementById('yAxis');
+      if (!bars || !yAxis) return;
+
+      const maxValue = Math.max(...data.map(d => d.v), 1);
+      const ticks = maxValue === 1 ? [1, 0] : [maxValue, Math.floor(maxValue / 2), 0];
+      yAxis.innerHTML = '';
+      ticks.forEach(t => {
+        const div = document.createElement('div');
+        div.textContent = t;
+        yAxis.appendChild(div);
+      });
+
+      bars.innerHTML = '';
+      data.forEach(item => {
+        const g = document.createElement('div');
+        g.className = 'bar-group';
+
+        const bar = document.createElement('div');
+        bar.className = 'bar';
+        bar.style.height = (item.v / maxValue) * 160 + 'px';
+        if (item.v > 0) {
+          const val = document.createElement('div');
+          val.className = 'bar-value';
+          val.textContent = item.v;
+          bar.appendChild(val);
+        }
+
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = item.x;
+
+        g.appendChild(bar);
+        g.appendChild(label);
+        bars.appendChild(g);
+      });
+    }
+
+    function setGranularity(type) {
+      const btnDay = document.getElementById('btnDay');
+      const btnMonth = document.getElementById('btnMonth');
+      const isMonth = type === 'month';
+      btnDay?.classList.toggle('active', !isMonth);
+      btnMonth?.classList.toggle('active', isMonth);
+      // 原型：先仅切换样式，图表数据保持按月展示
+    }
+
     function setView(view) {
       const chart = document.getElementById('viewChart');
       const table = document.getElementById('viewTable');
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
+      const filterTech = document.getElementById('filterTech');
+      const filterGranularity = document.getElementById('filterGranularity');
 
       const isChart = view === 'chart';
       chart.classList.toggle('hidden', !isChart);
       table.classList.toggle('hidden', isChart);
       tabChart.classList.toggle('active', isChart);
       tabTable.classList.toggle('active', !isChart);
+
+      // 汇总表截图中仅保留日期范围
+      filterTech?.classList.toggle('hidden', !isChart);
+      filterGranularity?.classList.toggle('hidden', !isChart);
     }
 
     setView('chart');
     document.getElementById('tabChart').addEventListener('click', () => setView('chart'));
     document.getElementById('tabTable').addEventListener('click', () => setView('table'));
+
+    renderBarChart(monthSeries);
+    document.getElementById('btnDay')?.addEventListener('click', () => setGranularity('day'));
+    document.getElementById('btnMonth')?.addEventListener('click', () => setGranularity('month'));
+    document.getElementById('btnDetail')?.addEventListener('click', () => alert('原型占位：明细'));
+    document.getElementById('btnDownload')?.addEventListener('click', () => alert('原型占位：下载'));
+
+    document.getElementById('btnExportByItem')?.addEventListener('click', () => alert('原型占位：按项目汇总导出'));
+    document.getElementById('btnExportByFlow')?.addEventListener('click', () => alert('原型占位：按流程汇总导出'));
   </script>
 </body>
 </html>

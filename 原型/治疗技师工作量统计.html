@@ -74,7 +74,7 @@
       flex-wrap: wrap;
       justify-content:flex-end;
     }
-    .input{
+    .select, .input{
       height: 32px;
       border: 1px solid #d9d9d9;
       border-radius: 6px;
@@ -83,12 +83,89 @@
       outline:none;
       background:#fff;
       color:#333;
+    }
+    .select{ min-width: 160px; }
+    .input{
       width: 260px;
     }
-    .input:focus{
+    .select:focus, .input:focus{
       border-color: var(--primary);
       box-shadow: 0 0 0 2px rgba(22,119,255,.18);
     }
+    .seg{
+      display:flex;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      overflow:hidden;
+      height: 32px;
+      background:#fff;
+    }
+    .seg button{
+      border: none;
+      background: transparent;
+      padding: 0 12px;
+      height: 32px;
+      font-size: 13px;
+      cursor:pointer;
+      color:#666;
+    }
+    .seg button.active{
+      background: #e6f4ff;
+      color: var(--primary);
+      font-weight: 700;
+    }
+    .btn{
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 6px;
+      border: 1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      font-size: 13px;
+      color:#333;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); }
+    .btn.sm{
+      height: 24px;
+      padding: 0 10px;
+      font-size: 11px;
+      border-radius: 6px;
+    }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width: 18px;
+      height: 18px;
+      padding: 0 6px;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 800;
+      border: 1px solid transparent;
+    }
+    .badge.blue{ background:#e6f4ff; color: var(--primary); border-color:#bae0ff; }
+    .tech-cell{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+    }
+    .avatar{
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size: 12px;
+      font-weight: 900;
+      border: 1px solid transparent;
+    }
+    .avatar.blue{ background:#f0f5ff; border-color:#d6e4ff; color:#2f54eb; }
+    .avatar.green{ background:#f6ffed; border-color:#b7eb8f; color:#389e0d; }
+    .avatar.orange{ background:#fff7e6; border-color:#ffd591; color:#d46b08; }
     .content{
       flex: 1 1 auto;
       min-height: 0;
@@ -100,8 +177,352 @@
       border-radius: 0;
       box-shadow: var(--shadow);
       overflow:hidden;
+      padding: 0;
+    }
+
+    /* 数据图面板 */
+    .panel-grid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
       padding: 10px;
-      min-height: 520px; /* 仅骨架占位 */
+    }
+    @media (max-width: 1100px){
+      .panel-grid{ grid-template-columns: 1fr; }
+    }
+    .panel{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow:hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      min-height: 320px;
+    }
+    .panel-hd{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      background:#fff;
+    }
+    .panel-title{
+      font-size: 13px;
+      font-weight: 800;
+      color:#333;
+    }
+    .panel-actions{ display:flex; align-items:center; gap: 8px; }
+    .chart-wrap{ padding: 10px 12px 8px 12px; }
+    .chart-box{
+      height: 210px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background:#fff;
+      /* 图例独占一行，绘图区在其下方 */
+      padding: 8px 10px 10px 10px;
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+      overflow:hidden;
+    }
+    .legend{
+      position: static;
+      width: 100%;
+      display:flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items:center;
+      font-size: 11px;
+      color:#666;
+      justify-content:flex-end;
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      padding: 0;
+    }
+    .legend-item{ display:flex; align-items:center; gap: 6px; }
+    .legend-dot{ width: 10px; height: 10px; border-radius: 2px; }
+    .plot-area{
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 14px 10px 30px 48px;
+      overflow:hidden;
+    }
+    .y-axis{
+      position:absolute;
+      left: 0;
+      top: 12px;
+      bottom: 24px;
+      width: 42px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      font-size: 11px;
+      color:#999;
+      text-align:right;
+      padding-right: 8px;
+      pointer-events:none;
+    }
+    .bars{
+      height: 100%;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-around;
+      gap: 10px;
+    }
+    .bar-group{
+      flex: 1;
+      max-width: 120px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap: 6px;
+    }
+    .bar-stack{
+      width: 44px;
+      display:flex;
+      flex-direction: column-reverse;
+      justify-content:flex-start;
+      border-radius: 2px 2px 0 0;
+      overflow:hidden;
+      min-height: 2px;
+      position: relative;
+    }
+    .seg-bar{ width: 100%; }
+    .bar-total{
+      position:absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      font-weight: 800;
+      color:#333;
+      white-space: nowrap;
+      pointer-events:none;
+    }
+    .bar-label{
+      font-size: 11px;
+      color:#666;
+      white-space: nowrap;
+    }
+
+    .data-table-wrap{
+      border-top: 1px solid var(--border);
+      background:#fff;
+      overflow:auto;
+    }
+    .data-table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 720px;
+    }
+    .data-table thead th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align:center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    .data-table tbody td{
+      font-size: 12px;
+      color:#333;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f5f5f5;
+      text-align:center;
+      white-space: nowrap;
+    }
+    .data-table tbody tr:hover{ background:#fafcff; }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: 0 8px;
+      height: 20px;
+      border-radius: 999px;
+      background:#e6f4ff;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 700;
+    }
+    .tag.gray{ background:#f5f5f5; color:#666; }
+    .tag.blue{ background:#e6f4ff; color: var(--primary); }
+    .tag.green{ background:#f6ffed; color:#389e0d; }
+    .tag.orange{ background:#fff7e6; color:#d46b08; }
+    .tag.red{ background:#fff1f0; color:#cf1322; }
+
+    /* 汇总表 */
+    .summary-wrap{ padding: 10px; }
+    .summary-grid{
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    @media (max-width: 1100px){
+      .summary-grid{ grid-template-columns: 1fr; }
+    }
+    .summary-card{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow:hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+      min-height: 210px;
+    }
+    .summary-hd{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+      font-weight: 800;
+      color:#333;
+    }
+    .summary-bd{
+      padding: 12px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap: 18px;
+      min-height: 160px;
+    }
+    .donut{
+      width: 140px;
+      height: 140px;
+      border-radius: 999px;
+      position: relative;
+      background: conic-gradient(#5470C6 0 360deg);
+      flex: 0 0 auto;
+    }
+    .donut::after{
+      content:"";
+      position:absolute;
+      inset: 24px;
+      background:#fff;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+    }
+    .donut-center{
+      position:absolute;
+      inset: 0;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      z-index: 1;
+      gap: 2px;
+    }
+    .donut-center .n{
+      font-size: 20px;
+      font-weight: 900;
+      color:#333;
+      line-height: 1;
+    }
+    .donut-center .t{
+      font-size: 12px;
+      font-weight: 700;
+      color:#666;
+    }
+    .legend-list{
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+      min-width: 210px;
+      max-width: 260px;
+    }
+    .legend-row{
+      display:flex;
+      align-items:center;
+      gap: 8px;
+      font-size: 12px;
+      color:#333;
+      white-space: nowrap;
+    }
+    .legend-row .dot{
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex: 0 0 auto;
+    }
+    .legend-row .name{
+      flex: 1 1 auto;
+      overflow:hidden;
+      text-overflow: ellipsis;
+    }
+    .legend-row .meta{
+      color:#666;
+      font-variant-numeric: tabular-nums;
+    }
+    .summary-table{
+      background:#fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow:hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .summary-table-hd{
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .summary-table-hd .t{
+      font-size: 13px;
+      font-weight: 800;
+      color:#333;
+    }
+    .table-wrap{
+      border-top: none;
+      background:#fff;
+      overflow:auto;
+    }
+    table{
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 1040px;
+    }
+    thead th{
+      background:#fafafa;
+      color:#333;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 8px;
+      border-bottom: 1px solid var(--border);
+      text-align:center;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+    tbody td{
+      font-size: 12px;
+      color:#333;
+      padding: 10px 8px;
+      border-bottom: 1px solid #f5f5f5;
+      text-align:center;
+      white-space: nowrap;
+    }
+    tbody tr:hover{ background:#fafcff; }
+    .col-left{
+      text-align:left !important;
+      padding-left: 12px !important;
+    }
+    .group-th{
+      background:#fafafa;
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 800;
+      color:#333;
+      padding: 10px 8px;
+      text-align:center;
     }
   </style>
 </head>
@@ -116,36 +537,470 @@
         </div>
       </div>
       <div class="filters">
+        <span id="filterTech">
+          <select class="select" id="techSelect">
+            <option selected>陈技师</option>
+            <option>林诗</option>
+            <option>朱毅毅</option>
+          </select>
+        </span>
         <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+        <span id="filterGranularity">
+          <div class="seg" role="group" aria-label="时间粒度">
+            <button type="button" id="btnDay">按日</button>
+            <button type="button" id="btnMonth" class="active">按月</button>
+          </div>
+        </span>
       </div>
     </div>
 
     <div class="content">
       <!-- 视图1：数据图（内容后续补充，先置空） -->
-      <div class="card" id="viewChart"></div>
+      <div class="card" id="viewChart">
+        <div class="panel-grid">
+          <!-- 执行技术统计 -->
+          <div class="panel">
+            <div class="panel-hd">
+              <div class="panel-title">执行技术统计</div>
+              <div class="panel-actions">
+                <button class="btn sm" data-action="detail" data-panel="tech">明细</button>
+                <button class="btn sm" data-action="download" data-panel="tech">下载</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-box" aria-label="执行技术统计柱状图">
+                <div class="legend" id="legendTechChart"></div>
+                <div class="plot-area">
+                  <div class="y-axis" id="yAxisTechChart"></div>
+                  <div class="bars" id="barsTechChart"></div>
+                </div>
+              </div>
+            </div>
+            <div class="data-table-wrap" style="max-height: 220px;">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 110px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyTechChart"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 拍片统计 -->
+          <div class="panel">
+            <div class="panel-hd">
+              <div class="panel-title">拍片统计</div>
+              <div class="panel-actions">
+                <button class="btn sm" data-action="detail" data-panel="imaging">明细</button>
+                <button class="btn sm" data-action="download" data-panel="imaging">下载</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-box" aria-label="拍片统计柱状图">
+                <div class="legend" id="legendImagingChart"></div>
+                <div class="plot-area">
+                  <div class="y-axis" id="yAxisImagingChart"></div>
+                  <div class="bars" id="barsImagingChart"></div>
+                </div>
+              </div>
+            </div>
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 110px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyImagingChart"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 治疗野/弧度统计（左侧一列） -->
+          <div class="panel">
+            <div class="panel-hd">
+              <div class="panel-title">治疗野/弧度统计</div>
+              <div class="panel-actions">
+                <button class="btn sm" data-action="detail" data-panel="fieldArc">明细</button>
+                <button class="btn sm" data-action="download" data-panel="fieldArc">下载</button>
+              </div>
+            </div>
+            <div class="chart-wrap">
+              <div class="chart-box" aria-label="治疗野弧度统计柱状图">
+                <div class="legend" id="legendFieldArcChart"></div>
+                <div class="plot-area">
+                  <div class="y-axis" id="yAxisFieldArcChart"></div>
+                  <div class="bars" id="barsFieldArcChart"></div>
+                </div>
+              </div>
+            </div>
+            <div class="data-table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 110px;"></th>
+                    <th>2025-07</th><th>2025-08</th><th>2025-09</th><th>2025-10</th><th>2025-11</th><th>2025-12</th><th>2026-01</th>
+                  </tr>
+                </thead>
+                <tbody id="tbodyFieldArcChart"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 占位：右侧留白以贴近UI -->
+          <div class="panel" style="visibility:hidden;"></div>
+        </div>
+      </div>
 
       <!-- 视图2：汇总表（内容后续补充，先置空） -->
-      <div class="card hidden" id="viewTable"></div>
+      <div class="card hidden" id="viewTable">
+        <div class="summary-wrap">
+          <div class="summary-grid">
+            <div class="summary-card">
+              <div class="summary-hd">执行技术统计</div>
+              <div class="summary-bd">
+                <div class="donut" id="donutTech">
+                  <div class="donut-center">
+                    <div class="n" id="donutTechTotal">12</div>
+                    <div class="t">总数</div>
+                  </div>
+                </div>
+                <div class="legend-list" id="legendTechSummary"></div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-hd">拍片统计</div>
+              <div class="summary-bd">
+                <div class="donut" id="donutImaging">
+                  <div class="donut-center">
+                    <div class="n" id="donutImagingTotal">2</div>
+                    <div class="t">总数</div>
+                  </div>
+                </div>
+                <div class="legend-list" id="legendImagingSummary"></div>
+              </div>
+            </div>
+
+            <div class="summary-card">
+              <div class="summary-hd">治疗野/弧度统计</div>
+              <div class="summary-bd">
+                <div class="donut" id="donutFieldArc">
+                  <div class="donut-center">
+                    <div class="n" id="donutFieldArcTotal">6</div>
+                    <div class="t">总数</div>
+                  </div>
+                </div>
+                <div class="legend-list" id="legendFieldArcSummary"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="summary-table">
+            <div class="summary-table-hd">
+              <div class="t">汇总表</div>
+              <div style="display:flex; gap:8px; align-items:center;">
+                <button class="btn sm" data-action="detail" data-panel="summary">明细</button>
+                <button class="btn sm" data-action="export" data-panel="summary">导出</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="group-th" rowspan="2" style="width: 160px; text-align:left; padding-left:12px;">技师</th>
+                    <th class="group-th" colspan="6">执行技术</th>
+                    <th class="group-th" colspan="4">拍片</th>
+                    <th class="group-th" colspan="7">治疗野/弧度</th>
+                  </tr>
+                  <tr>
+                    <th>SRS</th><th>未知</th><th>常规</th><th>SBRT</th><th>ABC</th><th>合计</th>
+                    <th>EPID</th><th>否</th><th>CBCT</th><th>合计</th>
+                    <th>SRS</th><th>未知</th><th>SRS|SBRT</th><th>常规</th><th>SBRT|ABC</th><th>SBRT</th><th>合计</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="col-left">
+                      <div class="tech-cell">
+                        <span class="avatar blue">朱</span><span>朱毅毅</span>
+                      </div>
+                    </td>
+                    <td>1</td><td>0</td><td>0</td><td>0</td><td>0</td><td><span class="badge blue">1</span></td>
+                    <td>0</td><td>0</td><td>0</td><td><span class="badge blue">0</span></td>
+                    <td>3</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td><span class="badge blue">3</span></td>
+                  </tr>
+                  <tr>
+                    <td class="col-left">
+                      <div class="tech-cell">
+                        <span class="avatar green">陈</span><span>陈技师</span>
+                      </div>
+                    </td>
+                    <td>2</td><td>1</td><td>1</td><td>2</td><td>0</td><td><span class="badge blue">6</span></td>
+                    <td>0</td><td>0</td><td>1</td><td><span class="badge blue">1</span></td>
+                    <td>0</td><td>0</td><td>0</td><td>3</td><td>0</td><td>0</td><td><span class="badge blue">3</span></td>
+                  </tr>
+                  <tr>
+                    <td class="col-left">
+                      <div class="tech-cell">
+                        <span class="avatar orange">林</span><span>林诗</span>
+                      </div>
+                    </td>
+                    <td>2</td><td>1</td><td>0</td><td>2</td><td>0</td><td><span class="badge blue">5</span></td>
+                    <td>0</td><td>0</td><td>1</td><td><span class="badge blue">1</span></td>
+                    <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td><span class="badge blue">0</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
+    const months = ['2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01'];
+
+    function setGranularity(type){
+      const btnDay = document.getElementById('btnDay');
+      const btnMonth = document.getElementById('btnMonth');
+      const isMonth = type === 'month';
+      btnDay?.classList.toggle('active', !isMonth);
+      btnMonth?.classList.toggle('active', isMonth);
+      // 原型：按日/按月仅切换样式
+    }
+
+    function renderLegend(containerId, series){
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      el.innerHTML = series.map(s => `
+        <span class="legend-item">
+          <span class="legend-dot" style="background:${s.color}"></span>
+          <span>${s.name}</span>
+        </span>
+      `).join('');
+    }
+
+    function renderYAxis(containerId, maxValue){
+      const el = document.getElementById(containerId);
+      if (!el) return;
+      const max = Math.max(maxValue, 1);
+      const ticks = max <= 1 ? [1,0] : [max, Math.floor(max/2), 0];
+      el.innerHTML = ticks.map(t => `<div>${t}</div>`).join('');
+    }
+
+    function renderStackedBars({ barsId, yAxisId, legendId, data, series }){
+      const barsEl = document.getElementById(barsId);
+      if (!barsEl) return;
+      renderLegend(legendId, series);
+      const totals = data.map(d => series.reduce((sum, s) => sum + (d.values[s.name] || 0), 0));
+      const max = Math.max(...totals, 1);
+      renderYAxis(yAxisId, max);
+
+      barsEl.innerHTML = '';
+      data.forEach((d, idx) => {
+        const total = totals[idx];
+        const group = document.createElement('div');
+        group.className = 'bar-group';
+
+        const stack = document.createElement('div');
+        stack.className = 'bar-stack';
+        stack.style.height = ((total / max) * 150 + 6) + 'px';
+        if (total > 0) {
+          const t = document.createElement('div');
+          t.className = 'bar-total';
+          t.textContent = total;
+          stack.appendChild(t);
+        }
+        series.forEach(s => {
+          const v = d.values[s.name] || 0;
+          if (v <= 0) return;
+          const seg = document.createElement('div');
+          seg.className = 'seg-bar';
+          seg.style.height = total ? ((v / total) * 100) + '%' : '0%';
+          seg.style.background = s.color;
+          stack.appendChild(seg);
+        });
+
+        const label = document.createElement('div');
+        label.className = 'bar-label';
+        label.textContent = d.x;
+
+        group.appendChild(stack);
+        group.appendChild(label);
+        barsEl.appendChild(group);
+      });
+    }
+
+    function renderTableRows(tbodyId, rows){
+      const el = document.getElementById(tbodyId);
+      if (!el) return;
+      el.innerHTML = rows.map(r => {
+        const cells = months.map(m => `<td>${r.data[m] ?? 0}</td>`).join('');
+        return `<tr><td><span class="tag ${r.tagClass || ''}">${r.name}</span></td>${cells}</tr>`;
+      }).join('');
+    }
+
+    function initDataChart(){
+      // 执行技术统计（SRS/SBRT/常规/未知）
+      const techSeries = [
+        { name: 'SRS', color: '#5470C6' },
+        { name: 'SBRT', color: '#91CC75' },
+        { name: '常规', color: '#FAC858' },
+        { name: '未知', color: '#EE6666' }
+      ];
+      const techData = months.map(m => ({ x: m, values: { 'SRS':0,'SBRT':0,'常规':0,'未知':0 } }));
+      // 参考截图：2025-08 常规=1；2025-09 SRS=2, SBRT=2, 未知=1
+      techData.find(d => d.x==='2025-08').values['常规'] = 1;
+      const d090 = techData.find(d => d.x==='2025-09');
+      d090.values['SRS'] = 2;
+      d090.values['SBRT'] = 2;
+      d090.values['未知'] = 1;
+      renderStackedBars({
+        barsId: 'barsTechChart',
+        yAxisId: 'yAxisTechChart',
+        legendId: 'legendTechChart',
+        data: techData,
+        series: techSeries
+      });
+      renderTableRows('tbodyTechChart', [
+        { name: 'SRS', tagClass:'blue', data: {'2025-09':2} },
+        { name: 'SBRT', tagClass:'green', data: {'2025-09':2} },
+        { name: '常规', tagClass:'orange', data: {'2025-08':1} },
+        { name: '未知', tagClass:'red', data: {'2025-09':1} },
+        { name: '总计', tagClass:'gray', data: {'2025-08':1,'2025-09':5} }
+      ]);
+
+      // 拍片统计（CBCT）
+      const imagingSeries = [{ name: 'CBCT', color: '#5470C6' }];
+      const imagingData = months.map(m => ({ x: m, values: { 'CBCT': 0 } }));
+      imagingData.find(d => d.x==='2025-09').values['CBCT'] = 1;
+      renderStackedBars({
+        barsId: 'barsImagingChart',
+        yAxisId: 'yAxisImagingChart',
+        legendId: 'legendImagingChart',
+        data: imagingData,
+        series: imagingSeries
+      });
+      renderTableRows('tbodyImagingChart', [
+        { name: 'CBCT', tagClass:'blue', data: {'2025-09':1} },
+        { name: '总计', tagClass:'gray', data: {'2025-09':1} }
+      ]);
+
+      // 治疗野/弧度统计（SRS|SBRT/常规/未知）
+      const faSeries = [
+        { name: 'SRS|SBRT', color: '#5470C6' },
+        { name: '常规', color: '#91CC75' },
+        { name: '未知', color: '#FAC858' }
+      ];
+      const faData = months.map(m => ({ x: m, values: { 'SRS|SBRT':0,'常规':0,'未知':0 } }));
+      faData.find(d => d.x==='2025-08').values['常规'] = 3;
+      renderStackedBars({
+        barsId: 'barsFieldArcChart',
+        yAxisId: 'yAxisFieldArcChart',
+        legendId: 'legendFieldArcChart',
+        data: faData,
+        series: faSeries
+      });
+      renderTableRows('tbodyFieldArcChart', [
+        { name: 'SRS|SBRT', tagClass:'blue', data: {} },
+        { name: '常规', tagClass:'green', data: {'2025-08':3} },
+        { name: '未知', tagClass:'orange', data: {} },
+        { name: '总计', tagClass:'gray', data: {'2025-08':3} }
+      ]);
+    }
+
+    function renderDonut(elId, legendId, totalElId, items){
+      // items: [{name, value, color}]
+      const donut = document.getElementById(elId);
+      const legend = document.getElementById(legendId);
+      const totalEl = document.getElementById(totalElId);
+      if (!donut || !legend || !totalEl) return;
+      const total = items.reduce((s, it) => s + it.value, 0) || 1;
+      totalEl.textContent = total;
+
+      let acc = 0;
+      const parts = items.map(it => {
+        const start = acc;
+        const pct = (it.value / total) * 100;
+        acc += pct;
+        return `${it.color} ${start.toFixed(4)}% ${acc.toFixed(4)}%`;
+      });
+      donut.style.background = `conic-gradient(${parts.join(',')})`;
+
+      legend.innerHTML = items.map(it => {
+        const pct = ((it.value / total) * 100);
+        return `
+          <div class="legend-row">
+            <span class="dot" style="background:${it.color}"></span>
+            <span class="name">${it.name}</span>
+            <span class="meta">${it.value}</span>
+            <span class="meta">${pct.toFixed(2)}%</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function initSummary(){
+      renderDonut('donutTech', 'legendTechSummary', 'donutTechTotal', [
+        { name: '陈技师', value: 6, color: '#5470C6' },
+        { name: '林诗', value: 5, color: '#91CC75' },
+        { name: '朱毅毅', value: 1, color: '#FAC858' }
+      ]);
+      renderDonut('donutImaging', 'legendImagingSummary', 'donutImagingTotal', [
+        { name: '林诗', value: 1, color: '#5470C6' },
+        { name: '陈技师', value: 1, color: '#91CC75' }
+      ]);
+      renderDonut('donutFieldArc', 'legendFieldArcSummary', 'donutFieldArcTotal', [
+        { name: '不成型', value: 3, color: '#5470C6' },
+        { name: '放射野', value: 3, color: '#91CC75' }
+      ]);
+    }
+
     function setView(view) {
       const chart = document.getElementById('viewChart');
       const table = document.getElementById('viewTable');
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
+      const filterTech = document.getElementById('filterTech');
+      const filterGranularity = document.getElementById('filterGranularity');
 
       const isChart = view === 'chart';
       chart.classList.toggle('hidden', !isChart);
       table.classList.toggle('hidden', isChart);
       tabChart.classList.toggle('active', isChart);
       tabTable.classList.toggle('active', !isChart);
+
+      // 汇总表截图中仅保留日期范围
+      filterTech?.classList.toggle('hidden', !isChart);
+      filterGranularity?.classList.toggle('hidden', !isChart);
     }
 
     setView('chart');
     document.getElementById('tabChart').addEventListener('click', () => setView('chart'));
     document.getElementById('tabTable').addEventListener('click', () => setView('table'));
+
+    initDataChart();
+    initSummary();
+    document.getElementById('btnDay')?.addEventListener('click', () => setGranularity('day'));
+    document.getElementById('btnMonth')?.addEventListener('click', () => setGranularity('month'));
+    document.body.addEventListener('click', (e) => {
+      const btn = e.target.closest('button[data-action]');
+      if (!btn) return;
+      const act = btn.getAttribute('data-action');
+      const panel = btn.getAttribute('data-panel');
+      const map = {
+        detail: '原型占位：明细',
+        download: '原型占位：下载',
+        export: '原型占位：导出'
+      };
+      alert(`${map[act] || '原型占位'}（${panel || ''}）`);
+    });
   </script>
 </body>
 </html>
