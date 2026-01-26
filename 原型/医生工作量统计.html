@@ -82,6 +82,13 @@
       flex-wrap: wrap;
       justify-content:flex-end;
     }
+    .filters-group{
+      display:flex;
+      align-items:center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content:flex-end;
+    }
     .select, .input{
       height: 32px;
       border: 1px solid #d9d9d9;
@@ -602,28 +609,49 @@
         </div>
       </div>
       <div class="filters">
-        <select class="select" id="campusSelect" title="院区">
-          <option value="all" selected>全部院区</option>
-        </select>
-        <select class="select" id="deptSelect" title="科室">
-          <option value="all" selected>全部科室</option>
-        </select>
-        <select class="select" id="doctorGroup">
-          <option value="all" selected>按主管医生/组</option>
-        </select>
-        <select class="select" id="doctorSelect">
-          <option value="wang" selected>王医生组</option>
-        </select>
-        <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
-        <div class="radio-group">
-          <label class="radio">
-            <input type="radio" name="timeGranularity" value="day" />
-            <span>按日</span>
-          </label>
-          <label class="radio">
-            <input type="radio" name="timeGranularity" value="month" checked />
-            <span>按月</span>
-          </label>
+        <!-- 数据图查询条件：保持原样（含第4个下拉） -->
+        <div id="filtersChart" class="filters-group">
+          <select class="select" id="campusSelect" title="院区">
+            <option value="all" selected>全部院区</option>
+          </select>
+          <select class="select" id="deptSelect" title="科室">
+            <option value="all" selected>全部科室</option>
+          </select>
+          <select class="select" id="doctorGroup">
+            <option value="all" selected>按主管医生/组</option>
+          </select>
+          <select class="select" id="doctorSelect">
+            <option value="wang" selected>王医生组</option>
+          </select>
+          <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
+          <div class="radio-group">
+            <label class="radio">
+              <input type="radio" name="timeGranularity" value="day" />
+              <span>按日</span>
+            </label>
+            <label class="radio">
+              <input type="radio" name="timeGranularity" value="month" checked />
+              <span>按月</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- 汇总表查询条件（独立一套；按需求：删除“第4个下拉单选”后仅保留3个下拉） -->
+        <div id="filtersTable" class="filters-group hidden">
+          <select class="select" id="campusSelectTable" title="院区">
+            <option value="all" selected>全部院区</option>
+          </select>
+          <select class="select" id="deptSelectTable" title="科室">
+            <option value="all" selected>全部科室</option>
+          </select>
+          <!-- 替换为：按主管医生/按医生组/按主诊医生/按科室 -->
+          <select class="select" id="summaryGroupByTable" title="统计维度">
+            <option value="manager-doctor">按主管医生</option>
+            <option value="doctor-group">按医生组</option>
+            <option value="attending-doctor">按主诊医生</option>
+            <option value="dept" selected>按科室</option>
+          </select>
+          <input class="input" id="dateRangeTable" value="2025-07-01 至 2026-01-31" />
         </div>
       </div>
     </div>
@@ -756,7 +784,7 @@
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total">35</div>
+                    <div class="total" id="totalAdmission">35</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -774,7 +802,7 @@
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total">10</div>
+                    <div class="total" id="totalCt">10</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -792,7 +820,7 @@
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total">1</div>
+                    <div class="total" id="totalContourA">1</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -810,7 +838,7 @@
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total">1</div>
+                    <div class="total" id="totalContourB">1</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -928,16 +956,28 @@
 
     function $(id){ return document.getElementById(id); }
 
-    function getFilters(){
+    // -----------------------------
+    // 两套查询条件：数据图 / 汇总表
+    // -----------------------------
+    function getChartFilters(){
       return {
         campusId: $('campusSelect')?.value || 'all',
-        deptId: $('deptSelect')?.value || 'all'
+        deptId: $('deptSelect')?.value || 'all',
+        doctorGroup: $('doctorGroup')?.value || 'all'
       };
     }
 
-    function updateDeptOptions(){
-      const campusId = $('campusSelect')?.value || 'all';
-      const deptSelect = $('deptSelect');
+    function getTableFilters(){
+      return {
+        campusId: $('campusSelectTable')?.value || 'all',
+        deptId: $('deptSelectTable')?.value || 'all',
+        groupBy: $('summaryGroupByTable')?.value || 'dept'
+      };
+    }
+
+    function updateDeptOptionsFor(campusSelectId, deptSelectId){
+      const campusId = $(campusSelectId)?.value || 'all';
+      const deptSelect = $(deptSelectId);
       if (!deptSelect) return;
       const prev = deptSelect.value || 'all';
 
@@ -955,8 +995,8 @@
       deptSelect.value = stillExists ? prev : 'all';
     }
 
-    function initCampusDeptFilters(){
-      const campusSelect = $('campusSelect');
+    function initCampusDeptFiltersFor(campusSelectId, deptSelectId){
+      const campusSelect = $(campusSelectId);
       if (campusSelect) {
         campusSelect.innerHTML = '';
         campusOptions.forEach(c => {
@@ -967,7 +1007,7 @@
         });
         campusSelect.value = 'all';
       }
-      updateDeptOptions();
+      updateDeptOptionsFor(campusSelectId, deptSelectId);
     }
 
     // -----------------------------
@@ -978,6 +1018,11 @@
     function dotClassByIndex(i){
       const dots = ['c1','c2','c3','c4','c5','c6'];
       return dots[i % dots.length];
+    }
+
+    function getDeptNameById(deptId){
+      const hit = (deptOptions || []).find(d => d.id === deptId);
+      return hit?.name || '未知科室';
     }
 
     // type: admission | ct | contour
@@ -999,12 +1044,47 @@
       { type:'contour', menuValue:'review', month:'2025-11', count:6, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
       { type:'contour', menuValue:'plan-evaluate', month:'2025-08', count:3, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' }
     ];
-    function applyCampusDeptFilter(list){
-      const { campusId, deptId } = getFilters();
+    function initDoctorGroupFilterFor(selectId){
+      const el = $(selectId);
+      if (!el) return;
+      const prev = el.value || 'all';
+      const groups = Array.from(new Set((mockEvents || []).map(e => e.doctorGroup).filter(Boolean)));
+      el.innerHTML = '';
+
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = '全部医生组';
+      el.appendChild(allOpt);
+
+      groups.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g;
+        opt.textContent = g;
+        el.appendChild(opt);
+      });
+
+      const stillExists = Array.from(el.options).some(o => o.value === prev);
+      el.value = stillExists ? prev : 'all';
+    }
+
+    function applyEventFilters(list, filters){
+      const { campusId, deptId, doctorGroup } = filters || { campusId:'all', deptId:'all', doctorGroup:'all' };
       return (list || []).filter(e => {
         const okCampus = campusId === 'all' ? true : e.campusId === campusId;
         const okDept = deptId === 'all' ? true : e.deptId === deptId;
-        return okCampus && okDept;
+        const okGroup = doctorGroup === 'all' ? true : e.doctorGroup === doctorGroup;
+        return okCampus && okDept && okGroup;
+      });
+    }
+
+    function applyDetailFilters(list, filters){
+      const { campusId, deptId, doctorGroup } = filters || { campusId:'all', deptId:'all', doctorGroup:'all' };
+      return (list || []).filter(e => {
+        const okCampus = campusId === 'all' ? true : e.campusId === campusId;
+        const okDept = deptId === 'all' ? true : e.deptId === deptId;
+        // 明细数据字段是 group（与 doctorGroup 对齐）
+        const okGroup = doctorGroup === 'all' ? true : (e.group === doctorGroup);
+        return okCampus && okDept && okGroup;
       });
     }
 
@@ -1030,19 +1110,50 @@
         .map((it, idx) => ({ name: it.name, count: it.count, pct: (it.count / total) * 100, dot: dotClassByIndex(idx) }));
     }
 
-    function buildSummaryRows(listAdmission, listCt, listContour){
-      const doctors = new Map();
+    function groupKeyAndLabelBy(mode, e){
+      // 说明：原型数据只有 doctor / doctorGroup / deptId
+      // - 按主管医生、按主诊医生：先统一用 doctor 口径
+      // - 按医生组：用 doctorGroup
+      // - 按科室：用 deptId -> deptName
+      if (mode === 'doctor-group') {
+        const label = e?.doctorGroup || '未知医生组';
+        return { key: label, label };
+      }
+      if (mode === 'dept') {
+        const label = getDeptNameById(e?.deptId);
+        return { key: label, label };
+      }
+      // manager-doctor / attending-doctor / default
+      const label = e?.doctor || '未知';
+      return { key: label, label };
+    }
+
+    function groupLegend(list, mode){
+      const map = new Map();
+      (list || []).forEach(e => {
+        const { key, label } = groupKeyAndLabelBy(mode, e);
+        map.set(key, { name: label, count: (map.get(key)?.count || 0) + (e.count || 0) });
+      });
+      const arr = Array.from(map.values());
+      const total = arr.reduce((s, it) => s + it.count, 0) || 1;
+      return arr
+        .sort((a,b) => b.count - a.count)
+        .map((it, idx) => ({ name: it.name, count: it.count, pct: (it.count / total) * 100, dot: dotClassByIndex(idx) }));
+    }
+
+    function buildSummaryRows(listAdmission, listCt, listContour, mode){
+      const rows = new Map();
       function add(list, key){
         (list || []).forEach(e => {
-          const name = e.doctor || '未知';
-          if (!doctors.has(name)) doctors.set(name, { name, init: name.slice(0,1), admission:0, ct:0, contouring:0 });
-          doctors.get(name)[key] += (e.count || 0);
+          const { key: groupKey, label } = groupKeyAndLabelBy(mode, e);
+          if (!rows.has(groupKey)) rows.set(groupKey, { name: label, init: label.slice(0,1), admission:0, ct:0, contouring:0 });
+          rows.get(groupKey)[key] += (e.count || 0);
         });
       }
       add(listAdmission, 'admission');
       add(listCt, 'ct');
       add(listContour, 'contouring');
-      return Array.from(doctors.values()).sort((a,b) => (b.admission+b.ct+b.contouring) - (a.admission+a.ct+a.contouring));
+      return Array.from(rows.values()).sort((a,b) => (b.admission+b.ct+b.contouring) - (a.admission+a.ct+a.contouring));
     }
 
     const contouringPanelKeys = ['A', 'B', 'C'];
@@ -1062,7 +1173,7 @@
       { patientName: '赵六', caseNo: 'C202501004', rtNo: 'RT202501004', doctor: '王医生', group: '王医生组', diagnosis: '食管癌', process: '外照射流程', submitTime: '2025-12-16 11:45:20', campusId:'c1', deptId:'d1' }
     ];
 
-    // （原型）汇总表与 donut 图例数据将由 refreshAll() 动态生成
+    // （原型）汇总表与 donut 图例数据将由 refreshSummary() 动态生成
 
     function renderLegend(containerId, data) {
       const el = document.getElementById(containerId);
@@ -1178,7 +1289,7 @@
       const tbody = document.getElementById('detailTableBody');
       if (!tbody) return;
       tbody.innerHTML = '';
-      const filtered = applyCampusDeptFilter(contouringDetailData);
+      const filtered = applyDetailFilters(contouringDetailData, getChartFilters());
       filtered.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1305,12 +1416,12 @@
       tbody.appendChild(row);
     }
 
-    function refreshAll(){
-      // 事件按院区/科室过滤
-      const filtered = applyCampusDeptFilter(mockEvents);
+    function refreshChart(){
+      const filtered = applyEventFilters(mockEvents, getChartFilters());
       const admissions = filtered.filter(e => e.type === 'admission');
       const cts = filtered.filter(e => e.type === 'ct');
       const contours = filtered.filter(e => e.type === 'contour');
+      const groupLabel = $('doctorSelect')?.options[$('doctorSelect').selectedIndex]?.text || '王医生组';
 
       // 图表：收治
       window.__admissionSeries = sumByMonth(admissions);
@@ -1322,19 +1433,36 @@
         const menuValue = contouringPanelConfig[k]?.menuValue;
         const series = sumByMonth(contours.filter(e => e.menuValue === menuValue));
         renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, series);
-        renderContouringPanelTable(`contouringTableBody${k}`, series);
+        renderContouringPanelTable(`contouringTableBody${k}`, series, groupLabel);
       });
+    }
 
-      // 汇总表 donut & 总表
-      const admissionLegend = groupByDoctor(admissions);
-      const ctLegend = groupByDoctor(cts);
-      const contourLegend = groupByDoctor(contours);
+    function refreshSummary(){
+      const { campusId, deptId, groupBy } = getTableFilters();
+      // 汇总表不再按“具体医生组”过滤，只按院区/科室过滤
+      const filtered = applyEventFilters(mockEvents, { campusId, deptId, doctorGroup: 'all' });
+      const admissions = filtered.filter(e => e.type === 'admission');
+      const cts = filtered.filter(e => e.type === 'ct');
+      const contours = filtered.filter(e => e.type === 'contour');
+
+      const admissionLegend = groupLegend(admissions, groupBy);
+      const ctLegend = groupLegend(cts, groupBy);
+      const contourLegend = groupLegend(contours, groupBy);
       renderLegend('legend1', admissionLegend);
       renderLegend('legend2', ctLegend);
       renderLegend('legend3', contourLegend);
       renderLegend('legend4', contourLegend);
 
-      window.__summaryRows = buildSummaryRows(admissions, cts, contours);
+      // 更新 donut 中心总数（否则看起来像“汇总表不参与筛选”）
+      const totalAdmission = admissions.reduce((s, e) => s + (e.count || 0), 0);
+      const totalCt = cts.reduce((s, e) => s + (e.count || 0), 0);
+      const totalContour = contours.reduce((s, e) => s + (e.count || 0), 0);
+      if ($('totalAdmission')) $('totalAdmission').textContent = String(totalAdmission);
+      if ($('totalCt')) $('totalCt').textContent = String(totalCt);
+      if ($('totalContourA')) $('totalContourA').textContent = String(totalContour);
+      if ($('totalContourB')) $('totalContourB').textContent = String(totalContour);
+
+      window.__summaryRows = buildSummaryRows(admissions, cts, contours, groupBy);
       renderTable();
     }
 
@@ -1344,18 +1472,28 @@
       const table = document.getElementById('viewTable');
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
+      const filtersChart = document.getElementById('filtersChart');
+      const filtersTable = document.getElementById('filtersTable');
 
       const isChart = view === 'chart';
       chart.classList.toggle('hidden', !isChart);
       table.classList.toggle('hidden', isChart);
       tabChart.classList.toggle('active', isChart);
       tabTable.classList.toggle('active', !isChart);
+
+      // 参考“治疗技师工作量统计”：两套查询条件随 Tab 切换
+      filtersChart?.classList.toggle('hidden', !isChart);
+      filtersTable?.classList.toggle('hidden', isChart);
     }
 
     // 初始化
-    initCampusDeptFilters();
     contouringPanelKeys.forEach((k) => updateContouringPanelTitle(k));
-    refreshAll();
+    initCampusDeptFiltersFor('campusSelect', 'deptSelect');
+    initCampusDeptFiltersFor('campusSelectTable', 'deptSelectTable');
+    initDoctorGroupFilterFor('doctorGroup');
+
+    refreshChart();
+    refreshSummary();
     renderContouringDetailTable();
 
     // 默认显示数据图视图
@@ -1366,9 +1504,16 @@
     document.getElementById('tabTable').addEventListener('click', () => setView('table'));
     document.getElementById('btnExport').addEventListener('click', () => alert('原型占位：导出'));
 
-    // 全局筛选事件
-    $('campusSelect')?.addEventListener('change', () => { updateDeptOptions(); refreshAll(); renderContouringDetailTable(); });
-    $('deptSelect')?.addEventListener('change', () => { refreshAll(); renderContouringDetailTable(); });
+    // 数据图筛选事件
+    $('campusSelect')?.addEventListener('change', () => { updateDeptOptionsFor('campusSelect', 'deptSelect'); refreshChart(); renderContouringDetailTable(); });
+    $('deptSelect')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
+    $('doctorGroup')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
+    $('doctorSelect')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
+
+    // 汇总表筛选事件
+    $('campusSelectTable')?.addEventListener('change', () => { updateDeptOptionsFor('campusSelectTable', 'deptSelectTable'); refreshSummary(); });
+    $('deptSelectTable')?.addEventListener('change', () => { refreshSummary(); });
+    $('summaryGroupByTable')?.addEventListener('change', () => { refreshSummary(); });
 
     // 三个面板按钮事件（设置/明细/下载）
     contouringPanelKeys.forEach((k) => {
