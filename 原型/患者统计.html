@@ -505,6 +505,12 @@
       <div class="filters">
         <span class="filter-label">患者人数</span>
         <span style="font-size: 14px; font-weight: 600; color:#333;">30</span>
+        <select class="select" id="campusSelect" title="院区">
+          <option value="all" selected>全部院区</option>
+        </select>
+        <select class="select" id="deptSelect" title="科室">
+          <option value="all" selected>全部科室</option>
+        </select>
         <select class="select" id="patientGroup">
           <option value="all" selected>全部患者</option>
         </select>
@@ -690,6 +696,59 @@
   </div>
 
   <script>
+    // -----------------------------
+    // 顶部筛选：院区 / 科室（UI骨架）
+    // 默认：全部院区 / 全部科室
+    // -----------------------------
+    const campusOptions = [
+      { id: 'all', name: '全部院区' },
+      { id: 'c1', name: '本部院区' },
+      { id: 'c2', name: '东院区' }
+    ];
+    const deptOptions = [
+      { id: 'all', campusId: 'all', name: '全部科室' },
+      { id: 'd1', campusId: 'c1', name: '放疗科' },
+      { id: 'd2', campusId: 'c1', name: '肿瘤科' },
+      { id: 'd3', campusId: 'c2', name: '放疗科' },
+      { id: 'd4', campusId: 'c2', name: '介入科' }
+    ];
+
+    function $(id){ return document.getElementById(id); }
+
+    function updateDeptOptions(){
+      const campusId = $('campusSelect')?.value || 'all';
+      const deptSelect = $('deptSelect');
+      if (!deptSelect) return;
+      const prev = deptSelect.value || 'all';
+
+      const list = deptOptions.filter(d => d.id === 'all' || campusId === 'all' || d.campusId === campusId);
+      deptSelect.innerHTML = '';
+      list.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        deptSelect.appendChild(opt);
+      });
+
+      const stillExists = Array.from(deptSelect.options).some(o => o.value === prev);
+      deptSelect.value = stillExists ? prev : 'all';
+    }
+
+    function initCampusDeptFilters(){
+      const campusSelect = $('campusSelect');
+      if (campusSelect) {
+        campusSelect.innerHTML = '';
+        campusOptions.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          campusSelect.appendChild(opt);
+        });
+        campusSelect.value = 'all';
+      }
+      updateDeptOptions();
+    }
+
     // 病种统计数据（支持多种分类方式）
     const diseaseData = [
       { 
@@ -883,6 +942,7 @@
     }
 
     // 初始化
+    initCampusDeptFilters();
     updateChartLegend(); // 初始化图例
     renderBarChart(); // 渲染柱状图
     renderLegend('ageLegend', ageData);
@@ -937,6 +997,7 @@
     document.getElementById('btnDetail').addEventListener('click', () => alert('原型占位：明细'));
     document.getElementById('btnDownload').addEventListener('click', () => alert('原型占位：下载'));
     document.getElementById('dateRange').addEventListener('click', () => alert('原型占位：日期选择器'));
+    $('campusSelect')?.addEventListener('change', () => { updateDeptOptions(); /* 原型占位：这里可触发数据刷新 */ });
   </script>
 </body>
 </html>

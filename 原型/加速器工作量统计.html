@@ -539,9 +539,16 @@
             <option>加速器B</option>
           </select>
         </span>
+        <span id="filterCampus">
+          <select class="select" id="campusSelect" title="院区">
+            <option value="all" selected>全部院区</option>
+            <option value="c1">本部院区</option>
+            <option value="c2">东院区</option>
+          </select>
+        </span>
         <span id="filterDept">
           <select class="select" id="deptSelect">
-            <option selected>请选择科室</option>
+            <option value="all" selected>全部科室</option>
             <option>放疗科</option>
             <option>肿瘤科</option>
           </select>
@@ -1151,6 +1158,7 @@
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
       const filterMachine = document.getElementById('filterMachine');
+      const filterCampus = document.getElementById('filterCampus');
       const filterDept = document.getElementById('filterDept');
       const filterGranularity = document.getElementById('filterGranularity');
 
@@ -1162,7 +1170,9 @@
 
       // 汇总表截图中仅保留日期范围
       filterMachine?.classList.toggle('hidden', !isChart);
-      filterDept?.classList.toggle('hidden', !isChart);
+      // 本次调整：汇总表查询条件需要“院区/科室”，两视图均显示
+      filterCampus?.classList.toggle('hidden', false);
+      filterDept?.classList.toggle('hidden', false);
       filterGranularity?.classList.toggle('hidden', !isChart);
     }
 

@@ -461,6 +461,14 @@
         </div>
       </div>
       <div class="filters">
+        <span id="filterCampusDept">
+          <select class="select" id="campusSelect" title="院区">
+            <option value="all" selected>全部院区</option>
+          </select>
+          <select class="select" id="deptSelect" title="科室">
+            <option value="all" selected>全部科室</option>
+          </select>
+        </span>
         <span id="filterRoom">
           <select class="select" id="roomSelect">
             <option selected>定位室</option>
@@ -619,6 +627,59 @@
 
   <script>
     const months = ['2025-07','2025-08','2025-09','2025-10','2025-11','2025-12','2026-01'];
+
+    // -----------------------------
+    // 顶部筛选：院区 / 科室（两视图共用）
+    // 默认：全部院区 / 全部科室
+    // -----------------------------
+    const campusOptions = [
+      { id: 'all', name: '全部院区' },
+      { id: 'c1', name: '本部院区' },
+      { id: 'c2', name: '东院区' }
+    ];
+    const deptOptions = [
+      { id: 'all', campusId: 'all', name: '全部科室' },
+      { id: 'd1', campusId: 'c1', name: '放疗科' },
+      { id: 'd2', campusId: 'c1', name: '肿瘤科' },
+      { id: 'd3', campusId: 'c2', name: '放疗科' },
+      { id: 'd4', campusId: 'c2', name: '介入科' }
+    ];
+
+    function $(id){ return document.getElementById(id); }
+
+    function updateDeptOptions(){
+      const campusId = $('campusSelect')?.value || 'all';
+      const deptSelect = $('deptSelect');
+      if (!deptSelect) return;
+      const prev = deptSelect.value || 'all';
+
+      const list = deptOptions.filter(d => d.id === 'all' || campusId === 'all' || d.campusId === campusId);
+      deptSelect.innerHTML = '';
+      list.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.textContent = d.name;
+        deptSelect.appendChild(opt);
+      });
+
+      const stillExists = Array.from(deptSelect.options).some(o => o.value === prev);
+      deptSelect.value = stillExists ? prev : 'all';
+    }
+
+    function initCampusDeptFilters(){
+      const campusSelect = $('campusSelect');
+      if (campusSelect) {
+        campusSelect.innerHTML = '';
+        campusOptions.forEach(c => {
+          const opt = document.createElement('option');
+          opt.value = c.id;
+          opt.textContent = c.name;
+          campusSelect.appendChild(opt);
+        });
+        campusSelect.value = 'all';
+      }
+      updateDeptOptions();
+    }
 
     function setGranularity(type){
       const btnDay = document.getElementById('btnDay');
@@ -816,6 +877,7 @@
       const table = document.getElementById('viewTable');
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
+      const filterCampusDept = document.getElementById('filterCampusDept');
       const filterRoom = document.getElementById('filterRoom');
       const filterGranularity = document.getElementById('filterGranularity');
 
@@ -825,10 +887,14 @@
       tabChart.classList.toggle('active', isChart);
       tabTable.classList.toggle('active', !isChart);
 
-      // 汇总表截图中仅保留日期范围
+      // 汇总表截图中仅保留日期范围（本次新增：院区/科室两视图均显示）
+      filterCampusDept?.classList.toggle('hidden', false);
       filterRoom?.classList.toggle('hidden', !isChart);
       filterGranularity?.classList.toggle('hidden', !isChart);
     }
+
+    initCampusDeptFilters();
+    $('campusSelect')?.addEventListener('change', () => { updateDeptOptions(); /* 原型占位：触发刷新 */ });
 
     setView('chart');
     document.getElementById('tabChart').addEventListener('click', () => setView('chart'));
