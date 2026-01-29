@@ -176,12 +176,14 @@
       color:#333;
     }
 
-    /* 数据图视图：2x2图表网格 */
+    /* 数据图视图：2x2图表网格，四个容器固定宽度占满页面 */
     .chart-grid{
-      display:grid;
+      display: grid;
       grid-template-columns: repeat(2, 1fr);
       gap: 10px;
       padding: 10px;
+      width: 100%;
+      min-width: 0;
     }
 
     .chart-module{
@@ -189,15 +191,18 @@
       border: 1px solid var(--border);
       border-radius: 8px;
       padding: 12px;
-      display:flex;
-      flex-direction:column;
+      display: flex;
+      flex-direction: column;
       gap: 10px;
       min-height: 300px;
+      min-width: 0;
+      overflow: hidden;
     }
     .chart-module-hd{
       display:flex;
       align-items:center;
       justify-content:space-between;
+      flex-shrink: 0;
     }
     .chart-module-title{
       font-weight: 700;
@@ -210,13 +215,17 @@
     }
     .chart-module-body{
       flex: 1;
-      display:flex;
-      flex-direction:column;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
       gap: 10px;
+      overflow-x: auto;
+      overflow-y: hidden;
     }
     .bar-chart-area{
-      flex: 1;
+      flex: 1 1 auto;
       min-height: 150px;
+      min-width: min-content;
       background:#fafafa;
       border-radius: 6px;
       display:flex;
@@ -228,21 +237,48 @@
       padding: 20px 10px 40px 50px;
     }
     .bar-chart-container{
-      flex: 1;
+      flex: 0 0 auto;
+      min-width: min-content;
       display:flex;
       align-items:flex-end;
-      justify-content:space-around;
+      justify-content:flex-start;
       gap: 8px;
       position: relative;
       height: 100%;
+    }
+    /* 默认 8 天：柱状图占满容器 */
+    .bar-chart-container.fill-width{
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      justify-content: space-around;
+    }
+    .bar-chart-container.fill-width .bar-group{
+      flex: 1;
+      max-width: none;
+      min-width: 0;
+      width: auto;
+    }
+    /* 超过 8 天：固定柱宽，容器横向滚动 */
+    .bar-chart-container.scroll-width{
+      flex: 0 0 auto;
+      min-width: min-content;
+    }
+    .bar-chart-container.scroll-width .bar-group{
+      flex: 0 0 32px;
+      width: 32px;
+      min-width: 32px;
+      max-width: 80px;
     }
     .bar-group{
       display:flex;
       flex-direction:column;
       align-items:center;
       gap: 4px;
-      flex: 1;
+      flex: 0 0 auto;
+      width: 32px;
       max-width: 80px;
+      min-width: 28px;
     }
     .bar-wrapper{
       width: 100%;
@@ -298,7 +334,8 @@
       text-align:right;
     }
     .chart-table{
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
       border-collapse: separate;
       border-spacing: 0;
       font-size: 12px;
@@ -609,50 +646,30 @@
         </div>
       </div>
       <div class="filters">
-        <!-- 数据图查询条件：保持原样（含第4个下拉） -->
-        <div id="filtersChart" class="filters-group">
-          <select class="select" id="campusSelect" title="院区">
-            <option value="all" selected>全部院区</option>
-          </select>
-          <select class="select" id="deptSelect" title="科室">
-            <option value="all" selected>全部科室</option>
-          </select>
-          <select class="select" id="doctorGroup">
-            <option value="all" selected>按主管医生/组</option>
-          </select>
-          <select class="select" id="doctorSelect">
-            <option value="wang" selected>王医生组</option>
-          </select>
-          <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
-          <div class="radio-group">
-            <label class="radio">
-              <input type="radio" name="timeGranularity" value="day" />
-              <span>按日</span>
-            </label>
-            <label class="radio">
-              <input type="radio" name="timeGranularity" value="month" checked />
-              <span>按月</span>
-            </label>
-          </div>
+        <!-- 数据图：模式 + 联动筛选值；汇总表：仅模式。第二个下拉仅在数据图页显示 -->
+        <select class="select" id="filterMode" title="筛选模式">
+          <option value="attending" selected>按主管医生</option>
+          <option value="primary">按主诊医生</option>
+          <option value="group">按医生组</option>
+          <option value="dept">按科室</option>
+          <option value="campus">按院区</option>
+        </select>
+        <span id="filterValueWrap">
+          <select class="select" id="filterValue" title="筛选值"></select>
+        </span>
+        <input type="text" class="input" id="dateRange" placeholder="选择日期范围" title="日期范围" value="2025-12-20 ~ 2025-12-27" />
+        <span id="granularityWrap">
+        <div class="radio-group" role="group" aria-label="统计粒度">
+          <label class="radio">
+            <input type="radio" name="timeGranularity" value="day" id="granularityDay" checked>
+            <span>按日</span>
+          </label>
+          <label class="radio">
+            <input type="radio" name="timeGranularity" value="month" id="granularityMonth">
+            <span>按月</span>
+          </label>
         </div>
-
-        <!-- 汇总表查询条件（独立一套；按需求：删除“第4个下拉单选”后仅保留3个下拉） -->
-        <div id="filtersTable" class="filters-group hidden">
-          <select class="select" id="campusSelectTable" title="院区">
-            <option value="all" selected>全部院区</option>
-          </select>
-          <select class="select" id="deptSelectTable" title="科室">
-            <option value="all" selected>全部科室</option>
-          </select>
-          <!-- 替换为：按主管医生/按医生组/按主诊医生/按科室 -->
-          <select class="select" id="summaryGroupByTable" title="统计维度">
-            <option value="manager-doctor">按主管医生</option>
-            <option value="doctor-group">按医生组</option>
-            <option value="attending-doctor">按主诊医生</option>
-            <option value="dept" selected>按科室</option>
-          </select>
-          <input class="input" id="dateRangeTable" value="2025-07-01 至 2026-01-31" />
-        </div>
+        </span>
       </div>
     </div>
 
@@ -793,16 +810,16 @@
             </div>
           </div>
 
-          <!-- CT预约统计 -->
+          <!-- 靶区勾画统计 -->
           <div class="donut-card">
             <div class="donut-card-hd">
-              <div class="donut-title">CT预约统计</div>
+              <div class="donut-title">靶区勾画统计</div>
             </div>
             <div class="donut-body">
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total" id="totalCt">10</div>
+                    <div class="total" id="totalTargetContour">0</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -811,16 +828,16 @@
             </div>
           </div>
 
-          <!-- 勾画审核统计1 -->
+          <!-- 医师核准统计 -->
           <div class="donut-card">
             <div class="donut-card-hd">
-              <div class="donut-title">勾画审核统计</div>
+              <div class="donut-title">医师核准统计</div>
             </div>
             <div class="donut-body">
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total" id="totalContourA">1</div>
+                    <div class="total" id="totalDoctorApproval">0</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -829,7 +846,7 @@
             </div>
           </div>
 
-          <!-- 勾画审核统计2 -->
+          <!-- 勾画审核统计 -->
           <div class="donut-card">
             <div class="donut-card-hd">
               <div class="donut-title">勾画审核统计</div>
@@ -838,7 +855,7 @@
               <div class="donut">
                 <div class="donut-center">
                   <div>
-                    <div class="total" id="totalContourB">1</div>
+                    <div class="total" id="totalReview">0</div>
                     <div class="label">总数</div>
                   </div>
                 </div>
@@ -857,9 +874,10 @@
           <table>
             <thead>
               <tr>
-                <th style="width: 200px; text-align:left; padding-left:12px;">主管医生</th>
+                <th id="summaryTableFirstHeader" style="width: 200px; text-align:left; padding-left:12px;">主管医生</th>
                 <th>收治</th>
-                <th>CT预约</th>
+                <th>靶区勾画</th>
+                <th>医师核准</th>
                 <th>勾画审核</th>
               </tr>
             </thead>
@@ -957,22 +975,98 @@
     function $(id){ return document.getElementById(id); }
 
     // -----------------------------
-    // 两套查询条件：数据图 / 汇总表
+    // 查询条件：数据图用“模式+联动筛选值”，汇总表仅用“模式”（opts.forSummary 时 value 为空）
     // -----------------------------
-    function getChartFilters(){
+    const filterValueData = {
+      attending: ['王医生', '刘医生', '陈医生', '邓霞', '阿郎'],
+      primary: ['chhys', '测试主诊A', '测试主诊B', '王医生'],
+      group: ['王医生组', '刘医生组', '陈医生组', '测试医生组'],
+      dept: ['放疗科', '肿瘤科', '介入科', '核医学科'],
+      campus: ['本部院区', '东院区', '南院区']
+    };
+
+    function getActiveFilter(opts){
+      const granularityEl = document.querySelector('input[name="timeGranularity"]:checked');
+      const forSummary = opts && opts.forSummary;
       return {
-        campusId: $('campusSelect')?.value || 'all',
-        deptId: $('deptSelect')?.value || 'all',
-        doctorGroup: $('doctorGroup')?.value || 'all'
+        mode: $('filterMode')?.value || 'attending',
+        value: forSummary ? '' : ($('filterValue')?.value || ''),
+        dateRange: $('dateRange')?.value || '',
+        granularity: granularityEl ? granularityEl.value : 'month'
       };
     }
 
-    function getTableFilters(){
-      return {
-        campusId: $('campusSelectTable')?.value || 'all',
-        deptId: $('deptSelectTable')?.value || 'all',
-        groupBy: $('summaryGroupByTable')?.value || 'dept'
+    function updateFilterValueOptions(){
+      const mode = $('filterMode')?.value || 'attending';
+      const list = filterValueData[mode] || [];
+      const el = $('filterValue');
+      if (!el) return;
+      el.innerHTML = '';
+      list.forEach((name) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        el.appendChild(opt);
+      });
+      if (el.options.length > 0) el.selectedIndex = 0;
+    }
+
+    // 解析日期范围字符串，返回 { start: 'YYYY-MM', end: 'YYYY-MM' }
+    function parseDateRange(dateRangeStr){
+      if (!dateRangeStr || !String(dateRangeStr).trim()) return { start: null, end: null };
+      const parts = String(dateRangeStr).split('~').map(s => s.trim());
+      const startStr = parts[0] || '';
+      const endStr = parts[1] || parts[0] || '';
+      const start = startStr.length >= 7 ? startStr.substring(0, 7) : null;
+      const end = endStr.length >= 7 ? endStr.substring(0, 7) : null;
+      return { start, end };
+    }
+
+    // 解析日期范围为完整日期 YYYY-MM-DD（用于按日维度）
+    function parseDateRangeFull(dateRangeStr){
+      if (!dateRangeStr || !String(dateRangeStr).trim()) return { start: null, end: null };
+      const parts = String(dateRangeStr).split('~').map(s => s.trim());
+      const startStr = (parts[0] || '').trim();
+      const endStr = (parts[1] || parts[0] || '').trim();
+      const toDate = (s) => {
+        if (s.length >= 10) return s.substring(0, 10);
+        if (s.length >= 7) return s + '-01';
+        return null;
       };
+      return { start: toDate(startStr), end: toDate(endStr) };
+    }
+
+    // 生成范围内的日期列表（与查询条件默认日期范围一致），最多 31 天便于展示
+    function getDatesInRange(startDate, endDate){
+      if (!startDate || !endDate || startDate > endDate) return [];
+      const list = [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      const maxDays = 31;
+      for (let d = new Date(start), n = 0; d <= end && n < maxDays; d.setDate(d.getDate() + 1), n++) {
+        list.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'));
+      }
+      return list;
+    }
+
+    // 按日期范围过滤事件（事件需有 month: 'YYYY-MM'）
+    function applyDateRangeFilter(list, dateRangeStr){
+      const { start, end } = parseDateRange(dateRangeStr);
+      if (!start || !end) return list || [];
+      return (list || []).filter(e => {
+        const m = e.month || '';
+        return m >= start && m <= end;
+      });
+    }
+
+    // 按完整日期范围过滤（按日维度时用，事件用 date 或 month+'-01'）
+    function applyDateRangeFilterFull(list, dateRangeStr){
+      const { start, end } = parseDateRangeFull(dateRangeStr);
+      if (!start || !end) return list || [];
+      return (list || []).filter(e => {
+        const d = e.date || (e.month ? e.month + '-01' : '');
+        return d >= start && d <= end;
+      });
     }
 
     function updateDeptOptionsFor(campusSelectId, deptSelectId){
@@ -1025,66 +1119,97 @@
       return hit?.name || '未知科室';
     }
 
-    // type: admission | ct | contour
-    // menuValue 仅 contour 使用（对应面板“关联菜单”）
+    function getCampusNameById(campusId){
+      const hit = (campusOptions || []).find(c => c.id === campusId);
+      return hit?.name || '未知院区';
+    }
+
+    // type: admission | ct | contour；按日维度用 date（YYYY-MM-DD），缺省时用 month+'-01'
+    // 默认日期范围 2025-12-20～2025-12-31，虚拟数据覆盖该区间
     const mockEvents = [
-      // admission（收治）
-      { type:'admission', month:'2025-10', count:2, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
-      { type:'admission', month:'2025-12', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
-      { type:'admission', month:'2025-12', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
-      { type:'admission', month:'2025-11', count:1, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      // admission（收治）——2025-12-20～31
+      { type:'admission', month:'2025-12', date:'2025-12-20', count:3, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', date:'2025-12-21', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'admission', month:'2025-12', date:'2025-12-22', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', date:'2025-12-23', count:1, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'admission', month:'2025-12', date:'2025-12-24', count:2, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'admission', month:'2025-12', date:'2025-12-25', count:5, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', date:'2025-12-26', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'admission', month:'2025-12', date:'2025-12-27', count:3, doctor:'阿郎', doctorGroup:'王医生组', campusId:'c1', deptId:'d2' },
+      { type:'admission', month:'2025-12', date:'2025-12-28', count:1, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'admission', month:'2025-12', date:'2025-12-29', count:2, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'admission', month:'2025-12', date:'2025-12-30', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'admission', month:'2025-12', date:'2025-12-31', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
 
-      // ct（CT预约）——用于汇总表 donut/总表展示
-      { type:'ct', month:'2025-12', count:6, doctor:'阿郎', doctorGroup:'王医生组', campusId:'c1', deptId:'d2' },
-      { type:'ct', month:'2025-12', count:4, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      // ct（CT预约）——汇总表用
+      { type:'ct', month:'2025-12', date:'2025-12-22', count:3, doctor:'阿郎', doctorGroup:'王医生组', campusId:'c1', deptId:'d2' },
+      { type:'ct', month:'2025-12', date:'2025-12-25', count:5, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'ct', month:'2025-12', date:'2025-12-28', count:2, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
 
-      // contour（勾画/审核/计划评估）
-      { type:'contour', menuValue:'target-contouring', month:'2025-12', count:12, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
-      { type:'contour', menuValue:'target-contouring', month:'2025-10', count:8, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
-      { type:'contour', menuValue:'review', month:'2025-11', count:6, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
-      { type:'contour', menuValue:'plan-evaluate', month:'2025-08', count:3, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' }
+      // contour 靶区勾画——2025-12-20～31
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-20', count:6, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-21', count:4, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-22', count:8, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-23', count:3, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-24', count:5, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-25', count:7, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-26', count:4, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-28', count:6, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-30', count:5, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'target-contouring', month:'2025-12', date:'2025-12-31', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+
+      // contour 医师核准——2025-12-20～31
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-20', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-21', count:2, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-23', count:5, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-24', count:3, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-26', count:6, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-27', count:2, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-29', count:4, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'doctor-approve', month:'2025-12', date:'2025-12-31', count:3, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+
+      // contour 勾画审核——2025-12-20～31
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-20', count:3, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-22', count:7, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-23', count:4, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-24', count:2, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-25', count:5, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-27', count:6, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-28', count:3, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-30', count:4, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'contour', menuValue:'review', month:'2025-12', date:'2025-12-31', count:2, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+
+      // contour 计划评估——2025-12-20～27（第三个数据图面板）
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-20', count:2, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-21', count:3, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-22', count:5, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-23', count:2, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-24', count:4, doctor:'陈医生', doctorGroup:'陈医生组', campusId:'c2', deptId:'d4' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-25', count:6, doctor:'王医生', doctorGroup:'王医生组', campusId:'c1', deptId:'d1' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-26', count:3, doctor:'刘医生', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' },
+      { type:'contour', menuValue:'plan-evaluate', month:'2025-12', date:'2025-12-27', count:4, doctor:'邓霞', doctorGroup:'刘医生组', campusId:'c2', deptId:'d3' }
     ];
-    function initDoctorGroupFilterFor(selectId){
-      const el = $(selectId);
-      if (!el) return;
-      const prev = el.value || 'all';
-      const groups = Array.from(new Set((mockEvents || []).map(e => e.doctorGroup).filter(Boolean)));
-      el.innerHTML = '';
-
-      const allOpt = document.createElement('option');
-      allOpt.value = 'all';
-      allOpt.textContent = '全部医生组';
-      el.appendChild(allOpt);
-
-      groups.forEach(g => {
-        const opt = document.createElement('option');
-        opt.value = g;
-        opt.textContent = g;
-        el.appendChild(opt);
-      });
-
-      const stillExists = Array.from(el.options).some(o => o.value === prev);
-      el.value = stillExists ? prev : 'all';
-    }
-
-    function applyEventFilters(list, filters){
-      const { campusId, deptId, doctorGroup } = filters || { campusId:'all', deptId:'all', doctorGroup:'all' };
+    function applyEventFilters(list, filter){
+      const { mode, value } = filter || { mode: 'attending', value: '' };
       return (list || []).filter(e => {
-        const okCampus = campusId === 'all' ? true : e.campusId === campusId;
-        const okDept = deptId === 'all' ? true : e.deptId === deptId;
-        const okGroup = doctorGroup === 'all' ? true : e.doctorGroup === doctorGroup;
-        return okCampus && okDept && okGroup;
+        if (!value) return true;
+        if (mode === 'group') return (e.doctorGroup || '') === value;
+        if (mode === 'dept') return getDeptNameById(e.deptId) === value;
+        if (mode === 'campus') return getCampusNameById(e.campusId) === value;
+        // attending / primary：原型统一按 doctor 口径过滤
+        return (e.doctor || '') === value;
       });
     }
 
-    function applyDetailFilters(list, filters){
-      const { campusId, deptId, doctorGroup } = filters || { campusId:'all', deptId:'all', doctorGroup:'all' };
+    function applyDetailFilters(list, filter){
+      const { mode, value } = filter || { mode: 'attending', value: '' };
       return (list || []).filter(e => {
-        const okCampus = campusId === 'all' ? true : e.campusId === campusId;
-        const okDept = deptId === 'all' ? true : e.deptId === deptId;
-        // 明细数据字段是 group（与 doctorGroup 对齐）
-        const okGroup = doctorGroup === 'all' ? true : (e.group === doctorGroup);
-        return okCampus && okDept && okGroup;
+        if (!value) return true;
+        if (mode === 'group') return (e.group || '') === value;
+        if (mode === 'dept') return getDeptNameById(e.deptId) === value;
+        if (mode === 'campus') return getCampusNameById(e.campusId) === value;
+        // attending / primary：原型统一按 doctor 口径过滤
+        return (e.doctor || '') === value;
       });
     }
 
@@ -1095,6 +1220,17 @@
         map.set(e.month, (map.get(e.month) || 0) + (e.count || 0));
       });
       return months.map(m => ({ month: m, value: map.get(m) || 0 }));
+    }
+
+    // 按日聚合：事件用 date 或 month+'-01' 作为日期键，与查询条件日期范围一致
+    function sumByDay(list, dates){
+      const map = new Map();
+      dates.forEach(d => map.set(d, 0));
+      (list || []).forEach(e => {
+        const d = e.date || (e.month ? e.month + '-01' : '');
+        if (map.has(d)) map.set(d, (map.get(d) || 0) + (e.count || 0));
+      });
+      return dates.map(d => ({ month: d, value: map.get(d) || 0 }));
     }
 
     function groupByDoctor(list){
@@ -1110,50 +1246,38 @@
         .map((it, idx) => ({ name: it.name, count: it.count, pct: (it.count / total) * 100, dot: dotClassByIndex(idx) }));
     }
 
-    function groupKeyAndLabelBy(mode, e){
-      // 说明：原型数据只有 doctor / doctorGroup / deptId
-      // - 按主管医生、按主诊医生：先统一用 doctor 口径
-      // - 按医生组：用 doctorGroup
-      // - 按科室：用 deptId -> deptName
-      if (mode === 'doctor-group') {
-        const label = e?.doctorGroup || '未知医生组';
-        return { key: label, label };
-      }
-      if (mode === 'dept') {
-        const label = getDeptNameById(e?.deptId);
-        return { key: label, label };
-      }
-      // manager-doctor / attending-doctor / default
-      const label = e?.doctor || '未知';
-      return { key: label, label };
-    }
-
-    function groupLegend(list, mode){
+    function groupByCampus(list){
       const map = new Map();
       (list || []).forEach(e => {
-        const { key, label } = groupKeyAndLabelBy(mode, e);
-        map.set(key, { name: label, count: (map.get(key)?.count || 0) + (e.count || 0) });
+        const k = getCampusNameById(e.campusId) || '未知院区';
+        map.set(k, (map.get(k) || 0) + (e.count || 0));
       });
-      const arr = Array.from(map.values());
+      const arr = Array.from(map.entries()).map(([name, count]) => ({ name, count }));
       const total = arr.reduce((s, it) => s + it.count, 0) || 1;
       return arr
         .sort((a,b) => b.count - a.count)
         .map((it, idx) => ({ name: it.name, count: it.count, pct: (it.count / total) * 100, dot: dotClassByIndex(idx) }));
     }
 
-    function buildSummaryRows(listAdmission, listCt, listContour, mode){
+    function buildSummaryRows(listAdmission, listTargetContour, listDoctorApproval, listReview, groupBy){
+      // groupBy: 'doctor' | 'campus' —— 按主管医生或按院区聚合
+      const byCampus = groupBy === 'campus';
+      const getKey = byCampus ? (e) => getCampusNameById(e.campusId) || '未知院区' : (e) => e.doctor || '未知';
       const rows = new Map();
       function add(list, key){
         (list || []).forEach(e => {
-          const { key: groupKey, label } = groupKeyAndLabelBy(mode, e);
-          if (!rows.has(groupKey)) rows.set(groupKey, { name: label, init: label.slice(0,1), admission:0, ct:0, contouring:0 });
-          rows.get(groupKey)[key] += (e.count || 0);
+          const name = getKey(e);
+          if (!rows.has(name)) rows.set(name, { name, init: name.slice(0,1), admission:0, targetContouring:0, doctorApproval:0, review:0 });
+          rows.get(name)[key] += (e.count || 0);
         });
       }
       add(listAdmission, 'admission');
-      add(listCt, 'ct');
-      add(listContour, 'contouring');
-      return Array.from(rows.values()).sort((a,b) => (b.admission+b.ct+b.contouring) - (a.admission+a.ct+a.contouring));
+      add(listTargetContour, 'targetContouring');
+      add(listDoctorApproval, 'doctorApproval');
+      add(listReview, 'review');
+      return Array.from(rows.values()).sort((a,b) =>
+        (b.admission + b.targetContouring + b.doctorApproval + b.review) -
+        (a.admission + a.targetContouring + a.doctorApproval + a.review));
     }
 
     const contouringPanelKeys = ['A', 'B', 'C'];
@@ -1202,14 +1326,15 @@
             <span class="who"><span class="avatar">${row.init}</span><span title="${row.name}">${row.name}</span></span>
           </td>
           <td>${row.admission}</td>
-          <td>${row.ct}</td>
-          <td>${row.contouring}</td>
+          <td>${row.targetContouring}</td>
+          <td>${row.doctorApproval}</td>
+          <td>${row.review}</td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    // 渲染通用柱状图（单序列）
+    // 渲染通用柱状图（单序列）；≤8 天占满容器，>8 天横向滚动
     function renderSimpleBarChart(containerId, yAxisId, data) {
       const container = document.getElementById(containerId);
       const yAxis = document.getElementById(yAxisId);
@@ -1217,6 +1342,7 @@
       
       container.innerHTML = '';
       yAxis.innerHTML = '';
+      container.className = 'bar-chart-container ' + (data.length <= 8 ? 'fill-width' : 'scroll-width');
       
       const maxValue = Math.max(...data.map(d => d.value), 1);
       const barHeight = 120; // 柱子最大高度（px）
@@ -1252,10 +1378,10 @@
         
         barWrapper.appendChild(bar);
         
-        // 月份标签
+        // 标签：按月显示 "07"，按日显示 "07-01"
         const label = document.createElement('div');
         label.className = 'bar-label';
-        label.textContent = item.month.substring(5); // 只显示月份部分，如 "07"
+        label.textContent = item.month.substring(5); // 按月 "07"，按日 "07-01"
         label.title = item.month;
         
         barGroup.appendChild(barWrapper);
@@ -1264,23 +1390,14 @@
       });
     }
 
-    // 渲染面板表格（与柱状图同数据）
+    // 渲染面板表格（与柱状图同数据，列数随按日/按月动态）
     function renderContouringPanelTable(tbodyId, data, groupLabel = '王医生组') {
       const tbody = document.getElementById(tbodyId);
       if (!tbody) return;
       tbody.innerHTML = '';
-
+      const cells = (data || []).map(d => `<td>${d.value ?? 0}</td>`).join('');
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="col-name" style="padding-left:12px;">${groupLabel}</td>
-        <td>${data[0]?.value ?? 0}</td>
-        <td>${data[1]?.value ?? 0}</td>
-        <td>${data[2]?.value ?? 0}</td>
-        <td>${data[3]?.value ?? 0}</td>
-        <td>${data[4]?.value ?? 0}</td>
-        <td>${data[5]?.value ?? 0}</td>
-        <td>${data[6]?.value ?? 0}</td>
-      `;
+      row.innerHTML = `<td class="col-name" style="padding-left:12px;">${groupLabel}</td>${cells}`;
       tbody.appendChild(row);
     }
 
@@ -1289,7 +1406,7 @@
       const tbody = document.getElementById('detailTableBody');
       if (!tbody) return;
       tbody.innerHTML = '';
-      const filtered = applyDetailFilters(contouringDetailData, getChartFilters());
+      const filtered = applyDetailFilters(contouringDetailData, getActiveFilter());
       filtered.forEach(item => {
         const row = document.createElement('tr');
         row.innerHTML = `
@@ -1349,7 +1466,7 @@
       openModal('settingModal');
     }
 
-    // 渲染收治统计柱状图
+    // 渲染收治统计柱状图；≤8 天占满容器，>8 天横向滚动
     function renderAdmissionBarChart() {
       const container = document.getElementById('admissionBarChart');
       const yAxis = document.getElementById('admissionYAxis');
@@ -1359,6 +1476,7 @@
       yAxis.innerHTML = '';
 
       const series = window.__admissionSeries || months.map(m => ({ month:m, value:0 }));
+      container.className = 'bar-chart-container ' + (series.length <= 8 ? 'fill-width' : 'scroll-width');
       const maxValue = Math.max(...series.map(d => d.value), 1);
       const barHeight = 120;
       const ticks = maxValue <= 1 ? [1,0] : [maxValue, Math.floor(maxValue/2), 0];
@@ -1393,7 +1511,7 @@
         // 月份标签
         const label = document.createElement('div');
         label.className = 'bar-label';
-        label.textContent = item.month.substring(5); // 只显示月份部分，如 "07"
+        label.textContent = item.month.substring(5); // 按月 "07"，按日 "07-01"
         label.title = item.month;
         
         barGroup.appendChild(barWrapper);
@@ -1405,8 +1523,8 @@
     function renderAdmissionTable(){
       const tbody = $('admissionTableBody');
       if (!tbody) return;
-      const groupLabel = $('doctorSelect')?.options[$('doctorSelect').selectedIndex]?.text || '王医生组';
       const series = window.__admissionSeries || months.map(m => ({ month:m, value:0 }));
+      const groupLabel = $('filterValue')?.options[$('filterValue').selectedIndex]?.text || '全部';
       const row = document.createElement('tr');
       row.innerHTML = `
         <td class="col-name" style="padding-left:12px;">${groupLabel}</td>
@@ -1416,64 +1534,108 @@
       tbody.appendChild(row);
     }
 
-    function refreshChart(){
-      const filtered = applyEventFilters(mockEvents, getChartFilters());
-      const admissions = filtered.filter(e => e.type === 'admission');
-      const cts = filtered.filter(e => e.type === 'ct');
-      const contours = filtered.filter(e => e.type === 'contour');
-      const groupLabel = $('doctorSelect')?.options[$('doctorSelect').selectedIndex]?.text || '王医生组';
-
-      // 图表：收治
-      window.__admissionSeries = sumByMonth(admissions);
-      renderAdmissionBarChart();
-      renderAdmissionTable();
-
-      // 三个面板：按 menuValue 聚合
-      contouringPanelKeys.forEach((k) => {
-        const menuValue = contouringPanelConfig[k]?.menuValue;
-        const series = sumByMonth(contours.filter(e => e.menuValue === menuValue));
-        renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, series);
-        renderContouringPanelTable(`contouringTableBody${k}`, series, groupLabel);
+    // 更新数据图四个统计表格的表头（与当前维度一致：按日显示日期，按月显示月份）
+    function updateChartTableHeaders(series){
+      const labels = (series || []).map(d => d.month.substring(5));
+      const theadSelectors = ['admissionTableBody', 'contouringTableBodyA', 'contouringTableBodyB', 'contouringTableBodyC'];
+      theadSelectors.forEach(tbodyId => {
+        const tbody = $(tbodyId);
+        if (!tbody) return;
+        const tr = tbody.closest('table')?.querySelector('thead tr');
+        if (!tr) return;
+        tr.innerHTML = '<th class="col-name" style="text-align:left; padding-left:12px;"></th>' + labels.map(l => `<th>${l}</th>`).join('');
       });
     }
 
+    function refreshChart(){
+      const filter = getActiveFilter();
+      const isDay = filter.granularity === 'day';
+      let filtered;
+      let admissionSeries;
+      let dateList;
+
+      if (isDay) {
+        const { start, end } = parseDateRangeFull(filter.dateRange);
+        dateList = getDatesInRange(start, end);
+        filtered = applyEventFilters(applyDateRangeFilterFull(mockEvents, filter.dateRange), filter);
+        const admissions = filtered.filter(e => e.type === 'admission');
+        const contours = filtered.filter(e => e.type === 'contour');
+        admissionSeries = sumByDay(admissions, dateList);
+        window.__admissionSeries = admissionSeries;
+        updateChartTableHeaders(admissionSeries);
+        renderAdmissionBarChart();
+        renderAdmissionTable();
+        const groupLabel = $('filterValue')?.options[$('filterValue').selectedIndex]?.text || '全部';
+        contouringPanelKeys.forEach((k) => {
+          const menuValue = contouringPanelConfig[k]?.menuValue;
+          const series = sumByDay(contours.filter(e => e.menuValue === menuValue), dateList);
+          renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, series);
+          renderContouringPanelTable(`contouringTableBody${k}`, series, groupLabel);
+        });
+      } else {
+        filtered = applyEventFilters(applyDateRangeFilter(mockEvents, filter.dateRange), filter);
+        const admissions = filtered.filter(e => e.type === 'admission');
+        const contours = filtered.filter(e => e.type === 'contour');
+        admissionSeries = sumByMonth(admissions);
+        window.__admissionSeries = admissionSeries;
+        updateChartTableHeaders(admissionSeries);
+        renderAdmissionBarChart();
+        renderAdmissionTable();
+        const groupLabel = $('filterValue')?.options[$('filterValue').selectedIndex]?.text || '全部';
+        contouringPanelKeys.forEach((k) => {
+          const menuValue = contouringPanelConfig[k]?.menuValue;
+          const series = sumByMonth(contours.filter(e => e.menuValue === menuValue));
+          renderSimpleBarChart(`contouringBarChart${k}`, `contouringYAxis${k}`, series);
+          renderContouringPanelTable(`contouringTableBody${k}`, series, groupLabel);
+        });
+      }
+    }
+
     function refreshSummary(){
-      const { campusId, deptId, groupBy } = getTableFilters();
-      // 汇总表不再按“具体医生组”过滤，只按院区/科室过滤
-      const filtered = applyEventFilters(mockEvents, { campusId, deptId, doctorGroup: 'all' });
+      const filter = getActiveFilter({ forSummary: true });
+      let byDate = applyDateRangeFilter(mockEvents, filter.dateRange);
+      const filtered = applyEventFilters(byDate, filter);
       const admissions = filtered.filter(e => e.type === 'admission');
-      const cts = filtered.filter(e => e.type === 'ct');
       const contours = filtered.filter(e => e.type === 'contour');
+      const targetContours = contours.filter(e => e.menuValue === 'target-contouring');
+      const doctorApprovals = contours.filter(e => e.menuValue === 'doctor-approve');
+      const reviews = contours.filter(e => e.menuValue === 'review');
 
-      const admissionLegend = groupLegend(admissions, groupBy);
-      const ctLegend = groupLegend(cts, groupBy);
-      const contourLegend = groupLegend(contours, groupBy);
+      const byCampus = filter.mode === 'campus';
+      const groupBy = byCampus ? 'campus' : 'doctor';
+      const groupFn = byCampus ? groupByCampus : groupByDoctor;
+
+      const admissionLegend = groupFn(admissions);
+      const targetContourLegend = groupFn(targetContours);
+      const doctorApprovalLegend = groupFn(doctorApprovals);
+      const reviewLegend = groupFn(reviews);
       renderLegend('legend1', admissionLegend);
-      renderLegend('legend2', ctLegend);
-      renderLegend('legend3', contourLegend);
-      renderLegend('legend4', contourLegend);
+      renderLegend('legend2', targetContourLegend);
+      renderLegend('legend3', doctorApprovalLegend);
+      renderLegend('legend4', reviewLegend);
 
-      // 更新 donut 中心总数（否则看起来像“汇总表不参与筛选”）
       const totalAdmission = admissions.reduce((s, e) => s + (e.count || 0), 0);
-      const totalCt = cts.reduce((s, e) => s + (e.count || 0), 0);
-      const totalContour = contours.reduce((s, e) => s + (e.count || 0), 0);
+      const totalTargetContour = targetContours.reduce((s, e) => s + (e.count || 0), 0);
+      const totalDoctorApproval = doctorApprovals.reduce((s, e) => s + (e.count || 0), 0);
+      const totalReview = reviews.reduce((s, e) => s + (e.count || 0), 0);
       if ($('totalAdmission')) $('totalAdmission').textContent = String(totalAdmission);
-      if ($('totalCt')) $('totalCt').textContent = String(totalCt);
-      if ($('totalContourA')) $('totalContourA').textContent = String(totalContour);
-      if ($('totalContourB')) $('totalContourB').textContent = String(totalContour);
+      if ($('totalTargetContour')) $('totalTargetContour').textContent = String(totalTargetContour);
+      if ($('totalDoctorApproval')) $('totalDoctorApproval').textContent = String(totalDoctorApproval);
+      if ($('totalReview')) $('totalReview').textContent = String(totalReview);
 
-      window.__summaryRows = buildSummaryRows(admissions, cts, contours, groupBy);
+      window.__summaryRows = buildSummaryRows(admissions, targetContours, doctorApprovals, reviews, groupBy);
+      if ($('summaryTableFirstHeader')) $('summaryTableFirstHeader').textContent = byCampus ? '院区' : '主管医生';
       renderTable();
     }
 
-    // Tab切换逻辑
+    // Tab切换逻辑：数据图显示第二个联动下拉和按日/按月；汇总表不显示
     function setView(view) {
       const chart = document.getElementById('viewChart');
       const table = document.getElementById('viewTable');
       const tabChart = document.getElementById('tabChart');
       const tabTable = document.getElementById('tabTable');
-      const filtersChart = document.getElementById('filtersChart');
-      const filtersTable = document.getElementById('filtersTable');
+      const filterValueWrap = document.getElementById('filterValueWrap');
+      const granularityWrap = document.getElementById('granularityWrap');
 
       const isChart = view === 'chart';
       chart.classList.toggle('hidden', !isChart);
@@ -1481,16 +1643,22 @@
       tabChart.classList.toggle('active', isChart);
       tabTable.classList.toggle('active', !isChart);
 
-      // 参考“治疗技师工作量统计”：两套查询条件随 Tab 切换
-      filtersChart?.classList.toggle('hidden', !isChart);
-      filtersTable?.classList.toggle('hidden', isChart);
+      if (filterValueWrap) filterValueWrap.classList.toggle('hidden', !isChart);
+      if (granularityWrap) granularityWrap.classList.toggle('hidden', !isChart);
+      if (isChart) {
+        updateFilterValueOptions();
+        refreshChart();
+      } else {
+        // 汇总表页面默认查询条件：按主管医生
+        const modeEl = $('filterMode');
+        if (modeEl) modeEl.value = 'attending';
+      }
+      refreshSummary();
     }
 
-    // 初始化
+    // 初始化（数据图默认显示，第二个下拉可见并联动）
     contouringPanelKeys.forEach((k) => updateContouringPanelTitle(k));
-    initCampusDeptFiltersFor('campusSelect', 'deptSelect');
-    initCampusDeptFiltersFor('campusSelectTable', 'deptSelectTable');
-    initDoctorGroupFilterFor('doctorGroup');
+    updateFilterValueOptions();
 
     refreshChart();
     refreshSummary();
@@ -1504,16 +1672,35 @@
     document.getElementById('tabTable').addEventListener('click', () => setView('table'));
     document.getElementById('btnExport').addEventListener('click', () => alert('原型占位：导出'));
 
-    // 数据图筛选事件
-    $('campusSelect')?.addEventListener('change', () => { updateDeptOptionsFor('campusSelect', 'deptSelect'); refreshChart(); renderContouringDetailTable(); });
-    $('deptSelect')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
-    $('doctorGroup')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
-    $('doctorSelect')?.addEventListener('change', () => { refreshChart(); renderContouringDetailTable(); });
-
-    // 汇总表筛选事件
-    $('campusSelectTable')?.addEventListener('change', () => { updateDeptOptionsFor('campusSelectTable', 'deptSelectTable'); refreshSummary(); });
-    $('deptSelectTable')?.addEventListener('change', () => { refreshSummary(); });
-    $('summaryGroupByTable')?.addEventListener('change', () => { refreshSummary(); });
+    // 查询条件联动（日期范围、按日/按月、两级下拉）
+    $('dateRange')?.addEventListener('change', () => {
+      refreshChart();
+      refreshSummary();
+      renderContouringDetailTable();
+    });
+    $('dateRange')?.addEventListener('input', () => {
+      refreshChart();
+      refreshSummary();
+      renderContouringDetailTable();
+    });
+    document.querySelectorAll('input[name="timeGranularity"]').forEach((radio) => {
+      radio.addEventListener('change', () => {
+        refreshChart();
+        refreshSummary();
+        renderContouringDetailTable();
+      });
+    });
+    $('filterMode')?.addEventListener('change', () => {
+      updateFilterValueOptions();
+      refreshChart();
+      refreshSummary();
+      renderContouringDetailTable();
+    });
+    $('filterValue')?.addEventListener('change', () => {
+      refreshChart();
+      refreshSummary();
+      renderContouringDetailTable();
+    });
 
     // 三个面板按钮事件（设置/明细/下载）
     contouringPanelKeys.forEach((k) => {

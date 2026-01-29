@@ -431,17 +431,17 @@
         </div>
       </div>
       <div class="filters">
-        <span id="filterCampusDept">
-          <select class="select" id="campusSelect" title="院区">
-            <option value="all" selected>全部院区</option>
-          </select>
-          <select class="select" id="deptSelect" title="科室">
-            <option value="all" selected>全部科室</option>
-          </select>
-        </span>
         <span id="filterTech">
           <select class="select" id="techSelect">
             <option value="chen" selected>陈山</option>
+          </select>
+        </span>
+        <span id="filterCampusDept">
+          <select class="select" id="campusSelect" title="院区">
+            <option value="" selected>筛选院区</option>
+          </select>
+          <select class="select" id="deptSelect" title="科室">
+            <option value="">筛选科室</option>
           </select>
         </span>
         <input class="input" id="dateRange" value="2025-07-01 至 2026-01-31" />
@@ -627,15 +627,13 @@
   <script>
     // -----------------------------
     // 顶部筛选：院区 / 科室（两视图共用）
-    // 默认：全部院区 / 全部科室
+    // 无“全部”选项，默认不选择，占位提示“筛选院区”“筛选科室”
     // -----------------------------
     const campusOptions = [
-      { id: 'all', name: '全部院区' },
       { id: 'c1', name: '本部院区' },
       { id: 'c2', name: '东院区' }
     ];
     const deptOptions = [
-      { id: 'all', campusId: 'all', name: '全部科室' },
       { id: 'd1', campusId: 'c1', name: '放疗科' },
       { id: 'd2', campusId: 'c1', name: '肿瘤科' },
       { id: 'd3', campusId: 'c2', name: '放疗科' },
@@ -645,13 +643,19 @@
     function $(id){ return document.getElementById(id); }
 
     function updateDeptOptions(){
-      const campusId = $('campusSelect')?.value || 'all';
+      const campusId = $('campusSelect')?.value || '';
       const deptSelect = $('deptSelect');
       if (!deptSelect) return;
-      const prev = deptSelect.value || 'all';
+      const prev = deptSelect.value || '';
 
-      const list = deptOptions.filter(d => d.id === 'all' || campusId === 'all' || d.campusId === campusId);
+      const list = !campusId
+        ? deptOptions.slice()
+        : deptOptions.filter(d => d.campusId === campusId);
       deptSelect.innerHTML = '';
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = '筛选科室';
+      deptSelect.appendChild(placeholder);
       list.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.id;
@@ -660,20 +664,24 @@
       });
 
       const stillExists = Array.from(deptSelect.options).some(o => o.value === prev);
-      deptSelect.value = stillExists ? prev : 'all';
+      deptSelect.value = stillExists ? prev : '';
     }
 
     function initCampusDeptFilters(){
       const campusSelect = $('campusSelect');
       if (campusSelect) {
         campusSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = '筛选院区';
+        campusSelect.appendChild(placeholder);
         campusOptions.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c.id;
           opt.textContent = c.name;
           campusSelect.appendChild(opt);
         });
-        campusSelect.value = 'all';
+        campusSelect.value = '';
       }
       updateDeptOptions();
     }
