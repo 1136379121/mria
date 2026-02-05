@@ -102,6 +102,22 @@ ssh-keygen -t ed25519 -C "您的邮箱"
 ### Q: 如何忽略某些文件？
 A: 编辑项目根目录的 `.gitignore` 文件，添加要忽略的文件或目录。
 
+## 将原型发布为可访问页面（GitHub Pages）
+
+1. 打开仓库：**https://github.com/1136379121/mria**
+2. 点击 **Settings** → 左侧 **Pages**
+3. 在 **Build and deployment** 下：
+   - **Source** 选择 **Deploy from a branch**
+   - **Branch** 选择 **main**，文件夹选择 **/ (root)**
+4. 点击 **Save**，等待约 1 分钟部署完成。
+
+**可访问链接：**
+
+- 首页（自动跳转到原型框架）：**https://1136379121.github.io/mria/**
+- 直接打开页面框架：**https://1136379121.github.io/mria/原型/页面框架.html**
+
+根目录的 `index.html` 会自动跳转到「原型/页面框架.html」，用上面第一个链接即可进入原型。
+
 ## 快速命令总结
 
 ```bash
