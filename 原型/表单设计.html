@@ -471,6 +471,90 @@
       line-height:1.6;
     }
 
+    /* 定位预约专用属性面板 */
+    .prop-appt-positioning .prop-appt-title {
+      font-size: 14px;
+      color: #6b7a8c;
+      margin-bottom: 12px;
+    }
+    .prop-appt-positioning .kv { align-items: center; }
+    .prop-appt-positioning .k .muted { color: #999; font-weight: normal; }
+    .prop-appt-positioning .help-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #faad14;
+      color: #fff;
+      font-size: 12px;
+      cursor: help;
+    }
+    .prop-appt-positioning .checkbox-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .prop-appt-positioning .checkbox-wrap input { width: auto; height: auto; }
+    .prop-appt-positioning .radio-wrap {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+    .prop-appt-positioning .radio-wrap:last-child { margin-bottom: 0; }
+    .prop-appt-positioning .radio-wrap input { width: auto; height: auto; margin-top: 2px; }
+    .prop-width-row {
+      display: flex !important;
+      align-items: center;
+      gap: 8px;
+    }
+    .prop-width-row input[type="range"] {
+      flex: 1;
+      min-width: 0;
+      height: 6px;
+      -webkit-appearance: none;
+      background: #e8e8e8;
+      border-radius: 3px;
+    }
+    .prop-width-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--primary);
+      cursor: pointer;
+    }
+    .prop-width-row .width-num {
+      width: 56px !important;
+      flex: 0 0 56px;
+      text-align: center;
+    }
+    .prop-appt-positioning .link-view {
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .prop-appt-positioning .link-view:hover { text-decoration: underline; }
+    .prop-appt-positioning .btn-delete {
+      margin-top: 16px;
+      width: 100%;
+      height: 36px;
+      border: 1px solid #ff4d4f;
+      background: #fff;
+      color: #ff4d4f;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .prop-appt-positioning .btn-delete:hover {
+      background: #fff1f0;
+    }
+
     /* 画布旁“应用态浮窗”（仅用于开发/测试对比） */
     .runtime-popover{
       position: fixed;
@@ -671,6 +755,7 @@
             <div class="pill" data-insert="approver">审批物理师/组</div>
             <div class="pill disabled" title="内置控件（演示禁用）">定位机器</div>
             <div class="pill" data-insert="machine">治疗机器</div>
+            <div class="pill" data-insert="appt-positioning">定位预约</div>
           </div>
           <div class="hint">原型说明：支持“拖拽添加（简化版）”。将控件拖入画布底部“新增控件”区域后，点击该控件可在右侧查看“设计态/应用态”预览。</div>
         </div>
@@ -785,7 +870,6 @@
       <div class="panel right">
         <div class="prop-hd">
           <strong id="propTitle">属性设置</strong>
-          <button class="btn" id="btnResetProp">清除选择</button>
         </div>
         <div class="prop-body">
           <div class="prop-empty" id="propEmpty">
@@ -811,6 +895,40 @@
 
             <div class="k" id="kPh">占位提示</div>
             <div class="v" id="vPh"><input id="pPh" /></div>
+          </div>
+
+          <div class="prop-appt-positioning" id="propApptPositioning" style="display:none;">
+            <div class="prop-appt-title">定位预约</div>
+            <div class="kv">
+              <div class="k">标题 <span class="muted">(最多50字)</span></div>
+              <div class="v"><input id="pApptTitle" maxlength="50" placeholder="定位预约" /></div>
+              <div class="k">校验</div>
+              <div class="v">
+                <label class="checkbox-wrap"><input type="checkbox" id="pApptRequired" /> 设为必填</label>
+              </div>
+              <div class="k">是否可提前预约全部项目</div>
+              <div class="v prop-appt-book-all">
+                <label class="radio-wrap"><input type="radio" id="pApptBookAllNo" name="pApptBookAll" value="false" checked /> 否（只能提前预约该环节的下一个项目）</label>
+                <label class="radio-wrap"><input type="radio" id="pApptBookAllYes" name="pApptBookAll" value="true" /> 是（允许预约后续所有项目）</label>
+              </div>
+              <div class="k">打印字号 <span class="help-icon" title="选择打印时的字号">?</span></div>
+              <div class="v">
+                <select id="pApptPrintSize">
+                  <option value="">请选择</option>
+                  <option value="12">12px</option>
+                  <option value="14">14px</option>
+                  <option value="16">16px</option>
+                </select>
+              </div>
+              <div class="k">宽度</div>
+              <div class="v prop-width-row">
+                <input type="range" id="pApptWidthRange" min="1" max="24" value="24" />
+                <input type="number" id="pApptWidth" min="1" max="24" value="24" class="width-num" />
+              </div>
+              <div class="k">关联信息</div>
+              <div class="v"><a href="javascript:void(0)" id="pApptLink" class="link-view">查看</a></div>
+            </div>
+            <button type="button" class="btn-delete" id="btnApptDelete">删除组件</button>
           </div>
 
           <div class="prop-lock-tip" id="propLockTip" style="display:none;">
@@ -885,23 +1003,31 @@
       });
     });
 
-    // 属性面板：默认空白，选中组件后才展示
-    function setPropVisible(visible) {
+    // 属性面板：默认空白，选中组件后才展示；type 为 'appt-positioning' 时显示专用面板
+    function setPropVisible(visible, type) {
       const empty = document.getElementById('propEmpty');
       const kv = document.getElementById('propKv');
+      const appt = document.getElementById('propApptPositioning');
       if (visible) {
         empty.style.display = 'none';
-        kv.style.display = '';
+        if (type === 'appt-positioning') {
+          kv.style.display = 'none';
+          appt.style.display = '';
+        } else {
+          kv.style.display = '';
+          appt.style.display = 'none';
+        }
       } else {
         empty.style.display = '';
         kv.style.display = 'none';
+        appt.style.display = 'none';
       }
     }
 
     // 仅作为原型示例：部分控件支持“必填/占位”
     function supportsReqPh(type) {
       const t = String(type || '');
-      return ['input','textarea','number','select','multi','date','cascader'].includes(t);
+      return ['input','textarea','number','select','multi','date','cascader','appt-positioning'].includes(t);
     }
     function updateReqPhVisibility(type) {
       const show = supportsReqPh(type);
@@ -919,10 +1045,20 @@
       const title = document.getElementById('pTitle');
       const req = document.getElementById('pReq');
       const ph = document.getElementById('pPh');
-      // “组件名称”始终不可编辑；标题/必填/占位根据来源控制
       title.disabled = !editable;
       req.disabled = !editable;
       ph.disabled = !editable;
+      lockTip.style.display = editable ? 'none' : '';
+    }
+    function setApptPanelEditable(editable) {
+      const lockTip = document.getElementById('propLockTip');
+      ['pApptRequired','pApptPrintSize'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.disabled = !editable;
+      });
+      [document.getElementById('pApptTitle'), document.getElementById('pApptWidthRange'), document.getElementById('pApptWidth'), document.getElementById('pApptBookAllNo'), document.getElementById('pApptBookAllYes')].forEach(el => {
+        if (el) el.disabled = false;
+      });
       lockTip.style.display = editable ? 'none' : '';
     }
 
@@ -942,16 +1078,27 @@
         : '请输入';
 
       document.getElementById('propTitle').textContent = `属性设置：${componentName}`;
-      setPropVisible(true);
-      document.getElementById('pCompName').value = componentName;
-      document.getElementById('pTitle').value = title;
-      updateReqPhVisibility(type);
-      if (supportsReqPh(type)) {
-        document.getElementById('pReq').value = req ? 'true' : 'false';
-        document.getElementById('pPh').value = ph;
+      setPropVisible(true, type);
+      if (type === 'appt-positioning') {
+        document.getElementById('pApptTitle').value = '定位预约';
+        document.getElementById('pApptRequired').checked = false;
+        document.getElementById('pApptWidthRange').value = 24;
+        document.getElementById('pApptWidth').value = 24;
+        document.getElementById('pApptPrintSize').value = '';
+        document.getElementById('pApptBookAllNo').checked = true;
+        document.getElementById('pApptBookAllYes').checked = false;
+        setApptPanelEditable(false);
+      } else {
+        document.getElementById('pCompName').value = componentName;
+        document.getElementById('pTitle').value = title;
+        updateReqPhVisibility(type);
+        if (supportsReqPh(type)) {
+          document.getElementById('pReq').value = req ? 'true' : 'false';
+          document.getElementById('pPh').value = ph;
+        }
+        setPropEditable(false);
       }
       currentSelection = { source: 'library', type, componentName };
-      setPropEditable(false);
     }
 
     // left actions（点击=选择显示属性，拖拽=添加到画布）
@@ -999,7 +1146,7 @@
 
     function runtimeCtrlText(type, ph) {
       if (type === 'textarea') return ph || '请输入（多行）';
-      if (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date') return ph || '请选择';
+      if (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date' || type === 'appt-positioning') return ph || '请选择';
       if (type === 'number') return ph || '请输入数字';
       return ph || '请输入';
     }
@@ -1077,7 +1224,7 @@
       if (type === 'textarea') el.classList.add('big-field');
       el.innerHTML = `
         <div class="label">${required ? '<span class="req">*</span>' : ''}<span>${escapeHtml(label || '字段')}</span></div>
-        <div class="ctrl">${escapeHtml(placeholder || (type === 'select' || type === 'multi' || type === 'cascader' ? '请选择' : (type === 'number' ? '请输入数字' : '请输入')))}</div>
+        <div class="ctrl">${escapeHtml(placeholder || (type === 'select' || type === 'multi' || type === 'cascader' || type === 'appt-positioning' ? '请选择' : (type === 'number' ? '请输入数字' : '请输入')))}</div>
       `;
       return el;
     }
@@ -1091,7 +1238,7 @@
       const id = `custom_${Date.now()}_${++customIdSeed}`;
       const required = false;
       const placeholder =
-        (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date') ? '请选择'
+        (type === 'select' || type === 'multi' || type === 'cascader' || type === 'date' || type === 'appt-positioning') ? '请选择'
           : (type === 'number') ? '请输入数字'
           : (type === 'textarea') ? '请输入（多行）'
           : '请输入';
@@ -1132,7 +1279,6 @@
 
     function syncPropFromField(f) {
       const type = f.getAttribute('data-type') || 'input';
-      // 兼容旧数据：若未设置组件名称，则用当前标题补齐一次
       if (!f.getAttribute('data-component-name')) {
         const fallback = f.getAttribute('data-label') || '';
         if (fallback) f.setAttribute('data-component-name', fallback);
@@ -1143,62 +1289,80 @@
       const ph = f.getAttribute('data-placeholder') || '';
 
       document.getElementById('propTitle').textContent = `属性设置：${title || componentName || '组件'}`;
-      setPropVisible(true);
-      document.getElementById('pCompName').value = componentName || '';
-      document.getElementById('pTitle').value = title || componentName || '';
-      updateReqPhVisibility(type);
-      if (supportsReqPh(type)) {
-        document.getElementById('pReq').value = req ? 'true' : 'false';
-        document.getElementById('pPh').value = ph;
+      setPropVisible(true, type);
+      if (type === 'appt-positioning') {
+        document.getElementById('pApptTitle').value = title || '定位预约';
+        document.getElementById('pApptRequired').checked = req;
+        const w = parseInt(f.getAttribute('data-appt-width'), 10) || 24;
+        document.getElementById('pApptWidthRange').value = w;
+        document.getElementById('pApptWidth').value = w;
+        document.getElementById('pApptPrintSize').value = f.getAttribute('data-appt-print-size') || '';
+        const bookAll = (f.getAttribute('data-appt-book-all') || 'false') === 'true';
+        document.getElementById('pApptBookAllNo').checked = !bookAll;
+        document.getElementById('pApptBookAllYes').checked = bookAll;
+        setApptPanelEditable(true);
+      } else {
+        document.getElementById('pCompName').value = componentName || '';
+        document.getElementById('pTitle').value = title || componentName || '';
+        updateReqPhVisibility(type);
+        if (supportsReqPh(type)) {
+          document.getElementById('pReq').value = req ? 'true' : 'false';
+          document.getElementById('pPh').value = ph;
+        }
+        setPropEditable(true);
       }
-      // 若浮窗打开，则同步更新内容（用于对比展示）
-      if (rt.el.classList.contains('show')) {
-        openRuntimePopoverForField(f);
-      }
+      if (rt.el.classList.contains('show')) openRuntimePopoverForField(f);
       currentSelection = { source: 'canvas', fieldEl: f, type, componentName };
-      setPropEditable(true);
     }
 
     function applyPropToSelection() {
-      // 需求：只有拖入画布后（选中画布实例）才能编辑属性
       if (!currentSelection || currentSelection.source !== 'canvas') return;
-      // 画布组件：修改实例属性（标题/必填/占位）
-      if (currentSelection && currentSelection.source === 'canvas' && currentSelection.fieldEl) {
-        const f = currentSelection.fieldEl;
-        const type = f.getAttribute('data-type') || 'input';
-        const componentName = f.getAttribute('data-component-name') || '';
-        const title = (document.getElementById('pTitle').value || '').trim() || componentName || '未命名';
+      const f = currentSelection.fieldEl;
+      if (!f) return;
+      const type = f.getAttribute('data-type') || 'input';
 
-        // 标题：可改
+      if (type === 'appt-positioning') {
+        const title = (document.getElementById('pApptTitle').value || '').trim().slice(0, 50) || '定位预约';
+        const req = document.getElementById('pApptRequired').checked;
+        const w = Math.min(24, Math.max(1, parseInt(document.getElementById('pApptWidth').value, 10) || 24));
+        const printSize = document.getElementById('pApptPrintSize').value || '';
+        const bookAll = document.querySelector('input[name="pApptBookAll"]:checked')?.value === 'true';
         f.setAttribute('data-label', title);
-
-        // 可选属性（示例：必填/占位）
-        if (supportsReqPh(type)) {
-          const req = document.getElementById('pReq').value === 'true';
-          const ph = document.getElementById('pPh').value || '';
-          f.setAttribute('data-required', req ? 'true' : 'false');
-          f.setAttribute('data-placeholder', ph);
-        }
-
-        // update UI
+        f.setAttribute('data-required', req ? 'true' : 'false');
+        f.setAttribute('data-appt-width', String(w));
+        f.setAttribute('data-appt-book-all', bookAll ? 'true' : 'false');
+        if (printSize) f.setAttribute('data-appt-print-size', printSize);
         const labelEl = f.querySelector('.label');
-        const ctrlEl = f.querySelector('.ctrl');
-        const req = (f.getAttribute('data-required') || 'false') === 'true';
-        const ph = f.getAttribute('data-placeholder') || '';
-        if (labelEl) {
-          labelEl.innerHTML = req ? `<span class="req">*</span><span>${escapeHtml(title)}</span>` : `<span>${escapeHtml(title)}</span>`;
-        }
-        if (ctrlEl) {
-          const t = f.getAttribute('data-type') || 'input';
-          ctrlEl.textContent = ph || (t === 'select' || t === 'multi' || t === 'cascader' || t === 'date' ? '请选择' : (t === 'number' ? '请输入数字' : (t === 'textarea' ? '请输入（多行）' : '请输入')));
-        }
-
-        // 同步浮窗（应用态对比）
+        if (labelEl) labelEl.innerHTML = req ? '<span class="req">*</span><span>' + escapeHtml(title) + '</span>' : '<span>' + escapeHtml(title) + '</span>';
         if (rt.el.classList.contains('show')) openRuntimePopoverForField(f);
-        // 同步属性标题
-        document.getElementById('propTitle').textContent = `属性设置：${title}`;
+        document.getElementById('propTitle').textContent = '属性设置：' + title;
         return;
       }
+
+      const componentName = f.getAttribute('data-component-name') || '';
+      const title = (document.getElementById('pTitle').value || '').trim() || componentName || '未命名';
+      f.setAttribute('data-label', title);
+      if (supportsReqPh(type)) {
+        const req = document.getElementById('pReq').value === 'true';
+        const ph = document.getElementById('pPh').value || '';
+        f.setAttribute('data-required', req ? 'true' : 'false');
+        f.setAttribute('data-placeholder', ph);
+      }
+
+      const labelEl = f.querySelector('.label');
+      const ctrlEl = f.querySelector('.ctrl');
+      const req = (f.getAttribute('data-required') || 'false') === 'true';
+      const ph = f.getAttribute('data-placeholder') || '';
+      if (labelEl) {
+        labelEl.innerHTML = req ? '<span class="req">*</span><span>' + escapeHtml(title) + '</span>' : '<span>' + escapeHtml(title) + '</span>';
+      }
+      if (ctrlEl) {
+        const t = f.getAttribute('data-type') || 'input';
+        ctrlEl.textContent = ph || (t === 'select' || t === 'multi' || t === 'cascader' || t === 'date' ? '请选择' : (t === 'number' ? '请输入数字' : (t === 'textarea' ? '请输入（多行）' : '请输入')));
+      }
+
+      if (rt.el.classList.contains('show')) openRuntimePopoverForField(f);
+      document.getElementById('propTitle').textContent = '属性设置：' + title;
     }
 
     // 画布字段点击：使用事件委托，保证“拖入新增控件”也可被选中
@@ -1238,7 +1402,6 @@
     setPropVisible(false);
 
     document.getElementById('canvasWrap').addEventListener('click', () => clearActive());
-    document.getElementById('btnResetProp').addEventListener('click', () => clearActive());
     ['pTitle','pReq','pPh'].forEach(id => {
       const el = document.getElementById(id);
       if (!el) return;
@@ -1246,6 +1409,38 @@
       el.addEventListener('input', () => {
         if (id === 'pTitle' || id === 'pPh') applyPropToSelection();
       });
+    });
+    // 定位预约属性面板
+    const pApptTitle = document.getElementById('pApptTitle');
+    const pApptRequired = document.getElementById('pApptRequired');
+    const pApptWidthRange = document.getElementById('pApptWidthRange');
+    const pApptWidth = document.getElementById('pApptWidth');
+    if (pApptTitle) pApptTitle.addEventListener('input', applyPropToSelection);
+    if (pApptRequired) pApptRequired.addEventListener('change', applyPropToSelection);
+    if (pApptWidthRange) {
+      pApptWidthRange.addEventListener('input', () => {
+        const v = pApptWidthRange.value;
+        if (pApptWidth) pApptWidth.value = v;
+        applyPropToSelection();
+      });
+    }
+    if (pApptWidth) {
+      pApptWidth.addEventListener('input', () => {
+        const v = Math.min(24, Math.max(1, parseInt(pApptWidth.value, 10) || 24));
+        pApptWidth.value = v;
+        if (pApptWidthRange) pApptWidthRange.value = v;
+        applyPropToSelection();
+      });
+    }
+    document.getElementById('pApptPrintSize')?.addEventListener('change', applyPropToSelection);
+    document.querySelectorAll('input[name="pApptBookAll"]').forEach(r => r.addEventListener('change', applyPropToSelection));
+    document.getElementById('pApptLink')?.addEventListener('click', () => toast('原型占位：查看关联信息'));
+    document.getElementById('btnApptDelete')?.addEventListener('click', () => {
+      if (!currentSelection || currentSelection.source !== 'canvas' || currentSelection.type !== 'appt-positioning') return;
+      const f = currentSelection.fieldEl;
+      if (f && f.parentNode) f.remove();
+      clearActive();
+      toast('已删除组件');
     });
 
     // top actions

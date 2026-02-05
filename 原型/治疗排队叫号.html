@@ -253,6 +253,15 @@
             vertical-align: middle;
         }
         th { background: #fafafa; color: #666; font-weight: 600; }
+        .editable-badge {
+            margin-left: 4px;
+            font-size: 11px;
+            color: #1890ff;
+            opacity: 0.85;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+        .editable-badge:hover { opacity: 1; }
         tbody tr:hover { background: #fafafa; }
 
         .namecell {
@@ -311,6 +320,87 @@
             font-size: 12px;
             background: #fff;
         }
+
+        /* 费用备注弹窗 */
+        .modal-mask {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-mask.show { display: flex; }
+        .modal-box {
+            width: 640px;
+            max-width: 96vw;
+            max-height: 85vh;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .modal-close {
+            cursor: pointer;
+            color: #999;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .modal-close:hover { color: #333; }
+        .modal-body {
+            padding: 16px 20px;
+            overflow: auto;
+            flex: 1;
+        }
+        .fee-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .fee-info .icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #1890ff;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .fee-info .text { font-size: 14px; color: #333; }
+        .fee-table { width: 100%; border-collapse: collapse; }
+        .fee-table th, .fee-table td { padding: 10px 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #f5f5f5; }
+        .fee-table th { background: #fafafa; color: #666; font-weight: 600; }
+        .fee-table .required::after { content: ' *'; color: #ff4d4f; }
+        .modal-footer {
+            padding: 12px 20px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid #f0f0f0;
+        }
+        .add-link { color: #1890ff; cursor: pointer; font-size: 14px; }
+        .add-link:hover { text-decoration: underline; }
+        .pay-total { font-size: 14px; color: #666; margin-left: 16px; }
+        .fee-history-opt { margin-bottom: 12px; }
+        .fee-history-opt label { font-size: 14px; color: #333; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+        .fee-history-opt input[type="checkbox"] { width: 14px; height: 14px; cursor: pointer; }
+        .modal-footer .btn { min-width: 80px; }
 
         @media (max-width: 1100px) {
             .content { grid-template-columns: 1fr; }
@@ -376,13 +466,14 @@
                     <table>
                         <thead>
                             <tr>
-                                <th style="width: 28%;">姓名/性别/年龄</th>
+                                <th style="width: 24%;">姓名/性别/年龄</th>
                                 <th>诊断</th>
-                                <th style="width: 10%;">次数</th>
-                                <th style="width: 14%;">预约时间</th>
-                                <th style="width: 12%;">报到时间</th>
-                                <th style="width: 10%;">操作人</th>
-                                <th style="width: 14%;">操作</th>
+                                <th style="width: 8%;">次数</th>
+                                <th style="width: 12%;">预约时间</th>
+                                <th style="width: 10%;">报到时间</th>
+                                <th style="width: 8%;">缴费数量</th>
+                                <th style="width: 8%;">操作人</th>
+                                <th style="width: 12%;">操作</th>
                             </tr>
                         </thead>
                         <tbody id="leftBody"></tbody>
@@ -412,23 +503,71 @@
         <div class="note">说明：鼠标拖动可移动顺序（原型：未实现拖拽，仅做 UI 展示与基础交互）。</div>
     </div>
 
+    <!-- 费用备注弹窗 -->
+    <div class="modal-mask" id="feeModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>费用备注</span>
+                <span class="modal-close" id="feeModalClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="fee-info" id="feeInfo">
+                    <span class="icon">预</span>
+                    <span class="text">预约排程006</span>
+                    <span class="text">病案号 042704</span>
+                    <span class="text">放疗号 NB2504766</span>
+                </div>
+                <div class="fee-history-opt">
+                    <label><input type="checkbox" id="feeShowHistory"> 显示其他流程的缴费记录</label>
+                </div>
+                <table class="fee-table">
+                    <thead>
+                        <tr>
+                            <th class="required">本次缴费数量</th>
+                            <th class="required">缴费时间</th>
+                            <th>备注</th>
+                            <th>操作人</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="feeTableBody">
+                        <tr>
+                            <td>5</td>
+                            <td>2026-02-03</td>
+                            <td></td>
+                            <td>超级管理员</td>
+                            <td><span class="op" data-fee-act="edit">修改</span> <span class="op" data-fee-act="del">删除</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <span class="add-link" id="feeAdd">添加</span>
+                    <span class="pay-total" id="feeTotal">本流程已缴数量: 5</span>
+                </div>
+                <button class="btn" id="feeModalCloseBtn">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const state = {
             leftTab: 'queue',
             queue: [
-                { id:'p1', badge:'卢', badgeClass:'b-blue', name:'卢深平', sex:'男', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', op:'胡杰' },
-                { id:'p2', badge:'龚', badgeClass:'b-purple', name:'龚修东', sex:'男', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', op:'刘姿' },
-                { id:'p3', badge:'高', badgeClass:'b-red', name:'高芳宇', sex:'女', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', op:'葛卓涵' },
+                { id:'p1', badge:'卢', badgeClass:'b-blue', name:'卢深平', sex:'男', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', payCount:5, mrn:'042704', rn:'NB2504766', scheduleNo:'预约排程006', op:'胡杰' },
+                { id:'p2', badge:'龚', badgeClass:'b-purple', name:'龚修东', sex:'男', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', payCount:3, mrn:'042705', rn:'NB2504767', scheduleNo:'预约排程007', op:'刘姿' },
+                { id:'p3', badge:'高', badgeClass:'b-red', name:'高芳宇', sex:'女', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', payCount:0, mrn:'042706', rn:'NB2504768', scheduleNo:'预约排程008', op:'葛卓涵' },
             ],
             done: [
-                { id:'d1', badge:'周', badgeClass:'b-gray', name:'周智', sex:'-', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', op:'申霖' },
+                { id:'d1', badge:'周', badgeClass:'b-gray', name:'周智', sex:'-', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', payCount:10, mrn:'042701', rn:'NB2504765', scheduleNo:'预约排程005', op:'申霖' },
             ],
             skipped: [
-                { id:'s1', badge:'王', badgeClass:'b-purple', name:'王雪凡', sex:'女', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', op:'汤毅毅' },
+                { id:'s1', badge:'王', badgeClass:'b-purple', name:'王雪凡', sex:'女', age:66, diag:'乳腺癌', times:'7/30', appt:'09:00-10:00', checkin:'10:23:12', payCount:2, mrn:'042707', rn:'NB2504769', scheduleNo:'预约排程009', op:'汤毅毅' },
             ],
             uncheck: [
-                { id:'u1', warn:false, name:'龚修东', sex:'男', age:66, mrn:'287346745', rn:'287346745', appt:'08:00-09:00' },
-                { id:'u2', warn:true,  name:'吴姗峰', sex:'女', age:66, mrn:'287346745', rn:'287346745', appt:'08:00-09:00' },
+                { id:'u1', warn:false, name:'龚修东', sex:'男', age:66, mrn:'042710', rn:'NB2504770', appt:'08:00-09:00' },
+                { id:'u2', warn:true,  name:'吴姗峰', sex:'女', age:66, mrn:'042711', rn:'NB2504771', appt:'08:00-09:00' },
             ]
         };
 
@@ -447,6 +586,7 @@
                 const opHtml = state.leftTab === 'queue'
                     ? `<span class="op" data-act="more" data-id="${item.id}">更多</span>`
                     : `<span class="op gray">更多</span>`;
+                const payCount = item.payCount || 0;
                 return `
                     <tr>
                         <td>
@@ -460,6 +600,7 @@
                         <td>${item.times}</td>
                         <td><span class="pill">${item.appt}</span></td>
                         <td>${item.checkin}</td>
+                        <td><span class="op pay-cell" data-act="fee" data-id="${item.id}" title="点击查看费用备注">${payCount}<span class="editable-badge">✎</span></span></td>
                         <td>${item.op}</td>
                         <td>${opHtml}</td>
                     </tr>
@@ -513,6 +654,10 @@
                 times: '7/30',
                 appt: p.appt,
                 checkin: new Date().toTimeString().slice(0,8),
+                payCount: 0,
+                mrn: p.mrn || '042704',
+                rn: p.rn || 'NB2504766',
+                scheduleNo: '预约排程' + String(Math.floor(Math.random()*900)+100),
                 op: '系统'
             });
             renderCounts();
@@ -544,7 +689,58 @@
             }
         });
 
+        // 费用备注弹窗
+        let feeModalItem = null;
+        const feeHistoryRecords = [
+            { qty: 2, date: '2026-01-28', remark: '', op: '胡杰' },
+            { qty: 3, date: '2026-02-01', remark: '预缴', op: '刘姿' },
+            { qty: 5, date: '2026-02-03', remark: '', op: '超级管理员' },
+        ];
+        function renderFeeTable(showHistory) {
+            const total = feeModalItem ? (feeModalItem.payCount || 0) : 0;
+            $('feeTotal').textContent = '本流程已缴数量: ' + total;
+            let rows = '';
+            if (showHistory && feeHistoryRecords.length > 0) {
+                rows = feeHistoryRecords.map(r =>
+                    `<tr><td>${r.qty}</td><td>${r.date}</td><td>${r.remark}</td><td>${r.op}</td><td><span class="op" data-fee-act="edit">修改</span> <span class="op" data-fee-act="del">删除</span></td></tr>`
+                ).join('');
+            } else if (total > 0) {
+                rows = `<tr><td>${total}</td><td>2026-02-03</td><td></td><td>超级管理员</td><td><span class="op" data-fee-act="edit">修改</span> <span class="op" data-fee-act="del">删除</span></td></tr>`;
+            } else {
+                rows = '<tr><td colspan="5" style="color:#999;text-align:center;">暂无缴费记录，点击下方添加</td></tr>';
+            }
+            $('feeTableBody').innerHTML = rows;
+        }
+        function openFeeModal(item) {
+            feeModalItem = item;
+            const info = $('feeInfo');
+            info.innerHTML = `
+                <span class="icon">预</span>
+                <span class="text">${item.scheduleNo || '预约排程006'}</span>
+                <span class="text">病案号 ${item.mrn || '042704'}</span>
+                <span class="text">放疗号 ${item.rn || 'NB2504766'}</span>
+            `;
+            $('feeShowHistory').checked = false;
+            renderFeeTable(false);
+            $('feeModal').classList.add('show');
+        }
+        function closeFeeModal() { $('feeModal').classList.remove('show'); }
+        $('feeModalClose').addEventListener('click', closeFeeModal);
+        $('feeModalCloseBtn').addEventListener('click', closeFeeModal);
+        $('feeModal').addEventListener('click', (e) => { if (e.target.id === 'feeModal') closeFeeModal(); });
+        $('feeAdd').addEventListener('click', () => alert('添加缴费记录（原型演示）'));
+        $('feeShowHistory').addEventListener('change', function() {
+            renderFeeTable(this.checked);
+        });
+
         $('leftBody').addEventListener('click', (e) => {
+            const feeEl = e.target.closest('[data-act="fee"]');
+            if (feeEl) {
+                const id = feeEl.dataset.id;
+                const item = [...state.queue, ...state.done, ...state.skipped].find(x => x.id === id);
+                if (item) openFeeModal(item);
+                return;
+            }
             const act = e.target.dataset.act;
             const id = e.target.dataset.id;
             if (act === 'more') alert(`更多操作：${id}（原型演示）`);

@@ -180,6 +180,10 @@
             width: var(--sidebar-width-collapsed);
         }
 
+        .sidebar.hidden {
+            display: none !important;
+        }
+
         .sidebar-toggle {
             position: absolute;
             bottom: 8px;
@@ -458,8 +462,8 @@
 
     <!-- 主内容区 -->
     <div class="main-content">
-        <!-- 左侧菜单栏 -->
-        <div class="sidebar">
+        <!-- 左侧菜单栏（用户管理时隐藏） -->
+        <div class="sidebar" id="appSidebar">
             <button class="sidebar-toggle" id="sidebarToggle" title="收起/展开菜单栏">≡</button>
             <div class="sidebar-menu" id="sidebarMenu">
                 <!-- 左侧菜单项将根据当前选中的顶部菜单动态渲染 -->
@@ -510,6 +514,22 @@
                 window.localStorage.removeItem(key);
             } catch (e) {}
         }
+
+        // 用户管理模块专用菜单树（顶部点击「用户管理」时使用）
+        const userManagementMenuTree = [
+            {
+                name: '用户管理',
+                enabled: true,
+                url: '用户管理.html',
+                children: [
+                    { name: '账号管理', enabled: true, url: '用户管理.html' },
+                    { name: '角色权限', enabled: true, url: '用户管理.html' },
+                    { name: '消息模板', enabled: true, url: '用户管理.html' },
+                    { name: '科室管理', enabled: true, url: '用户管理.html' },
+                    { name: '医院信息', enabled: true, url: '用户管理.html' }
+                ]
+            }
+        ];
 
         // 默认菜单树兜底：当未进入“菜单管理”配置或无法读取 localStorage 时，仍能渲染菜单并加载页面
         const defaultMenuTree = [
@@ -738,7 +758,7 @@
                 permissions: ['admin', 'technician']
             },
             '用户管理': {
-                url: '用户管理.html',
+                url: '消息模板.html',
                 permissions: ['admin']
             }
         };
@@ -780,8 +800,8 @@
             // 清空左侧菜单项
             sidebarMenu.innerHTML = '';
 
-            // 从“菜单管理”页面保存的列表数据中，取所有【启用】状态的菜单渲染到左侧菜单框
-            const tree = loadMenuTreeFromStorage() || [];
+            // 顶部「用户管理」使用专用菜单树，其余使用流程管理菜单树
+            const tree = (menuName === '用户管理') ? userManagementMenuTree : (loadMenuTreeFromStorage() || []);
             const visibleTargets = [];
             let expandedGroupChosen = false; // 仅展开默认加载页面所在的一级菜单组，其余默认收起
 
@@ -1089,12 +1109,16 @@
                     });
                     menuElement.classList.add('active');
                     
-                    // 更新左侧菜单
-                    const firstUrl = renderSidebar(menuName);
-
-                    // 若左侧菜单未产生可加载页面，则回退到顶部菜单配置的默认 URL
-                    if (!firstUrl && menuItem.url) {
+                    const sidebar = document.getElementById('appSidebar');
+                    if (menuName === '用户管理') {
+                        if (sidebar) sidebar.classList.add('hidden');
                         loadPageContent(menuItem.url);
+                    } else {
+                        if (sidebar) sidebar.classList.remove('hidden');
+                        const firstUrl = renderSidebar(menuName);
+                        if (!firstUrl && menuItem.url) {
+                            loadPageContent(menuItem.url);
+                        }
                     }
                 });
                 

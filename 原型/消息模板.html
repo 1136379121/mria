@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - 消息模板</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            /* 与流程管理模块一致：由框架 content-wrapper 统一控制边距 10px */
+            padding: 0;
+            margin: 0;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .page { display: flex; gap: 0; height: 100vh; min-height: 500px; }
+
+        .sidebar {
+            width: 216px;
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            box-shadow: 2px 0 8px rgba(0, 0, 0, 0.06);
+            padding: 16px 0 16px 24px;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            padding: 10px 12px;
+            border-radius: 8px;
+            color: #555;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .nav-item:hover { background: #f5faff; color: #1890ff; }
+        .nav-item.active { background: #e6f4ff; color: #1890ff; font-weight: 600; }
+
+        .nav-list { display: flex; flex-direction: column; gap: 4px; }
+
+        .template-search {
+            width: 100%;
+            height: 34px;
+            border: 1px solid #e2e6f0;
+            border-radius: 8px;
+            padding: 0 12px;
+            font-size: 13px;
+            outline: none;
+            transition: all 0.2s ease;
+            margin-bottom: 12px;
+        }
+        .template-search:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.12); }
+
+        .nav-sub-item {
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 14px;
+            color: #555;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .nav-sub-item:hover { background: #f5faff; color: #1890ff; }
+        .nav-sub-item.active { background: #e6f4ff; color: #1890ff; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(24,144,255,0.15); }
+
+        .main {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            background: #fff;
+            overflow-y: auto;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 28px;
+            align-items: flex-start;
+        }
+
+        .template-panel {
+            background: #f8fbff;
+            border-radius: 16px;
+            padding: 22px 20px;
+            box-shadow: inset 0 0 0 1px rgba(24,144,255,0.08);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 160px);
+        }
+
+        .template-panel-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .template-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+        }
+
+        .form-panel {
+            background: #fff;
+            border-radius: 16px;
+            padding: 8px 6px 0 6px;
+        }
+
+        .form-title { font-size: 20px; font-weight: 600; margin-bottom: 24px; }
+
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: #333; margin-bottom: 12px; }
+        .form-radio-group { display: flex; gap: 24px; align-items: center; }
+        .form-radio { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #555; }
+        .form-radio input { width: 16px; height: 16px; cursor: pointer; accent-color: #1890ff; }
+        .form-check-group { display: flex; gap: 24px; align-items: center; }
+        .form-check { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #555; }
+        .form-check input { width: 16px; height: 16px; cursor: pointer; accent-color: #1890ff; }
+
+        .form-select {
+            height: 36px;
+            min-width: 200px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 0 12px;
+            font-size: 14px;
+            outline: none;
+        }
+        .form-select:focus { border-color: #1890ff; }
+
+        .form-tags {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .form-tag .remove { cursor: pointer; color: #999; font-size: 14px; }
+        .form-tag .remove:hover { color: #ff4d4f; }
+        .form-tag-add {
+            padding: 4px 12px;
+            border: 1px dashed #1890ff;
+            color: #1890ff;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            background: transparent;
+        }
+        .form-tag-add:hover { background: #e6f4ff; }
+
+        .form-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 12px 14px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+        }
+        .form-textarea:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.15); }
+        .form-textarea-wrap { position: relative; }
+        .form-insert-link { color: #1890ff; font-size: 13px; cursor: pointer; margin-top: 8px; }
+        .form-insert-link:hover { text-decoration: underline; }
+        .form-char-count { position: absolute; right: 12px; bottom: 12px; font-size: 12px; color: #999; }
+
+        .btn-sensitive {
+            padding: 4px 12px;
+            font-size: 13px;
+            color: #1890ff;
+            background: transparent;
+            border: 1px solid #1890ff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn-sensitive:hover { background: #e6f4ff; }
+        .modal-mask { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-mask.show { display: flex; }
+        .modal-box { width: 480px; max-width: 96vw; background: #fff; border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.15); overflow: hidden; }
+        .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #f0f0f0; font-size: 16px; font-weight: 600; }
+        .modal-close { cursor: pointer; color: #999; font-size: 20px; line-height: 1; }
+        .modal-close:hover { color: #333; }
+        .modal-body { padding: 20px; }
+        .sensitive-add { display: flex; gap: 8px; margin-bottom: 12px; }
+        .sensitive-add input { flex: 1; height: 34px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 0 12px; font-size: 14px; outline: none; }
+        .sensitive-add input:focus { border-color: #1890ff; }
+        .sensitive-add .btn-add { flex-shrink: 0; padding: 0 16px; }
+        .sensitive-words { display: flex; flex-wrap: wrap; gap: 8px; }
+        .sensitive-tag { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #fff1f0; color: #ff4d4f; border-radius: 6px; font-size: 13px; border: 1px solid #ffccc7; }
+        .sensitive-tag .del { cursor: pointer; font-size: 14px; opacity: 0.8; }
+        .sensitive-tag .del:hover { opacity: 1; }
+        .sensitive-tip { font-size: 12px; color: #999; margin-top: 8px; }
+
+        .form-actions { display: flex; gap: 12px; margin-top: 32px; padding-top: 24px; border-top: 1px solid #f0f0f0; }
+        .btn { height: 36px; padding: 0 20px; border-radius: 8px; font-size: 14px; cursor: pointer; transition: all 0.2s; }
+        .btn-default { border: 1px solid #d9d9d9; background: #fff; color: #333; }
+        .btn-default:hover { border-color: #1890ff; color: #1890ff; }
+        .btn-primary { border: none; background: #1890ff; color: #fff; }
+        .btn-primary:hover { background: #40a9ff; }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <aside class="sidebar">
+            <nav class="nav-list">
+                <div class="nav-item" data-menu="account">账号管理</div>
+                <div class="nav-item" data-menu="role">角色权限</div>
+                <div class="nav-item active" data-menu="template">消息模板</div>
+                <div class="nav-item" data-menu="dept">科室管理</div>
+                <div class="nav-item" data-menu="hospital">医院信息</div>
+            </nav>
+        </aside>
+
+        <main class="main">
+            <div class="layout">
+                <section class="template-panel">
+                    <div class="template-panel-header">
+                        <span>消息模板</span>
+                        <button type="button" class="btn-sensitive" id="btnSensitiveFilter">敏感词过滤</button>
+                    </div>
+                    <input class="template-search" placeholder="请输入搜索内容">
+                    <div class="template-items">
+                        <div class="nav-sub-item active" data-template="疗程终止">疗程终止</div>
+                        <div class="nav-sub-item" data-template="疗程新增">疗程新增</div>
+                        <div class="nav-sub-item" data-template="疗程编辑">疗程编辑</div>
+                        <div class="nav-sub-item" data-template="疗程暂停">疗程暂停</div>
+                        <div class="nav-sub-item" data-template="疗程恢复">疗程恢复</div>
+                        <div class="nav-sub-item" data-template="新增定位">新增定位</div>
+                        <div class="nav-sub-item" data-template="新增治疗">新增治疗</div>
+                        <div class="nav-sub-item" data-template="追加预约">追加预约</div>
+                        <div class="nav-sub-item" data-template="删除预约">删除预约</div>
+                        <div class="nav-sub-item" data-template="预约调整">预约调整</div>
+                        <div class="nav-sub-item" data-template="任务逾期">任务逾期</div>
+                        <div class="nav-sub-item" data-template="申请绿色通道">申请绿色通道</div>
+                        <div class="nav-sub-item" data-template="新增复位">新增复位</div>
+                    </div>
+                </section>
+
+                <section class="form-panel">
+                    <h1 class="form-title" id="formTitle">疗程终止</h1>
+
+                    <div class="form-group">
+                        <label class="form-label">消息提醒</label>
+                        <div class="form-radio-group">
+                            <label class="form-radio"><input type="radio" name="remind" value="direct" checked> 直接发送</label>
+                            <label class="form-radio"><input type="radio" name="remind" value="user"> 用户判断是否发送</label>
+                            <label class="form-radio"><input type="radio" name="remind" value="none"> 不发送</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">发布渠道</label>
+                        <div class="form-check-group">
+                            <label class="form-check"><input type="checkbox" name="channel" value="sms" checked> 短信消息</label>
+                            <label class="form-check"><input type="checkbox" name="channel" value="system" checked> 系统消息</label>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">触发动作</label>
+                        <select class="form-select" id="triggerAction">
+                            <option>疗程终止</option>
+                            <option>疗程新增</option>
+                            <option>疗程编辑</option>
+                            <option>疗程暂停</option>
+                            <option>疗程恢复</option>
+                            <option>新增定位</option>
+                            <option>新增治疗</option>
+                            <option>追加预约</option>
+                            <option>删除预约</option>
+                            <option>预约调整</option>
+                            <option>任务逾期</option>
+                            <option>申请绿色通道</option>
+                            <option>新增复位</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">提醒人员</label>
+                        <div class="form-tags">
+                            <span class="form-tag">个人/患者本人 <span class="remove">×</span></span>
+                            <button type="button" class="form-tag-add">+2</button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">提醒内容</label>
+                        <div class="form-textarea-wrap">
+                            <textarea class="form-textarea" id="remindContent" maxlength="700">患者{患者姓名}因为{操作原因},已终止{流程类型}</textarea>
+                            <a class="form-insert-link">插入变量</a>
+                            <span class="form-char-count" id="charCount">27/700</span>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button class="btn btn-default">取消</button>
+                        <button class="btn btn-primary">保存</button>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-mask" id="sensitiveModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <span>敏感词过滤设置</span>
+                <span class="modal-close" id="sensitiveModalClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="sensitive-add">
+                    <input type="text" id="sensitiveInput" placeholder="输入敏感词后点击添加" style="flex:1;height:34px;border:1px solid #d9d9d9;border-radius:6px;padding:0 12px;font-size:14px;">
+                    <button type="button" class="btn btn-primary btn-add" id="sensitiveAddBtn">添加</button>
+                </div>
+                <div class="sensitive-words" id="sensitiveWordsList"></div>
+                <div class="sensitive-tip">对所有消息模板生效，发消息时敏感词将被替换为 **</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const templates = {
+            '疗程终止': { trigger: '疗程终止', content: '患者{患者姓名}因为{操作原因},已终止{流程类型}' },
+            '疗程新增': { trigger: '疗程新增', content: '患者{患者姓名}因为{操作原因},已新增{流程类型}' },
+            '疗程编辑': { trigger: '疗程编辑', content: '患者{患者姓名}因为{操作原因},已编辑{流程类型}' },
+            '疗程暂停': { trigger: '疗程暂停', content: '患者{患者姓名}因为{操作原因},已暂停{流程类型}' },
+            '疗程恢复': { trigger: '疗程恢复', content: '患者{患者姓名}因为{操作原因},已恢复{流程类型}' },
+            '新增定位': { trigger: '新增定位', content: '患者{患者姓名}已新增定位{流程类型}' },
+            '新增治疗': { trigger: '新增治疗', content: '患者{患者姓名}已新增治疗{流程类型}' },
+            '追加预约': { trigger: '追加预约', content: '患者{患者姓名}已追加预约' },
+            '删除预约': { trigger: '删除预约', content: '患者{患者姓名}已删除预约' },
+            '预约调整': { trigger: '预约调整', content: '患者{患者姓名}已调整预约' },
+            '任务逾期': { trigger: '任务逾期', content: '患者{患者姓名}任务已逾期，请及时处理' },
+            '申请绿色通道': { trigger: '申请绿色通道', content: '患者{患者姓名}申请绿色通道' },
+            '新增复位': { trigger: '新增复位', content: '患者{患者姓名}已新增复位' }
+        };
+
+        document.querySelectorAll('.nav-sub-item').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.nav-sub-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+                const name = this.dataset.template;
+                document.getElementById('formTitle').textContent = name;
+                const t = templates[name];
+                if (t) {
+                    document.getElementById('triggerAction').value = t.trigger;
+                    const textarea = document.getElementById('remindContent');
+                    textarea.value = t.content;
+                    updateCharCount();
+                }
+            });
+        });
+
+        document.getElementById('remindContent').addEventListener('input', updateCharCount);
+        function updateCharCount() {
+            const ta = document.getElementById('remindContent');
+            document.getElementById('charCount').textContent = ta.value.length + '/700';
+        }
+
+        const layout = document.querySelector('.layout');
+        let placeholderEl = null;
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.addEventListener('click', function() {
+                document.querySelectorAll('.nav-item').forEach(m => m.classList.remove('active'));
+                this.classList.add('active');
+                if (this.dataset.menu === 'template') {
+                    if (layout) layout.style.display = '';
+                    if (placeholderEl) placeholderEl.style.display = 'none';
+                } else {
+                    if (layout) layout.style.display = 'none';
+                    if (!placeholderEl) {
+                        placeholderEl = document.createElement('div');
+                        placeholderEl.id = 'placeholderContent';
+                        placeholderEl.style.cssText = 'padding:40px;color:#999;font-size:14px;';
+                        document.querySelector('.main').appendChild(placeholderEl);
+                    }
+                    placeholderEl.textContent = this.textContent.trim() + '（原型演示，无实际页面）';
+                    placeholderEl.style.display = 'block';
+                }
+            });
+        });
+
+        const sensitiveWords = [];
+        document.getElementById('btnSensitiveFilter').addEventListener('click', () => {
+            document.getElementById('sensitiveModal').classList.add('show');
+        });
+        document.getElementById('sensitiveModalClose').addEventListener('click', () => {
+            document.getElementById('sensitiveModal').classList.remove('show');
+        });
+        document.getElementById('sensitiveModal').addEventListener('click', (e) => {
+            if (e.target.id === 'sensitiveModal') document.getElementById('sensitiveModal').classList.remove('show');
+        });
+        function renderSensitiveWords() {
+            const el = document.getElementById('sensitiveWordsList');
+            el.innerHTML = sensitiveWords.map((w, i) =>
+                `<span class="sensitive-tag">${w}<span class="del" data-idx="${i}">×</span></span>`
+            ).join('');
+        }
+        function addSensitiveWord() {
+            const input = document.getElementById('sensitiveInput');
+            const word = (input.value || '').trim();
+            if (!word) return alert('请输入敏感词');
+            if (sensitiveWords.includes(word)) return alert('该敏感词已存在');
+            sensitiveWords.push(word);
+            input.value = '';
+            renderSensitiveWords();
+        }
+        document.getElementById('sensitiveAddBtn').addEventListener('click', addSensitiveWord);
+        document.getElementById('sensitiveInput').addEventListener('keydown', e => {
+            if (e.key === 'Enter') { e.preventDefault(); addSensitiveWord(); }
+        });
+        document.getElementById('sensitiveWordsList').addEventListener('click', e => {
+            const idx = e.target.dataset.idx;
+            if (idx !== undefined) {
+                sensitiveWords.splice(Number(idx), 1);
+                renderSensitiveWords();
+            }
+        });
+
+        function filterSensitive(text) {
+            let result = text;
+            sensitiveWords.forEach(w => {
+                result = result.split(w).join('**');
+            });
+            return result;
+        }
+
+        document.querySelector('.form-insert-link').addEventListener('click', () => alert('插入变量（原型演示）'));
+        document.querySelector('.btn-default').addEventListener('click', () => alert('取消（原型演示）'));
+        document.querySelector('.btn-primary').addEventListener('click', () => {
+            const content = document.getElementById('remindContent').value;
+            const filtered = filterSensitive(content);
+            if (sensitiveWords.length > 0 && content !== filtered) {
+                alert('保存成功！发送时将替换敏感词：\n\n原文：' + content + '\n\n过滤后：' + filtered);
+            } else {
+                alert('保存（原型演示）');
+            }
+        });
+        updateCharCount();
+    </script>
+</body>
+</html>
