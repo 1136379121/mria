@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ART治疗</title>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body{
+      margin:0;
+      background:#f5f5f5;
+      color:#1f1f1f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+      overflow:hidden; /* 页面内部滚动 */
+    }
+
+    :root{
+      --primary:#1890ff;
+      --border:#e8e8e8;
+      --muted:#8c8c8c;
+      --shadow: 0 2px 10px rgba(0,0,0,0.06);
+      --card:#fff;
+      --bg:#f5f5f5;
+      --success:#52c41a;
+    }
+
+    .page{
+      height:100%;
+      display:flex;
+      gap:10px;
+      padding:10px;
+      min-height:0;
+    }
+
+    .left{
+      flex:1 1 auto;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      min-height:0;
+    }
+
+    .right{
+      width:360px;
+      flex:0 0 360px;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+      border:1px solid var(--border);
+      background:var(--card);
+      box-shadow: var(--shadow);
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    /* 顶部：标题 + 患者信息 */
+    .head{
+      padding:10px 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+
+    .title-row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+    .title{
+      font-size:18px;
+      font-weight:800;
+      color:#111;
+      letter-spacing:.2px;
+    }
+    .link{
+      color:var(--primary);
+      text-decoration:none;
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .link:hover{ text-decoration: underline; }
+
+    .patient{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+      padding:10px 12px;
+      border:1px solid #f0f0f0;
+      background:#fff;
+      border-radius:10px;
+    }
+    .avatar{
+      width:44px; height:44px;
+      border-radius:10px;
+      background:linear-gradient(135deg,#2f54eb,#69c0ff);
+      color:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      font-size:18px;
+      flex:0 0 44px;
+      user-select:none;
+    }
+    .pinfo{
+      flex:1 1 auto;
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+    }
+    .p-top{
+      display:flex;
+      align-items:baseline;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .p-name{ font-size:16px; font-weight:800; color:#111; }
+    .p-sex{ font-size:14px; font-weight:700; color:#333; }
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      height:20px;
+      padding:0 8px;
+      border-radius:999px;
+      border:1px solid #d9f7be;
+      background:#f6ffed;
+      color:#389e0d;
+      font-size:12px;
+      font-weight:700;
+    }
+    .p-kv{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px 16px;
+      font-size:12px;
+      color:#333;
+    }
+    .kv{ display:inline-flex; gap:6px; align-items:baseline; }
+    .k{ color:var(--muted); }
+    .v{ color:#111; font-weight:700; }
+
+    /* 步骤条 */
+    .steps{
+      padding:10px 14px 12px 14px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+      border-top:1px solid #f0f0f0;
+      background:#fff;
+    }
+    .step{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      height:30px;
+      padding:0 10px;
+      border-radius:999px;
+      border:1px solid #f0f0f0;
+      background:#fff;
+      color:#666;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .step:hover{ border-color: rgba(24,144,255,.28); color: var(--primary); background: rgba(24,144,255,.06); }
+    .step .dot{
+      width:18px; height:18px; border-radius:6px;
+      display:inline-flex; align-items:center; justify-content:center;
+      background:#d9d9d9;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+      flex:0 0 18px;
+    }
+    .step.active{
+      border-color: rgba(24,144,255,.34);
+      background: rgba(24,144,255,.08);
+      color: var(--primary);
+      font-weight:800;
+    }
+    .step.active .dot{ background: var(--primary); }
+    .step.done .dot{ background: var(--success); }
+
+    .steps .spacer{ flex:1 1 auto; min-width: 10px; }
+    .btn{
+      height:30px;
+      padding:0 12px;
+      border-radius:8px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      color:#333;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: all .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+
+    /* 中间：执行单 */
+    .paper-wrap{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding:10px;
+      background:var(--bg);
+    }
+    .paper{
+      background:#fff;
+      border:1px solid #f0f0f0;
+      box-shadow: 0 10px 24px rgba(0,0,0,.06);
+      border-radius:10px;
+      max-width: 980px;
+      margin:0 auto 12px auto;
+      overflow:hidden;
+    }
+    .paper-hd{
+      padding:14px 16px 8px 16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:#333;
+      font-weight:900;
+      letter-spacing:.5px;
+      user-select:none;
+    }
+    .brand-badge{
+      width:34px; height:34px; border-radius:50%;
+      background:#ff4d4f;
+      display:inline-flex; align-items:center; justify-content:center;
+      color:#fff;
+      font-weight:900;
+      font-size:12px;
+    }
+    .paper-title{
+      flex:1 1 auto;
+      text-align:center;
+      font-size:18px;
+      font-weight:900;
+      color:#111;
+      padding-right:44px; /* 视觉居中 */
+    }
+    .paper-bd{ padding: 0 16px 16px 16px; }
+
+    .section{
+      border-top:1px solid #f0f0f0;
+      padding-top:10px;
+      margin-top:6px;
+    }
+    .section:first-child{ border-top:none; padding-top:0; margin-top:0; }
+    .sec-title{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-size:14px;
+      font-weight:900;
+      color:#333;
+      margin: 6px 0 10px 0;
+    }
+    .sec-title .mark{
+      width:6px; height:6px;
+      border-radius:2px;
+      background: var(--primary);
+      flex:0 0 6px;
+    }
+    .info-grid{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap:10px 16px;
+      font-size:12px;
+      color:#333;
+    }
+    .info-item{
+      min-width:0;
+      display:flex;
+      gap:6px;
+      align-items:baseline;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .info-item .k{ color: var(--muted); }
+    .info-item .v{ color:#111; font-weight:700; overflow:hidden; text-overflow:ellipsis; }
+
+    .info-grid.exec{
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      padding-bottom: 6px;
+    }
+
+    .editable{
+      display:inline-flex;
+      align-items:baseline;
+      gap:6px;
+      min-width:0;
+    }
+    .editable input{
+      width: 100%;
+      min-width: 0;
+      height: 26px;
+      border:1px solid #d9d9d9;
+      border-radius:8px;
+      padding: 0 10px;
+      outline:none;
+      font-size:12px;
+    }
+    .editable input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.16);
+    }
+    .edit-on [data-edit-mode="view"]{ display:none; }
+    .edit-off [data-edit-mode="edit"]{ display:none; }
+
+    .paper-ft{
+      padding: 10px 16px 14px 16px;
+      border-top:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:flex-end;
+      font-size:12px;
+      color:#666;
+      gap: 18px;
+      flex-wrap:wrap;
+    }
+    .sig{ display:inline-flex; gap:6px; align-items:baseline; }
+
+    /* 底部动作条 */
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:14px;
+      padding:10px;
+    }
+    .act{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      height:34px;
+      padding:0 14px;
+      border-radius:10px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      user-select:none;
+      font-size:13px;
+      color:#333;
+      transition: all .15s ease;
+    }
+    .act:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+    .act svg{ width:16px; height:16px; }
+
+    .act.danger{
+      border-color: #ffccc7;
+      color: #cf1322;
+      background: #fff1f0;
+    }
+    .act.danger:hover{
+      border-color: #ff4d4f;
+      color: #ff4d4f;
+      background: #fff1f0;
+    }
+
+    /* 分次排程 */
+    .sched-card{
+      max-width: 980px;
+      margin:0 auto 12px auto;
+      background:#fff;
+      border:1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius:10px;
+      overflow:hidden;
+    }
+    .sched-hd{
+      padding:10px 12px;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:#fff;
+    }
+    .sched-hd strong{
+      font-size:13px;
+      font-weight:900;
+      color:#333;
+    }
+    .sched-tip{
+      font-size:12px;
+      color:#999;
+      white-space:nowrap;
+    }
+    .sched-bd{ padding: 8px 10px 10px 10px; background:#fff; }
+    .sched-row{
+      display:grid;
+      grid-template-columns: 84px 1fr 120px 120px;
+      gap: 10px;
+      align-items:center;
+      padding:8px 8px;
+      border-radius:10px;
+    }
+    .sched-row + .sched-row{ margin-top: 6px; }
+    .sched-th{
+      background:#fafafa;
+      border:1px solid #f0f0f0;
+      font-size:12px;
+      color:#666;
+      font-weight:800;
+    }
+    .sched-item{
+      border:1px solid #f0f0f0;
+      background:#fff;
+      font-size:12px;
+      color:#333;
+    }
+    .sched-badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:22px;
+      padding:0 8px;
+      border-radius:999px;
+      border:1px solid #d9d9d9;
+      background:#fafafa;
+      color:#666;
+      font-weight:800;
+      width: fit-content;
+    }
+    .sched-badge.warn{
+      border-color:#ffe58f;
+      background:#fffbe6;
+      color:#ad6800;
+    }
+    .sched-badge.ok{
+      border-color:#d9f7be;
+      background:#f6ffed;
+      color:#389e0d;
+    }
+    .sched-badge.danger{
+      border-color:#ffccc7;
+      background:#fff1f0;
+      color:#cf1322;
+    }
+    .sched-actions{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+    .sched-btn{
+      height:28px;
+      padding:0 10px;
+      border-radius:8px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: all .15s ease;
+    }
+    .sched-btn:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+    .sched-btn:disabled{
+      color:#bbb;
+      border-color:#f0f0f0;
+      background:#fafafa;
+      cursor:not-allowed;
+    }
+
+    /* 重新排程弹窗 */
+    .mask{
+      position:fixed;
+      inset:0;
+      background: rgba(0,0,0,.45);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      z-index:10000;
+    }
+    .mask.show{ display:flex; }
+    .dialog{
+      width:min(520px, 100%);
+      background:#fff;
+      border-radius:12px;
+      overflow:hidden;
+      box-shadow: 0 16px 50px rgba(0,0,0,.22);
+      display:flex;
+      flex-direction:column;
+      max-height: 90vh;
+    }
+    .dialog-hd{
+      padding:12px 14px;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .dialog-hd strong{ font-size:13px; color:#333; font-weight:900; }
+    .dialog-bd{
+      padding:12px 14px 14px 14px;
+      background:#fff;
+    }
+    .form{
+      display:grid;
+      grid-template-columns: 90px 1fr;
+      gap: 10px 10px;
+      align-items:center;
+      font-size:12px;
+      color:#333;
+    }
+    .form .k{ color:#666; }
+    .form input{
+      width:100%;
+      height:32px;
+      border:1px solid #d9d9d9;
+      border-radius:10px;
+      padding:0 10px;
+      outline:none;
+      font-size:12px;
+      font-family: inherit;
+      background:#fff;
+    }
+    .form input:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.16);
+    }
+    .dialog-ft{
+      padding:12px 14px;
+      border-top:1px solid #f0f0f0;
+      display:flex;
+      justify-content:flex-end;
+      gap:10px;
+      background:#fff;
+    }
+    .btn2{
+      height:32px;
+      padding:0 14px;
+      border-radius:10px;
+      border:1px solid #d9d9d9;
+      background:#fff;
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+      transition: all .15s ease;
+    }
+    .btn2:hover{ border-color: var(--primary); color: var(--primary); background:#f0f7ff; }
+    .btn2.primary{
+      border-color: var(--primary);
+      background: var(--primary);
+      color:#fff;
+      font-weight:900;
+    }
+    .btn2.primary:hover{ background:#40a9ff; border-color:#40a9ff; color:#fff; }
+
+    /* 右侧：医疗团队 + 聊天 */
+    .team-hd{
+      padding:10px 12px;
+      border-bottom:1px solid #f0f0f0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      background:#fff;
+    }
+    .team-hd strong{
+      font-size:13px;
+      color:#333;
+      font-weight:900;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+    .team-count{
+      color:#999;
+      font-size:12px;
+      white-space:nowrap;
+    }
+    .team-tabs{
+      padding:8px 10px;
+      border-bottom:1px solid #f0f0f0;
+      background:#fff;
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      height:28px;
+      padding:0 10px;
+      border-radius:10px;
+      border:1px solid #f0f0f0;
+      background:#fff;
+      color:#666;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .chip.active{
+      border-color: rgba(24,144,255,.34);
+      background: rgba(24,144,255,.08);
+      color: var(--primary);
+      font-weight:800;
+    }
+    .chip .ico{
+      width:18px; height:18px;
+      border-radius:6px;
+      background:#f5f5f5;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:900;
+      color:#666;
+      font-size:12px;
+    }
+    .chip.active .ico{ background: var(--primary); color:#fff; }
+
+    .chat{
+      flex:1 1 auto;
+      min-height:0;
+      display:flex;
+      flex-direction:column;
+    }
+    .chat-body{
+      flex:1 1 auto;
+      min-height:0;
+      overflow:auto;
+      padding:10px 10px 12px 10px;
+      background:#fff;
+    }
+    .empty{
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#bbb;
+      font-size:12px;
+      text-align:center;
+      padding: 16px;
+      line-height:1.7;
+    }
+    .msg{
+      display:flex;
+      gap:8px;
+      margin: 8px 0;
+      align-items:flex-start;
+    }
+    .msg.me{ flex-direction: row-reverse; }
+    .bubble{
+      max-width: 78%;
+      border:1px solid #f0f0f0;
+      background:#fafafa;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      color:#333;
+      line-height:1.6;
+      white-space:pre-wrap;
+      word-break: break-word;
+    }
+    .msg.me .bubble{
+      background: rgba(24,144,255,.08);
+      border-color: rgba(24,144,255,.18);
+    }
+    .meta{
+      font-size:11px;
+      color:#999;
+      margin-top: 2px;
+      white-space:nowrap;
+    }
+    .msg-col{
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      gap:2px;
+      min-width:0;
+    }
+    .msg.me .msg-col{ align-items:flex-end; }
+    .mini{
+      width:26px; height:26px;
+      border-radius:8px;
+      background:#f5f5f5;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#666;
+      font-weight:900;
+      font-size:12px;
+      flex:0 0 26px;
+      user-select:none;
+    }
+
+    .chat-ft{
+      border-top:1px solid #f0f0f0;
+      background:#fff;
+      padding:10px;
+      display:flex;
+      gap:8px;
+      align-items:flex-end;
+    }
+    .chat-ft textarea{
+      flex:1 1 auto;
+      min-width:0;
+      height:64px;
+      border:1px solid #d9d9d9;
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      outline:none;
+      resize:none;
+      font-family: inherit;
+    }
+    .chat-ft textarea:focus{
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(24,144,255,.16);
+    }
+    .send{
+      height:64px;
+      width:76px;
+      border:none;
+      border-radius:10px;
+      background: var(--primary);
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+      user-select:none;
+      font-size:12px;
+    }
+    .send:hover{ background:#40a9ff; }
+    .send:disabled{
+      background:#d9d9d9;
+      cursor:not-allowed;
+    }
+
+    /* toast */
+    .toast{
+      position:fixed;
+      left:50%;
+      top:16px;
+      transform:translateX(-50%);
+      background: rgba(0,0,0,.78);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:10px;
+      font-size:12px;
+      display:none;
+      z-index:9999;
+      max-width: 70vw;
+      text-align:center;
+    }
+    .toast.show{ display:block; }
+
+    @media (max-width: 1100px){
+      .right{ width:320px; flex-basis:320px; }
+      .info-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .info-grid.exec{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    /* 打印：仅打印执行单 */
+    @media print{
+      body{ background:#fff; overflow:visible; }
+      .page{ padding:0; }
+      .right, .head, .actions, .sched-card, .mask, .toast{ display:none !important; }
+      .paper-wrap{ padding:0; overflow:visible; }
+      .paper{ box-shadow:none; border-radius:0; border:none; max-width:none; margin:0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page edit-off" id="pageRoot">
+    <div class="left">
+      <div class="card">
+        <div class="head">
+          <div class="title-row">
+            <div class="title">ART治疗</div>
+            <a class="link" href="患者详情/患者详情.html" title="打开患者详情（原型）">患者详情</a>
+          </div>
+
+          <div class="patient" aria-label="患者信息">
+            <div class="avatar" id="avatarText">全</div>
+            <div class="pinfo">
+              <div class="p-top">
+                <div class="p-name" id="pName">全功能演示</div>
+                <div class="p-sex" id="pSex">男</div>
+                <span class="tag" id="pStatus">已完成</span>
+              </div>
+              <div class="p-kv">
+                <span class="kv"><span class="k">年龄</span><span class="v" id="pAge">25岁</span></span>
+                <span class="kv"><span class="k">放疗号</span><span class="v" id="pRtNo">F250006</span></span>
+                <span class="kv"><span class="k">病例号</span><span class="v" id="pCaseNo">001</span></span>
+                <span class="kv"><span class="k">预约时间</span><span class="v" id="pAppt">2026-02-11 08:00:00</span></span>
+                <span class="kv"><span class="k">床位</span><span class="v" id="pBed">—</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="steps" aria-label="流程步骤">
+          <div class="step done" data-step="imaging"><span class="dot">✓</span><span>影像归档</span></div>
+          <div class="step done" data-step="assess"><span class="dot">✓</span><span>ART评估</span></div>
+          <div class="step done" data-step="planDesign"><span class="dot">✓</span><span>ART计划设计</span></div>
+          <div class="step done" data-step="planReview"><span class="dot">✓</span><span>ART计划评估</span></div>
+          <div class="step done" data-step="verify"><span class="dot">✓</span><span>计划验证</span></div>
+          <div class="step active" data-step="treat"><span class="dot">6</span><span>治疗执行</span></div>
+          <div class="spacer"></div>
+          <button class="btn" id="btnBackToART" type="button">返回ART</button>
+        </div>
+      </div>
+
+      <div class="paper-wrap">
+        <div class="paper" id="paper">
+          <div class="paper-hd">
+            <div class="brand">
+              <span class="brand-badge" aria-hidden="true">M</span>
+              <span>MANTEIA</span>
+            </div>
+            <div class="paper-title">ART执行</div>
+          </div>
+
+          <div class="paper-bd">
+            <div class="section">
+              <div class="sec-title"><span class="mark"></span><span>基本信息</span></div>
+              <div class="info-grid">
+                <div class="info-item"><span class="k">姓名:</span><span class="v" id="bName">全功能演示</span></div>
+                <div class="info-item"><span class="k">病案号:</span><span class="v" id="bMrn">001</span></div>
+                <div class="info-item"><span class="k">放疗号:</span><span class="v" id="bRt">F250006</span></div>
+                <div class="info-item"><span class="k">性别:</span><span class="v" id="bSex">男</span></div>
+
+                <div class="info-item"><span class="k">门诊号/住院号:</span><span class="v" id="bVisit">456</span></div>
+                <div class="info-item"><span class="k">年龄（岁）:</span><span class="v" id="bAge">25</span></div>
+                <div class="info-item"><span class="k">患者电话:</span><span class="v" id="bPhone">18850528412</span></div>
+                <div class="info-item"><span class="k">病区:</span><span class="v" id="bWard">—</span></div>
+
+                <div class="info-item" style="grid-column: span 4;">
+                  <span class="k">主管医生/组:</span>
+                  <span class="v" id="bDoctor">肿瘤放疗门诊/陈倩</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="sec-title"><span class="mark"></span><span>ART执行</span></div>
+              <div class="info-grid exec">
+                <div class="info-item">
+                  <span class="k">计划名称:</span>
+                  <span class="v editable" data-field="planName">
+                    <span data-edit-mode="view" id="planNameView">—</span>
+                    <span data-edit-mode="edit" style="flex:1 1 auto; min-width:0;">
+                      <input id="planNameInput" placeholder="请输入计划名称" />
+                    </span>
+                  </span>
+                </div>
+                <div class="info-item">
+                  <span class="k">治疗日期:</span>
+                  <span class="v editable" data-field="treatDate">
+                    <span data-edit-mode="view" id="treatDateView">2026-02-11</span>
+                    <span data-edit-mode="edit" style="flex:1 1 auto; min-width:0;">
+                      <input id="treatDateInput" placeholder="YYYY-MM-DD" value="2026-02-11" />
+                    </span>
+                  </span>
+                </div>
+                <div class="info-item">
+                  <span class="k">操作技师:</span>
+                  <span class="v editable" data-field="operator">
+                    <span data-edit-mode="view" id="operatorView">—</span>
+                    <span data-edit-mode="edit" style="flex:1 1 auto; min-width:0;">
+                      <input id="operatorInput" placeholder="请输入操作技师" />
+                    </span>
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="paper-ft">
+            <span class="sig"><span class="k">超级管理员签名处:</span><span class="v" id="signName">超级管理员</span></span>
+            <span class="sig"><span class="k">日期:</span><span class="v" id="signDate">2026-02-11</span></span>
+          </div>
+        </div>
+
+      <div class="sched-card" id="scheduleCard" aria-label="分次排程">
+        <div class="sched-hd">
+          <strong>分次排程</strong>
+          <span class="sched-tip">中断治疗后将新增 2.1 分次，可对其重新排程</span>
+        </div>
+        <div class="sched-bd">
+          <div class="sched-row sched-th">
+            <div>分次</div>
+            <div>计划时间</div>
+            <div>状态</div>
+            <div style="text-align:right;">操作</div>
+          </div>
+          <div id="schedRows"></div>
+        </div>
+      </div>
+
+        <div class="actions">
+          <button class="act" id="btnEdit" type="button" title="编辑/保存（原型）">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M4 20h4l10.5-10.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M13.5 6.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+            <span id="editLabel">编辑</span>
+          </button>
+        <button class="act danger" id="btnInterrupt" type="button" title="中断治疗（原型）">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" stroke="currentColor" stroke-width="1.8"/>
+            <path d="M8.5 8.5h7v7h-7v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+          <span>中断治疗</span>
+        </button>
+          <button class="act" id="btnPrint" type="button" title="打印（原型）">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M7 8V4h10v4" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M7 17h10v3H7v-3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M6 10h12a2 2 0 0 1 2 2v3H4v-3a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <path d="M17 13h.01" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+            </svg>
+            <span>打印</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="right" aria-label="医疗团队协作">
+      <div class="team-hd">
+        <strong id="teamTitle">全功能演示的医疗团队（加入）</strong>
+        <span class="team-count" id="teamCount">共2人</span>
+      </div>
+      <div class="team-tabs" id="teamTabs">
+        <div class="chip active" data-to="陈倩"><span class="ico">陈</span><span>陈倩</span></div>
+        <div class="chip" data-to="超级管理员"><span class="ico">超</span><span>超级管理员</span></div>
+      </div>
+      <div class="chat">
+        <div class="chat-body" id="chatBody">
+          <div class="empty" id="chatEmpty">暂无消息。<br/>在下方输入内容并发送（原型）。</div>
+        </div>
+        <div class="chat-ft">
+          <textarea id="chatInput" placeholder="请输入内容"></textarea>
+          <button class="send" id="btnSend" type="button" disabled>发送</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="mask" id="reschedMask" aria-hidden="true">
+    <div class="dialog" role="dialog" aria-modal="true" aria-label="重新排程">
+      <div class="dialog-hd">
+        <strong id="reschedTitle">重新排程</strong>
+        <button class="btn2" type="button" id="btnReschedClose">关闭</button>
+      </div>
+      <div class="dialog-bd">
+        <div class="form">
+          <div class="k">分次</div>
+          <div><span class="v" id="reschedFraction">—</span></div>
+          <div class="k">日期</div>
+          <div><input type="date" id="reschedDate" /></div>
+          <div class="k">时间</div>
+          <div><input type="time" id="reschedTime" /></div>
+        </div>
+      </div>
+      <div class="dialog-ft">
+        <button class="btn2" type="button" id="btnReschedCancel">取消</button>
+        <button class="btn2 primary" type="button" id="btnReschedOk">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = String(msg || '');
+      el.classList.add('show');
+      window.clearTimeout(toast._t);
+      toast._t = window.setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    function pad2(n){ return String(n).padStart(2, '0'); }
+    function nowHHMM(){
+      const d = new Date();
+      return pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+    }
+
+    // 分次排程（原型）
+    const schedRowsEl = document.getElementById('schedRows');
+    const scheduleCard = document.getElementById('scheduleCard');
+
+    function normalizeApptText(text) {
+      const t = String(text || '').trim();
+      // 期望格式：YYYY-MM-DD HH:mm:ss 或 YYYY-MM-DD HH:mm
+      const m = t.match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/);
+      if (m) return { date: m[1], time: m[2] };
+      // fallback：使用治疗日期 view
+      const d = (document.getElementById('treatDateView')?.textContent || '').trim();
+      return { date: d || '2026-02-11', time: '08:00' };
+    }
+
+    const baseAppt = normalizeApptText(document.getElementById('pAppt')?.textContent);
+
+    const fractions = [
+      {
+        id: '2',
+        label: '2',
+        planAt: `${baseAppt.date} ${baseAppt.time}`,
+        status: '执行中',
+        canResched: false
+      }
+    ];
+
+    function fractionBadgeClass(status) {
+      if (status === '待排程') return 'warn';
+      if (status === '已排程') return 'ok';
+      if (status === '已中断') return 'danger';
+      return '';
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function renderSchedule() {
+      if (!schedRowsEl) return;
+      schedRowsEl.innerHTML = '';
+      fractions.forEach(f => {
+        const row = document.createElement('div');
+        row.className = 'sched-row sched-item';
+        const badgeCls = fractionBadgeClass(f.status);
+        row.innerHTML = `
+          <div><span class="sched-badge">${escapeHtml(f.label)}分次</span></div>
+          <div style="color:#111;font-weight:700;">${escapeHtml(f.planAt || '—')}</div>
+          <div><span class="sched-badge ${badgeCls}">${escapeHtml(f.status || '—')}</span></div>
+          <div class="sched-actions">
+            <button class="sched-btn" data-action="resched" data-id="${escapeHtml(f.id)}" ${f.canResched ? '' : 'disabled'}>重新排程</button>
+          </div>
+        `;
+        schedRowsEl.appendChild(row);
+      });
+    }
+
+    function ensureFraction21() {
+      const exists = fractions.some(x => x.id === '2.1');
+      if (exists) return false;
+      fractions.push({
+        id: '2.1',
+        label: '2.1',
+        planAt: '待排程',
+        status: '待排程',
+        canResched: true
+      });
+      return true;
+    }
+
+    // 步骤条：原型仅切换高亮与提示
+    document.querySelectorAll('.step').forEach((el) => {
+      el.addEventListener('click', () => {
+        document.querySelectorAll('.step').forEach(x => x.classList.remove('active'));
+        el.classList.add('active');
+        const name = el.textContent.trim();
+        toast('原型占位：切换到「' + name + '」');
+      });
+    });
+
+    document.getElementById('btnBackToART').addEventListener('click', () => {
+      try {
+        if (window.history.length > 1) {
+          window.history.back();
+          return;
+        }
+      } catch (e) {}
+      toast('原型占位：返回ART');
+    });
+
+    // 编辑/保存
+    const root = document.getElementById('pageRoot');
+    const btnEdit = document.getElementById('btnEdit');
+    const editLabel = document.getElementById('editLabel');
+
+    function setEditMode(on){
+      root.classList.toggle('edit-on', !!on);
+      root.classList.toggle('edit-off', !on);
+      editLabel.textContent = on ? '保存' : '编辑';
+      if (on) {
+        // 将 view 值同步到 input
+        document.getElementById('planNameInput').value = document.getElementById('planNameView').textContent.trim().replace(/^—$/, '');
+        document.getElementById('operatorInput').value = document.getElementById('operatorView').textContent.trim().replace(/^—$/, '');
+        document.getElementById('treatDateInput').value = document.getElementById('treatDateView').textContent.trim();
+        document.getElementById('planNameInput').focus();
+      }
+    }
+
+    function applyEdits(){
+      const planName = (document.getElementById('planNameInput').value || '').trim();
+      const operator = (document.getElementById('operatorInput').value || '').trim();
+      const treatDate = (document.getElementById('treatDateInput').value || '').trim();
+      document.getElementById('planNameView').textContent = planName || '—';
+      document.getElementById('operatorView').textContent = operator || '—';
+      document.getElementById('treatDateView').textContent = treatDate || '—';
+      document.getElementById('signDate').textContent = treatDate || document.getElementById('signDate').textContent;
+    }
+
+    let editing = false;
+    btnEdit.addEventListener('click', () => {
+      editing = !editing;
+      if (!editing) {
+        applyEdits();
+        toast('已保存（原型）');
+      }
+      setEditMode(editing);
+    });
+
+    // 中断治疗 -> 新增 2.1 分次 -> 重新排程
+    const btnInterrupt = document.getElementById('btnInterrupt');
+    if (btnInterrupt) {
+      btnInterrupt.addEventListener('click', () => {
+        if (editing) {
+          toast('请先保存编辑内容后再中断治疗');
+          return;
+        }
+        const ok = confirm('确认中断本次治疗？（原型：将新增 2.1 分次并进行重新排程）');
+        if (!ok) return;
+
+        // 标记当前 2 分次为已中断
+        const f2 = fractions.find(x => x.id === '2');
+        if (f2) {
+          f2.status = '已中断';
+        }
+
+        const added = ensureFraction21();
+        renderSchedule();
+        toast(added ? '已中断：新增 2.1 分次（待排程）' : '已中断：2.1 分次已存在，可重新排程');
+        openResched('2.1');
+      });
+    }
+
+    // 打印
+    document.getElementById('btnPrint').addEventListener('click', () => {
+      try { window.print(); } catch (e) { toast('当前环境不支持打印'); }
+    });
+
+    // 重新排程弹窗
+    const reschedMask = document.getElementById('reschedMask');
+    const reschedTitle = document.getElementById('reschedTitle');
+    const reschedFraction = document.getElementById('reschedFraction');
+    const reschedDate = document.getElementById('reschedDate');
+    const reschedTime = document.getElementById('reschedTime');
+    const btnReschedClose = document.getElementById('btnReschedClose');
+    const btnReschedCancel = document.getElementById('btnReschedCancel');
+    const btnReschedOk = document.getElementById('btnReschedOk');
+
+    let currentReschedId = null;
+
+    function closeResched() {
+      currentReschedId = null;
+      if (reschedMask) reschedMask.classList.remove('show');
+    }
+
+    function openResched(id) {
+      const f = fractions.find(x => x.id === id);
+      if (!f) return;
+      currentReschedId = id;
+      if (reschedTitle) reschedTitle.textContent = '重新排程';
+      if (reschedFraction) reschedFraction.textContent = `${f.label}分次`;
+
+      // 预填：若已排程则从 planAt 拆分，否则用治疗日期 + 08:00
+      const m = String(f.planAt || '').match(/^(\d{4}-\d{2}-\d{2})\s+(\d{2}:\d{2})/);
+      const fallbackDate = (document.getElementById('treatDateView')?.textContent || '2026-02-11').trim();
+      if (reschedDate) reschedDate.value = m ? m[1] : fallbackDate;
+      if (reschedTime) reschedTime.value = m ? m[2] : '08:00';
+
+      if (reschedMask) reschedMask.classList.add('show');
+      setTimeout(() => reschedDate && reschedDate.focus(), 0);
+    }
+
+    function saveResched() {
+      if (!currentReschedId) return;
+      const f = fractions.find(x => x.id === currentReschedId);
+      if (!f) return;
+      const d = (reschedDate?.value || '').trim();
+      const t = (reschedTime?.value || '').trim();
+      if (!d || !t) {
+        toast('请填写日期与时间');
+        return;
+      }
+      f.planAt = `${d} ${t}`;
+      f.status = '已排程';
+      renderSchedule();
+
+      // 同步顶部“预约时间”显示（原型：以 2.1 分次为准）
+      if (currentReschedId === '2.1') {
+        const topAppt = document.getElementById('pAppt');
+        if (topAppt) topAppt.textContent = `${d} ${t}:00`;
+      }
+
+      closeResched();
+      toast('已重新排程（原型）');
+    }
+
+    if (btnReschedClose) btnReschedClose.addEventListener('click', closeResched);
+    if (btnReschedCancel) btnReschedCancel.addEventListener('click', closeResched);
+    if (btnReschedOk) btnReschedOk.addEventListener('click', saveResched);
+    if (reschedMask) {
+      reschedMask.addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) closeResched();
+      });
+    }
+    document.addEventListener('keydown', (e) => {
+      if (!reschedMask || !reschedMask.classList.contains('show')) return;
+      if (e.key === 'Escape') closeResched();
+    });
+
+    if (scheduleCard) {
+      scheduleCard.addEventListener('click', (e) => {
+        const btn = e.target && e.target.closest ? e.target.closest('button[data-action]') : null;
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        if (action === 'resched' && id) {
+          openResched(id);
+        }
+      });
+    }
+
+    // 右侧团队/会话切换
+    let activeTo = '陈倩';
+    const tabs = document.getElementById('teamTabs');
+    const chatBody = document.getElementById('chatBody');
+    const emptyEl = document.getElementById('chatEmpty');
+    const inputEl = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('btnSend');
+
+    const conversations = new Map(); // to -> [{from,text,time}]
+    function renderChat(){
+      const msgs = conversations.get(activeTo) || [];
+      chatBody.innerHTML = '';
+      if (msgs.length === 0) {
+        chatBody.appendChild(emptyEl);
+        emptyEl.style.display = '';
+        return;
+      }
+      emptyEl.style.display = 'none';
+      msgs.forEach(m => {
+        const row = document.createElement('div');
+        row.className = 'msg' + (m.from === '我' ? ' me' : '');
+        const mini = document.createElement('div');
+        mini.className = 'mini';
+        mini.textContent = (m.from || '').slice(0, 1) || '·';
+        const col = document.createElement('div');
+        col.className = 'msg-col';
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        bubble.textContent = m.text;
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = (m.from === '我' ? '我 → ' + activeTo : activeTo) + '  ' + m.time;
+        col.appendChild(bubble);
+        col.appendChild(meta);
+        row.appendChild(mini);
+        row.appendChild(col);
+        chatBody.appendChild(row);
+      });
+      chatBody.scrollTop = chatBody.scrollHeight;
+    }
+
+    tabs.addEventListener('click', (e) => {
+      const chip = e.target && e.target.closest ? e.target.closest('.chip') : null;
+      if (!chip) return;
+      document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
+      chip.classList.add('active');
+      activeTo = chip.getAttribute('data-to') || activeTo;
+      renderChat();
+    });
+
+    function updateSendState(){
+      const v = (inputEl.value || '').trim();
+      sendBtn.disabled = !v;
+    }
+    inputEl.addEventListener('input', updateSendState);
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (!sendBtn.disabled) sendBtn.click();
+      }
+    });
+
+    sendBtn.addEventListener('click', () => {
+      const text = (inputEl.value || '').trim();
+      if (!text) return;
+      const list = conversations.get(activeTo) || [];
+      list.push({ from: '我', text, time: nowHHMM() });
+      conversations.set(activeTo, list);
+      inputEl.value = '';
+      updateSendState();
+      renderChat();
+    });
+
+    // 初始渲染
+    renderSchedule();
+    renderChat();
+    updateSendState();
+  </script>
+</body>
+</html>
+

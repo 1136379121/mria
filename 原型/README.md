@@ -22,6 +22,7 @@
 - [`CT排队叫号.html`](CT排队叫号.html)
 - [`治疗排队叫号.html`](治疗排队叫号.html)
 - [`排队叫号.html`](排队叫号.html)（兼容入口）
+- [`ART治疗.html`](ART治疗.html)
 - [`数据管理.html`](数据管理.html)
 - [`远程控制.html`](远程控制.html)
 - [`用户管理.html`](用户管理.html)
