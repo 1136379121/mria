@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>勾画审核</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      color: #1f1f1f;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+    }
+
+    :root {
+      --bg: #f5f5f5;
+      --card: #fff;
+      --line: #eaecef;
+      --muted: #8c8c8c;
+      --primary: #1890ff;
+      --success: #52c41a;
+      --purple: #9254de;
+      --shadow: 0 2px 10px rgba(0,0,0,0.06);
+    }
+
+    .page { background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+
+    /* 顶部患者信息条 */
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .badge-big {
+      width: 56px;
+      height: 56px;
+      border-radius: 10px;
+      background: var(--purple);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      font-weight: 800;
+      flex: 0 0 56px;
+    }
+    .pinfo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+      flex: 1;
+    }
+    .pinfo-top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+    .p-name { font-size: 18px; font-weight: 800; }
+    .pinfo-sub {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 22px;
+      color: #333;
+      font-size: 13px;
+    }
+    .kv { display: inline-flex; gap: 6px; align-items: baseline; }
+    .k { color: var(--muted); }
+    .v { font-weight: 600; color: #111; }
+    .top-right { margin-left: auto; }
+    .link-detail {
+      color: var(--primary);
+      font-size: 13px;
+      cursor: pointer;
+      text-decoration: none;
+    }
+    .link-detail:hover { text-decoration: underline; }
+
+    /* 筛选栏 */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+      flex-wrap: wrap;
+    }
+    .filter-bar select,
+    .filter-bar .input-search {
+      height: 32px;
+      padding: 0 10px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      font-size: 13px;
+      min-width: 120px;
+    }
+    .filter-bar .input-search {
+      width: 180px;
+    }
+    .filter-bar .btn-export {
+      height: 32px;
+      padding: 0 14px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      color: #333;
+    }
+    .filter-bar .btn-export:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-bar .btn-icon {
+      width: 32px;
+      height: 32px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      background: #fff;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #666;
+    }
+    .filter-bar .btn-icon:hover { color: var(--primary); border-color: var(--primary); }
+
+    /* 主体：流程 + 内容 */
+    .main {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg);
+      min-height: 520px;
+    }
+
+    /* 流程面板 */
+    .panel {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+    }
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .panel-title { font-weight: 800; font-size: 14px; }
+    .flow { padding: 10px 8px 12px; max-height: 520px; overflow: auto; }
+    .flow-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f0f5ff;
+      border: 1px solid #d6e4ff;
+      color: #1d39c4;
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+    .caret {
+      width: 0; height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #1d39c4;
+      opacity: .9;
+    }
+    .flow-items { position: relative; padding-left: 18px; }
+    .flow-items::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 4px;
+      bottom: 4px;
+      width: 2px;
+      background: #d9d9d9;
+    }
+    .flow-item {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      user-select: none;
+      color: #333;
+      font-size: 13px;
+    }
+    .flow-item:hover { background: #fafafa; }
+    .flow-item.active {
+      background: rgba(24,144,255,0.08);
+      border: 1px solid rgba(24,144,255,0.2);
+    }
+    .flow-item.done .node { background: var(--success); }
+    .node {
+      position: absolute;
+      left: 4px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #d9d9d9;
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 900;
+      border: 2px solid #fff;
+    }
+    .flow-item.active .node { background: var(--primary); }
+    .flow-text { padding-left: 10px; display: flex; align-items: center; gap: 8px; }
+
+    /* 勾画审核主内容区 */
+    .doc {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+      display: flex;
+      flex-direction: column;
+      min-height: 520px;
+    }
+    .doc-inner { padding: 18px 24px 16px; overflow: auto; flex: 1; }
+    .doc-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .hosp-name { font-weight: 800; font-size: 14px; color: #555; }
+    .doc-title { text-align: center; margin-bottom: 20px; }
+    .doc-title .big-title { font-size: 24px; font-weight: 900; letter-spacing: 0.5px; }
+
+    .section { margin-top: 20px; }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #333;
+      font-weight: 800;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    .mark {
+      width: 4px;
+      height: 16px;
+      border-radius: 2px;
+      background: var(--primary);
+    }
+    /* 查看勾画：应用图标 */
+    .view-contour-apps {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .view-contour-app {
+      width: 120px;
+      height: 100px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      background: #fafafa;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .view-contour-app:hover {
+      border-color: var(--primary);
+      background: #f0f7ff;
+    }
+    .view-contour-app .app-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #e6f4ff, #bae0ff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .view-contour-app .app-name { font-size: 13px; color: #333; font-weight: 600; }
+
+    /* 审核信息 */
+    .review-form .form-item { margin-bottom: 16px; }
+    .review-form label {
+      display: block;
+      font-size: 13px;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    .review-form textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 10px 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+      resize: vertical;
+    }
+    .review-form input[type="text"] {
+      width: 100%;
+      height: 36px;
+      padding: 0 12px;
+      border: 1px solid #d9d9d9;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    .doc-footer {
+      border-top: 1px solid var(--line);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+    }
+    .fbtn {
+      height: 36px;
+      padding: 0 18px;
+      border-radius: 8px;
+      border: 1px solid #d9d9d9;
+      background: #fff;
+      color: #333;
+      cursor: pointer;
+      user-select: none;
+      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .fbtn:hover { border-color: var(--primary); color: var(--primary); }
+    .fbtn-primary {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .fbtn-primary:hover { opacity: 0.9; }
+
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- 患者信息栏 -->
+    <div class="topbar">
+      <div class="badge-big" title="患者姓名单字">陈</div>
+      <div class="pinfo">
+        <div class="pinfo-top">
+          <span class="p-name">陈平 / 女 / 60</span>
+        </div>
+        <div class="pinfo-sub">
+          <span class="kv"><span class="k">病案号</span><span class="v">25041206</span></span>
+          <span class="kv"><span class="k">放疗号</span><span class="v">NB251071</span></span>
+          <span class="kv"><span class="k">主管医生</span><span class="v">倪超</span></span>
+          <span class="kv"><span class="k">流程名称</span><span class="v">[1]外照射流程</span></span>
+        </div>
+      </div>
+      <div class="top-right">
+        <a class="link-detail" href="#" id="linkPatientDetail">患者详情</a>
+      </div>
+    </div>
+
+    <!-- 筛选栏 -->
+    <div class="filter-bar">
+      <select id="selDoctor" title="主管医生">
+        <option>主管医生</option>
+        <option>倪超</option>
+      </select>
+      <select id="selCampus" title="院区">
+        <option>院区</option>
+        <option>月湖</option>
+      </select>
+      <div style="position:relative;">
+        <input type="text" class="input-search" id="inputSearch" placeholder="患者姓名等关键词" />
+      </div>
+      <button type="button" class="btn-export" id="btnExport">导出</button>
+      <button type="button" class="btn-icon" title="筛选">▦</button>
+    </div>
+
+    <div class="main">
+      <!-- 流程步骤 -->
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">共1个流程</div>
+        </div>
+        <div class="flow">
+          <div class="flow-group">
+            <div class="caret"></div>
+            <div style="flex:1;">[1]外照射...</div>
+          </div>
+          <div class="flow-items" id="flowItems">
+            <div class="flow-item done" data-node="靶区勾画"><span class="node">✓</span><div class="flow-text"><span>靶区勾画</span></div></div>
+            <div class="flow-item active" data-node="勾画审核"><span class="node">●</span><div class="flow-text"><span>勾画审核</span></div></div>
+            <div class="flow-item" data-node="计划申请"><span class="node">○</span><div class="flow-text"><span>计划申请</span></div></div>
+            <div class="flow-item" data-node="计划设计"><span class="node">○</span><div class="flow-text"><span>计划设计</span></div></div>
+            <div class="flow-item" data-node="组长审核"><span class="node">○</span><div class="flow-text"><span>组长审核</span></div></div>
+            <div class="flow-item" data-node="医师核准"><span class="node">○</span><div class="flow-text"><span>医师核准</span></div></div>
+            <div class="flow-item" data-node="计划复核"><span class="node">○</span><div class="flow-text"><span>计划复核</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 勾画审核主面板 -->
+      <div class="doc">
+        <div class="doc-inner">
+          <div class="doc-top">
+            <div class="hosp-name">肿瘤放化疗科12</div>
+          </div>
+          <div class="doc-title">
+            <div class="big-title">勾画审核</div>
+          </div>
+
+          <div class="section">
+            <div class="section-head"><span class="mark"></span><span>查看勾画</span></div>
+            <div class="view-contour-apps">
+              <div class="view-contour-app" title="AccuContour">
+                <div class="app-icon">A</div>
+                <span class="app-name">AccuContour</span>
+              </div>
+              <div class="view-contour-app" title="AC192">
+                <div class="app-icon">A</div>
+                <span class="app-name">AC192</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-head"><span class="mark"></span><span>审核信息</span></div>
+            <div class="review-form">
+              <div class="form-item">
+                <label>审批备注：</label>
+                <textarea id="approvalRemark" placeholder="请输入审批备注"></textarea>
+              </div>
+              <div class="form-item">
+                <label>单行输入框：</label>
+                <input type="text" id="singleInput" placeholder="单行输入" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="doc-footer">
+          <button type="button" class="fbtn" id="btnRevert">↶ 回退</button>
+          <button type="button" class="fbtn" id="btnReject">驳回</button>
+          <button type="button" class="fbtn fbtn-primary" id="btnSubmit">✓ 提交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      document.getElementById('linkPatientDetail')?.addEventListener('click', function (e) {
+        e.preventDefault();
+        alert('患者详情（原型演示）');
+      });
+      document.getElementById('btnExport')?.addEventListener('click', function () {
+        alert('导出（原型演示）');
+      });
+      document.querySelectorAll('.flow-item').forEach(function (el) {
+        el.addEventListener('click', function () {
+          document.querySelectorAll('.flow-item').forEach(function (x) { x.classList.remove('active'); });
+          this.classList.add('active');
+        });
+      });
+      document.querySelectorAll('.view-contour-app').forEach(function (el) {
+        el.addEventListener('click', function () {
+          alert('打开勾画应用：' + (this.querySelector('.app-name')?.textContent || '') + '（原型演示）');
+        });
+      });
+      document.getElementById('btnRevert')?.addEventListener('click', function () { alert('回退（原型演示）'); });
+      document.getElementById('btnReject')?.addEventListener('click', function () { alert('驳回（原型演示）'); });
+      document.getElementById('btnSubmit')?.addEventListener('click', function () { alert('提交（原型演示）'); });
+    })();
+  </script>
+</body>
+</html>

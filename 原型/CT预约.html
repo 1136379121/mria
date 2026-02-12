@@ -35,18 +35,25 @@
         }
 
         .topbar {
-            height: 56px;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 14px;
+            flex-direction: column;
+            padding: 10px 14px 12px;
             border-bottom: 1px solid var(--line);
             background: #fff;
             position: sticky;
             top: 0;
             z-index: 10;
+            gap: 10px;
+        }
+
+        .topbar-row1,
+        .topbar-row2 {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             gap: 12px;
-            flex-wrap: wrap;
+            width: 100%;
+            min-width: 0;
         }
 
         .topbar-left {
@@ -55,6 +62,34 @@
             gap: 12px;
             min-width: 0;
         }
+
+        .topbar-row1 .topbar-left { flex: 0 0 auto; }
+        .topbar-row1 .topbar-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .topbar-row2 .topbar-left { display: flex; align-items: center; gap: 12px; }
+        .topbar-row2 .topbar-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; min-width: 0; }
+
+        .topbar-room-icon {
+            width: 20px;
+            height: 20px;
+            color: #666;
+            flex-shrink: 0;
+        }
+        .topbar-status { font-size: 13px; color: #666; }
+        .topbar-status .badge { margin-left: 2px; }
+        .topbar-icon-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            background: #fff;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+        .topbar-icon-btn:hover { border-color: var(--primary); color: var(--primary); }
 
         .title {
             font-size: 18px;
@@ -167,9 +202,14 @@
             position: relative;
         }
 
+        .search-wrap .input {
+            padding: 0 32px 0 10px;
+        }
+
         .search-icon {
             position: absolute;
-            left: 10px;
+            right: 10px;
+            left: auto;
             top: 50%;
             transform: translateY(-50%);
             width: 16px;
@@ -177,6 +217,8 @@
             color: var(--muted);
             pointer-events: none;
         }
+
+        .topbar-row1 .search-wrap .input { width: 240px; }
 
         .topbar-right {
             display: flex;
@@ -837,56 +879,58 @@
         }
 
         @media (max-width: 1400px) {
-            .topbar-center { flex-wrap: wrap; }
-            .input { width: 200px; }
+            .topbar-row2 .topbar-right { flex-wrap: wrap; }
+            .topbar-row1 .search-wrap .input { width: 200px; }
         }
     </style>
 </head>
 <body>
     <div class="page">
         <div class="topbar">
-            <div class="topbar-left">
-                <div class="title">CT预约</div>
-                <select class="select" id="roomSelect">
-                    <option>妈祖定位机房</option>
-                    <option>机房2</option>
-                    <option>机房3</option>
-                </select>
-                <span>待预约 <span class="badge">10</span></span>
-            </div>
-
-            <div class="topbar-center">
-                <div class="view-tabs">
-                    <div class="view-tab active" data-view="week">周</div>
-                    <div class="view-tab" data-view="day">日</div>
-                    <div class="view-tab" data-view="list">列表</div>
+            <div class="topbar-row1">
+                <div class="topbar-left">
+                    <div class="title">CT预约</div>
                 </div>
-                <div class="date-nav">
-                    <button class="nav-btn" id="prevWeek">‹</button>
-                    <span class="date-range" id="dateRange">2026-01-05 至 2026-01-11</span>
-                    <button class="nav-btn" id="nextWeek">›</button>
-                </div>
-                <div class="search-wrap">
-                    <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
-                        <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                    </svg>
-                    <input type="text" class="input" placeholder="姓名/病案号/放疗号等" id="searchInput" />
-                </div>
-            </div>
-
-            <div class="topbar-right">
-                <button class="btn" id="btnMed">刷医保码</button>
-                <button class="btn" id="btnCard">读社保卡</button>
-                <button class="btn" id="btnBatch">批量调整</button>
-                <div class="more-wrap">
-                    <button type="button" class="btn-more" id="btnMore" title="更多" aria-haspopup="true" aria-expanded="false">
-                        <span class="dots"><span></span><span></span><span></span></span>
-                    </button>
-                    <div class="more-popover" id="morePopover" role="menu">
-                        <button type="button" class="more-popover-item" id="menuStats" role="menuitem">统计视图</button>
-                        <button type="button" class="more-popover-item" id="menuExport" role="menuitem">导出Excel</button>
+                <div class="topbar-right">
+                    <div class="search-wrap">
+                        <input type="text" class="input" placeholder="姓名/病案号/放疗号等" id="searchInput" />
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <path d="M10.5 18.5a8 8 0 1 1 0-16 8 8 0 0 1 0 16Z" stroke="currentColor" stroke-width="2"/>
+                            <path d="M21 21l-4.2-4.2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
                     </div>
+                    <button class="btn" id="btnMed">刷医保码</button>
+                    <button class="btn" id="btnCard">读社保卡</button>
+                </div>
+            </div>
+            <div class="topbar-row2">
+                <div class="topbar-left">
+                    <svg class="topbar-room-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <path d="M4 4h16v16H4zM4 8h16M4 12h16M4 16h16"/>
+                        <path d="M8 2v4M16 2v4" stroke-linecap="round"/>
+                    </svg>
+                    <select class="select" id="roomSelect">
+                        <option>妈祖定位机房</option>
+                        <option>机房2</option>
+                        <option>机房3</option>
+                    </select>
+                    <span class="topbar-status">待预约 <span class="badge" id="badgePending">10</span></span>
+                    <span class="topbar-status">待上机 <span id="countOnMachine">3</span></span>
+                </div>
+                <div class="topbar-right">
+                    <div class="view-tabs">
+                        <div class="view-tab active" data-view="week">周</div>
+                        <div class="view-tab" data-view="day">日</div>
+                        <div class="view-tab" data-view="list">列表</div>
+                    </div>
+                    <div class="date-nav">
+                        <button class="nav-btn" id="prevWeek">‹</button>
+                        <span class="date-range" id="dateRange">2026-02-02 至 2026-02-08</span>
+                        <button class="nav-btn" id="nextWeek">›</button>
+                    </div>
+                    <button type="button" class="topbar-icon-btn" id="btnBatch" title="批量调整"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="2"/><path d="M9 12h6M9 16h6"/></svg></button>
+                    <button type="button" class="topbar-icon-btn" id="btnStats" title="统计视图"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="12" width="4" height="8"/><rect x="10" y="8" width="4" height="12"/><rect x="17" y="4" width="4" height="16"/></svg></button>
+                    <button type="button" class="topbar-icon-btn" id="btnExport" title="导出"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
                 </div>
             </div>
         </div>
@@ -1045,17 +1089,18 @@
                                         <th>序号</th>
                                         <th>姓名</th>
                                         <th>病案号</th>
+                                        <th>放疗号</th>
+                                        <th>次数</th>
                                         <th>预约日期</th>
-                                        <th>预约时段</th>
-                                        <th>爽约时间</th>
+                                        <th>预约时间</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr><td>1</td><td>张三</td><td>MR202601001</td><td>2026-02-03</td><td>08:00-09:00</td><td>2026-02-03 09:15</td></tr>
-                                    <tr><td>2</td><td>李四</td><td>MR202601002</td><td>2026-02-03</td><td>09:00-10:00</td><td>2026-02-03 10:20</td></tr>
-                                    <tr><td>3</td><td>王五</td><td>MR202601003</td><td>2026-02-03</td><td>10:00-11:00</td><td>2026-02-03 11:05</td></tr>
-                                    <tr><td>4</td><td>赵六</td><td>MR202601004</td><td>2026-02-03</td><td>14:00-15:00</td><td>2026-02-03 15:30</td></tr>
-                                    <tr><td>5</td><td>钱七</td><td>MR202601005</td><td>2026-02-03</td><td>15:00-16:00</td><td>2026-02-03 16:10</td></tr>
+                                    <tr><td>1</td><td>张三</td><td>MR202601001</td><td>RT202601001</td><td>2/5</td><td>2026-02-03</td><td>08:00-09:00</td></tr>
+                                    <tr><td>2</td><td>李四</td><td>MR202601002</td><td>RT202601002</td><td>3/6</td><td>2026-02-03</td><td>09:00-10:00</td></tr>
+                                    <tr><td>3</td><td>王五</td><td>MR202601003</td><td>RT202601003</td><td>1/4</td><td>2026-02-03</td><td>10:00-11:00</td></tr>
+                                    <tr><td>4</td><td>赵六</td><td>MR202601004</td><td>RT202601004</td><td>4/7</td><td>2026-02-03</td><td>14:00-15:00</td></tr>
+                                    <tr><td>5</td><td>钱七</td><td>MR202601005</td><td>RT202601005</td><td>2/6</td><td>2026-02-03</td><td>15:00-16:00</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1279,33 +1324,13 @@
         // 按钮事件
         document.getElementById('btnMed').addEventListener('click', () => alert('刷医保码（原型占位）'));
         document.getElementById('btnCard').addEventListener('click', () => alert('读社保卡（原型占位）'));
-        document.getElementById('btnBatch').addEventListener('click', () => alert('批量调整（原型占位）'));
 
-        (function initMorePopover() {
-            const btnMore = document.getElementById('btnMore');
-            const popover = document.getElementById('morePopover');
-            const menuStats = document.getElementById('menuStats');
-            const menuExport = document.getElementById('menuExport');
-            if (!btnMore || !popover) return;
-            function closePopover() {
-                popover.classList.remove('show');
-                btnMore.setAttribute('aria-expanded', 'false');
-            }
-            btnMore.addEventListener('click', function (e) {
-                e.stopPropagation();
-                const isOpen = popover.classList.toggle('show');
-                btnMore.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-            });
-            menuStats?.addEventListener('click', () => {
-                closePopover();
-                const statsModal = document.getElementById('statsModal');
-                if (statsModal) { statsModal.classList.add('show'); statsModal.setAttribute('aria-hidden', 'false'); }
-            });
-            menuExport?.addEventListener('click', () => { closePopover(); alert('导出Excel（原型占位）'); });
-            document.addEventListener('click', function (e) {
-                if (!btnMore.contains(e.target) && !popover.contains(e.target)) closePopover();
-            });
-        })();
+        document.getElementById('btnBatch')?.addEventListener('click', () => alert('批量调整（原型占位）'));
+        document.getElementById('btnStats')?.addEventListener('click', () => {
+            const statsModal = document.getElementById('statsModal');
+            if (statsModal) { statsModal.classList.add('show'); statsModal.setAttribute('aria-hidden', 'false'); }
+        });
+        document.getElementById('btnExport')?.addEventListener('click', () => alert('导出Excel（原型占位）'));
 
         (function initStatsModal() {
             const overlay = document.getElementById('statsModal');
